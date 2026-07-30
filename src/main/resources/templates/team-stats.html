@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"/>
-  <title>Team Stats — NumSOX</title>
+  <title>Team Stats - NumSOX</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}"/>
 </head>
 <body>
@@ -48,7 +48,7 @@
         <span class="sep">·</span>
         <span>Last 10: <strong th:text="${stats.last10Record}">6-4</strong></span>
         <span class="sep">·</span>
-        <span>Streak: <strong th:text="${stats.currentStreak ?: '—'}">W2</strong></span>
+        <span>Streak: <strong th:text="${stats.currentStreak ?: 'N/A'}">W2</strong></span>
       </div>
     </div>
 
@@ -96,7 +96,7 @@
         <div class="stat-card"><div class="stat-label">L5 Run Diff</div><div class="stat-value" th:text="${stats.last5RunDifferential != null ? ((stats.last5RunDifferential > 0 ? '+' : '') + stats.last5RunDifferential) : 'N/A'}">+8</div></div>
         <div class="stat-card"><div class="stat-label">L5 R Scored</div><div class="stat-value" th:text="${stats.last5RunsScored}">26</div></div>
         <div class="stat-card"><div class="stat-label">L5 R Allowed</div><div class="stat-value" th:text="${stats.last5RunsAllowed}">18</div></div>
-        <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" th:text="${stats.currentStreak ?: '—'}">W2</div></div>
+        <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" th:text="${stats.currentStreak ?: 'N/A'}">W2</div></div>
       </div>
 
       <div class="data-freshness">

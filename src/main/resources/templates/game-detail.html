@@ -37,7 +37,7 @@
     <div class="hero-record">
       <span th:text="${#temporals.format(game.gameDate, 'EEEE, MMMM d, yyyy')}">Saturday, April 3, 2026</span>
       <span class="sep">·</span>
-      <span th:text="${game.venue ?: '—'}">Fenway Park</span>
+      <span th:text="${game.venue ?: 'N/A'}">Fenway Park</span>
       <span class="sep">·</span>
       <span th:text="${game.status}">Final</span>
       <span th:if="${game.result != null}" class="sep">·</span>

@@ -1,0 +1,10 @@
+target
+.git
+.idea
+.vscode
+*.iml
+.DS_Store
+data/*.db
+data/*.trace.db
+*.mv.db
+*.trace.db

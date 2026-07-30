@@ -29,7 +29,7 @@ public class TeamStatSnapshot {
     @Column(name = "runs_allowed") private Integer runsAllowed;
     @Column(name = "runs_per_game") private Double runsPerGame;
 
-    // Standings (MLB Stats API standings feed — already-computed ranks/tiebreakers)
+    // Standings (MLB Stats API standings feed - already-computed ranks/tiebreakers)
     @Column(name = "division_rank") private Integer divisionRank;
     @Column(name = "wild_card_rank") private Integer wildCardRank;
     @Column(name = "games_back") private String gamesBack;

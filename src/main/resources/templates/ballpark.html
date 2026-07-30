@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"/>
-  <title>Ballpark Factors — NumSOX</title>
+  <title>Ballpark Factors - NumSOX</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}"/>
 </head>
 <body>
@@ -104,29 +104,29 @@
     <div class="park-factors-quick">
       <div class="pf-block">
         <div class="pf-val" th:classappend="${park.parkFactor != null and park.parkFactor > 103 ? 'pf-high' : (park.parkFactor != null and park.parkFactor < 97 ? 'pf-low' : '')}"
-             th:text="${park.parkFactor ?: '—'}">104</div>
+             th:text="${park.parkFactor ?: 'N/A'}">104</div>
         <div class="pf-lbl">Overall</div>
       </div>
       <div class="pf-block">
         <div class="pf-val" th:classappend="${park.runParkFactor != null and park.runParkFactor > 103 ? 'pf-high' : (park.runParkFactor != null and park.runParkFactor < 97 ? 'pf-low' : '')}"
-             th:text="${park.runParkFactor ?: '—'}">106</div>
+             th:text="${park.runParkFactor ?: 'N/A'}">106</div>
         <div class="pf-lbl">Runs</div>
       </div>
       <div class="pf-block">
         <div class="pf-val" th:classappend="${park.homeRunParkFactor != null and park.homeRunParkFactor > 103 ? 'pf-high' : (park.homeRunParkFactor != null and park.homeRunParkFactor < 97 ? 'pf-low' : '')}"
-             th:text="${park.homeRunParkFactor ?: '—'}">97</div>
+             th:text="${park.homeRunParkFactor ?: 'N/A'}">97</div>
         <div class="pf-lbl">HR</div>
       </div>
       <div class="pf-block">
-        <div class="pf-val" th:text="${park.doubleParkFactor ?: '—'}">128</div>
+        <div class="pf-val" th:text="${park.doubleParkFactor ?: 'N/A'}">128</div>
         <div class="pf-lbl">2B</div>
       </div>
       <div class="pf-block">
-        <div class="pf-val" th:text="${park.lhbParkFactor ?: '—'}">101</div>
+        <div class="pf-val" th:text="${park.lhbParkFactor ?: 'N/A'}">101</div>
         <div class="pf-lbl">LHB</div>
       </div>
       <div class="pf-block">
-        <div class="pf-val" th:text="${park.rhbParkFactor ?: '—'}">107</div>
+        <div class="pf-val" th:text="${park.rhbParkFactor ?: 'N/A'}">107</div>
         <div class="pf-lbl">RHB</div>
       </div>
     </div>

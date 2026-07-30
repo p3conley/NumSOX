@@ -121,7 +121,7 @@ public class MlbApiService {
             String json = rest.getForObject(url, String.class);
             return mapper.readTree(json);
         } catch (Exception e) {
-            log.warn("MLB API call failed: {} — {}", url, e.getMessage());
+            log.warn("MLB API call failed: {} - {}", url, e.getMessage());
             return mapper.createObjectNode();
         }
     }

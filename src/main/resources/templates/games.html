@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"/>
-  <title>Games — NumSOX</title>
+  <title>Games - NumSOX</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}"/>
 </head>
 <body>
@@ -60,8 +60,8 @@
             </a>
           </td>
           <td th:text="${game.homeAway}">Home</td>
-          <td th:text="${game.venue ?: '—'}">Fenway Park</td>
-          <td th:text="${game.redSoxScore == null ? '—' : game.redSoxScore + '-' + game.opponentScore}">5-3</td>
+          <td th:text="${game.venue ?: 'N/A'}">Fenway Park</td>
+          <td th:text="${game.redSoxScore == null ? 'N/A' : game.redSoxScore + '-' + game.opponentScore}">5-3</td>
           <td>
             <span th:if="${game.result != null}"
                   th:text="${game.result}"

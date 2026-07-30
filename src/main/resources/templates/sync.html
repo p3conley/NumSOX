@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"/>
-  <title>Sync / Data Updates — NumSOX</title>
+  <title>Sync / Data Updates - NumSOX</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}"/>
 </head>
 <body>
@@ -51,13 +51,13 @@
         </tr>
         <tr th:each="log : ${syncLogs}">
           <td th:text="${log.displayLabel ?: log.dataType}">Schedule</td>
-          <td th:text="${log.sourceName ?: '—'}">MLB Stats API</td>
+          <td th:text="${log.sourceName ?: 'N/A'}">MLB Stats API</td>
           <td th:text="${log.lastUpdated != null ? #temporals.format(log.lastUpdated, 'MMM d, yyyy h:mm a') : 'Never'}">May 31, 2026 1:45 PM</td>
           <td>
             <span th:if="${log.status == 'Success'}" class="badge badge-win">&#10003; OK</span>
             <span th:if="${log.status != 'Success'}" class="badge badge-loss" th:text="${log.status ?: 'Unknown'}">Error</span>
           </td>
-          <td class="sync-notes" th:text="${log.notes ?: '—'}">Updated successfully.</td>
+          <td class="sync-notes" th:text="${log.notes ?: 'N/A'}">Updated successfully.</td>
         </tr>
       </tbody>
     </table>
@@ -104,12 +104,12 @@
         <tr><td>Real WAR, wRC+, xFIP, FIP-, ERA-</td><td>MLB Stats API (sabermetrics feed)</td><td>On Refresh</td></tr>
         <tr><td>Exit Velocity, Hard-Hit%, Barrel%, Whiff%, Pitch Velocity, OAA</td><td>Baseball Savant (public CSV export)</td><td>On Refresh</td></tr>
         <tr><td>Park Factors</td><td>Multi-year static baseline (built in)</td><td>Fixed reference data</td></tr>
-        <tr><td>DRS, UZR</td><td>No free public source — not available</td><td>—</td></tr>
+        <tr><td>DRS, UZR</td><td>No free public source</td><td>N/A</td></tr>
       </tbody>
     </table>
     <p class="sync-note">
       <strong>Note:</strong> Statcast metrics are pulled from Baseball Savant's own public CSV leaderboard
-      export (the same endpoint behind their site's "Download CSV" button) — a first-party MLB data source,
+      export (the same endpoint behind their site's "Download CSV" button), a first-party MLB data source,
       not a scrape of a third-party site. DRS (Baseball Info Solutions) and UZR (FanGraphs) are proprietary
       and have no free public API, so those two fields are intentionally left blank rather than estimated.
     </p>

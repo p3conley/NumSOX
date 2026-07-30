@@ -280,19 +280,19 @@ public class WinProbabilityService {
         if (stats == null) return list;
 
         if (stats.getTeamWrcPlus() != null && stats.getTeamWrcPlus() >= 108)
-            list.add("Team wRC+ " + fmt(stats.getTeamWrcPlus(), 0) + " — above-average offense");
+            list.add("Team wRC+ " + fmt(stats.getTeamWrcPlus(), 0) + " - above-average offense");
         if (stats.getTeamObp() != null && stats.getTeamObp() >= 0.325)
-            list.add("Team OBP " + fmt3(stats.getTeamObp()) + " — strong on-base rate");
+            list.add("Team OBP " + fmt3(stats.getTeamObp()) + " - strong on-base rate");
         if (stats.getBullpenEra() != null && stats.getBullpenEra() <= 3.60)
-            list.add("Bullpen ERA " + fmt(stats.getBullpenEra(), 2) + " — reliable late innings");
+            list.add("Bullpen ERA " + fmt(stats.getBullpenEra(), 2) + " - reliable late innings");
         if (stats.getRunDifferential() != null && stats.getRunDifferential() >= 20)
             list.add("Run differential " + (stats.getRunDifferential() > 0 ? "+" : "") + stats.getRunDifferential());
         if (stats.getOutsAboveAverage() != null && stats.getOutsAboveAverage() >= 5)
             list.add("Defense: +" + stats.getOutsAboveAverage() + " Outs Above Average");
         if (starter != null && starter.getKMinusBbRate() != null && starter.getKMinusBbRate() >= 18)
-            list.add("Starter K-BB% " + fmt(starter.getKMinusBbRate(), 1) + "% — elite control and strikeouts");
+            list.add("Starter K-BB% " + fmt(starter.getKMinusBbRate(), 1) + "% - elite control and strikeouts");
         if (stats.getLast10Wins() != null && stats.getLast10Wins() >= 7)
-            list.add("Last 10 games: " + stats.getLast10Record() + " — hot streak");
+            list.add("Last 10 games: " + stats.getLast10Record() + " - hot streak");
 
         if (list.isEmpty()) list.add("Competitive overall profile");
         return list.size() > 4 ? list.subList(0, 4) : list;
@@ -303,17 +303,17 @@ public class WinProbabilityService {
         if (stats == null) return list;
 
         if (stats.getTeamKRate() != null && stats.getTeamKRate() >= 24.0)
-            list.add("K% " + fmt(stats.getTeamKRate(), 1) + "% — strikeout rate is high");
+            list.add("K% " + fmt(stats.getTeamKRate(), 1) + "% - strikeout rate is high");
         if (stats.getOutsAboveAverage() != null && stats.getOutsAboveAverage() <= -5)
-            list.add("OAA " + stats.getOutsAboveAverage() + " — below-average defense");
+            list.add("OAA " + stats.getOutsAboveAverage() + " - below-average defense");
         if (starter != null && starter.getHrPer9() != null && starter.getHrPer9() >= 1.3)
-            list.add("Starter HR/9 " + fmt(starter.getHrPer9(), 2) + " — allows too many home runs");
+            list.add("Starter HR/9 " + fmt(starter.getHrPer9(), 2) + " - allows too many home runs");
         if (stats.getBullpenBbRate() != null && stats.getBullpenBbRate() >= 10.0)
-            list.add("Bullpen BB% " + fmt(stats.getBullpenBbRate(), 1) + "% — too many free passes");
+            list.add("Bullpen BB% " + fmt(stats.getBullpenBbRate(), 1) + "% - too many free passes");
         if (starter != null && starter.getWhip() != null && starter.getWhip() >= 1.35)
-            list.add("Starter WHIP " + fmt(starter.getWhip(), 2) + " — too many baserunners");
+            list.add("Starter WHIP " + fmt(starter.getWhip(), 2) + " - too many baserunners");
         if (stats.getLast10Wins() != null && stats.getLast10Wins() <= 3)
-            list.add("Last 10 games: " + stats.getLast10Record() + " — struggling recently");
+            list.add("Last 10 games: " + stats.getLast10Record() + " - struggling recently");
 
         if (list.isEmpty()) list.add("No glaring weaknesses identified");
         return list.size() > 4 ? list.subList(0, 4) : list;

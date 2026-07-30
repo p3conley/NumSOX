@@ -551,7 +551,7 @@ public class MlbDataImportService {
     @Transactional
     public void seedStaticDataIfNeeded() {
         if (teamRepo.count() > 0) {
-            log.info("Static data already seeded — skipping");
+            log.info("Static data already seeded - skipping");
             return;
         }
         log.info("Seeding static reference data...");
@@ -938,7 +938,7 @@ public class MlbDataImportService {
 
     private void seedBallparkFactors() {
         // Park factors are seeded lazily in the BallparkFactorSnapshotRepository
-        // via the BallparkFactorSnapshot entity — done by a separate seeder if needed
+        // via the BallparkFactorSnapshot entity - done by a separate seeder if needed
         // Implemented separately to keep this method short.
     }
 
@@ -949,12 +949,12 @@ public class MlbDataImportService {
 
     private void seedSyncLog() {
         List<String[]> logs = List.of(
-            new String[]{"schedule",   "Not yet synced — click Refresh"},
-            new String[]{"standings",  "Not yet synced — click Refresh"},
-            new String[]{"team_stats", "Not yet synced — click Refresh"},
+            new String[]{"schedule",   "Not yet synced - click Refresh"},
+            new String[]{"standings",  "Not yet synced - click Refresh"},
+            new String[]{"team_stats", "Not yet synced - click Refresh"},
             new String[]{"park_factors","Bundled static data"},
             new String[]{"rosters",    "Not yet synced"},
-            new String[]{"advanced_metrics", "Not yet synced — click Refresh"}
+            new String[]{"advanced_metrics", "Not yet synced - click Refresh"}
         );
         for (String[] l : logs) {
             if (syncLogRepo.findByDataType(l[0]).isEmpty()) {

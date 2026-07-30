@@ -57,7 +57,7 @@ public class BaseballSavantService {
             MappingIterator<Map<String, String>> it = csvMapper.readerFor(Map.class).with(schema).readValues(csv);
             return it.readAll();
         } catch (Exception e) {
-            log.warn("Baseball Savant CSV fetch failed: {} — {}", url, e.getMessage());
+            log.warn("Baseball Savant CSV fetch failed: {} - {}", url, e.getMessage());
             return List.of();
         }
     }

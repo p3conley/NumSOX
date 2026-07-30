@@ -124,23 +124,23 @@
         <div class="ballpark-summary" th:text="${featuredWinProb.ballparkNarrative}">Park narrative.</div>
         <div class="park-factors-quick compact">
           <div class="pf-block">
-            <div class="pf-val" th:text="${featuredPark.runParkFactor ?: '—'}">103</div>
+            <div class="pf-val" th:text="${featuredPark.runParkFactor ?: 'N/A'}">103</div>
             <div class="pf-lbl">Runs</div>
           </div>
           <div class="pf-block">
-            <div class="pf-val" th:text="${featuredPark.homeRunParkFactor ?: '—'}">112</div>
+            <div class="pf-val" th:text="${featuredPark.homeRunParkFactor ?: 'N/A'}">112</div>
             <div class="pf-lbl">HR</div>
           </div>
           <div class="pf-block">
-            <div class="pf-val" th:text="${featuredPark.doubleParkFactor ?: '—'}">108</div>
+            <div class="pf-val" th:text="${featuredPark.doubleParkFactor ?: 'N/A'}">108</div>
             <div class="pf-lbl">2B</div>
           </div>
           <div class="pf-block">
-            <div class="pf-val" th:text="${featuredPark.lfHomeRunFactor ?: '—'}">118</div>
+            <div class="pf-val" th:text="${featuredPark.lfHomeRunFactor ?: 'N/A'}">118</div>
             <div class="pf-lbl">LF HR</div>
           </div>
           <div class="pf-block">
-            <div class="pf-val" th:text="${featuredPark.rfHomeRunFactor ?: '—'}">96</div>
+            <div class="pf-val" th:text="${featuredPark.rfHomeRunFactor ?: 'N/A'}">96</div>
             <div class="pf-lbl">RF HR</div>
           </div>
         </div>
@@ -192,7 +192,7 @@
     </div>
     <div class="stat-card">
       <div class="stat-label">Streak</div>
-      <div class="stat-value" th:text="${bosStats.currentStreak != null ? bosStats.currentStreak : '—'}">W2</div>
+      <div class="stat-value" th:text="${bosStats.currentStreak != null ? bosStats.currentStreak : 'N/A'}">W2</div>
     </div>
   </div>
 
@@ -264,8 +264,8 @@
             </a>
           </td>
           <td th:text="${g.homeAway}">Home</td>
-          <td th:text="${g.venue ?: '—'}">Fenway Park</td>
-          <td th:text="${g.redSoxScore != null ? g.redSoxScore + '-' + g.opponentScore : '—'}">5-3</td>
+          <td th:text="${g.venue ?: 'N/A'}">Fenway Park</td>
+          <td th:text="${g.redSoxScore != null ? g.redSoxScore + '-' + g.opponentScore : 'N/A'}">5-3</td>
           <td>
             <span th:if="${g.result != null}"
                   th:text="${g.result}"

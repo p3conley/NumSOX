@@ -1790,7 +1790,7 @@ textarea { min-height: 100px; resize: vertical; }
     clip-path: polygon(0 0, 86% 0, 100% 50%, 86% 100%, 0 100%);
 }
 
-/* Division leader — shiny gold: glossy gradient + highlight + soft glow. */
+/* Division leader - shiny gold: glossy gradient + highlight + soft glow. */
 .tag-div-leader {
     background: linear-gradient(135deg, #fff6cf 0%, #ffd700 30%, #d4a900 68%, #ffe680 100%);
     box-shadow: 0 1px 5px rgba(212,169,0,0.55), inset 0 1px 0 rgba(255,255,255,0.75);
@@ -1798,7 +1798,7 @@ textarea { min-height: 100px; resize: vertical; }
     text-shadow: 0 1px 0 rgba(255,255,255,0.5);
 }
 
-/* Wild card ranks — matte, flat, no gloss. */
+/* Wild card ranks - matte, flat, no gloss. */
 .tag-wc-1 { background: #b8860b; color: #fff3d6; }
 .tag-wc-2 { background: #a3a3a8; color: #26262a; }
 .tag-wc-3 { background: #a5672a; color: #ffe9d1; }

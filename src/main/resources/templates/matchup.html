@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"/>
-  <title>Matchup Center — NumSOX</title>
+  <title>Matchup Center - NumSOX</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}"/>
 </head>
 <body>
@@ -230,7 +230,7 @@
     <!-- Quick Stats Side by Side -->
     <div class="two-col-stats">
       <div class="stats-col" th:if="${awayStats}">
-        <div class="stats-col-header away-header" th:text="${awayTeamName + ' — Quick Stats'}">Away Quick Stats</div>
+        <div class="stats-col-header away-header" th:text="${awayTeamName + ' Quick Stats'}">Away Quick Stats</div>
         <div class="stat-row"><span class="sr-label">Record</span><span class="sr-value" th:text="${awayStats.record}">28-24</span></div>
         <div class="stat-row"><span class="sr-label">Run Diff</span><span class="sr-value" th:text="${awayStats.runDifferential != null ? (awayStats.runDifferential > 0 ? '+' : '') + awayStats.runDifferential : 'N/A'}">+22</span></div>
         <div class="stat-row"><span class="sr-label">Runs/Game</span><span class="sr-value" th:text="${awayStats.runsPerGame != null ? #numbers.formatDecimal(awayStats.runsPerGame,1,2) : 'N/A'}">4.84</span></div>
@@ -252,7 +252,7 @@
       </div>
 
       <div class="stats-col" th:if="${homeStats}">
-        <div class="stats-col-header home-header" th:text="${homeTeamName + ' — Quick Stats'}">Home Quick Stats</div>
+        <div class="stats-col-header home-header" th:text="${homeTeamName + ' Quick Stats'}">Home Quick Stats</div>
         <div class="stat-row"><span class="sr-label">Record</span><span class="sr-value" th:text="${homeStats.record}">30-22</span></div>
         <div class="stat-row"><span class="sr-label">Run Diff</span><span class="sr-value" th:text="${homeStats.runDifferential != null ? (homeStats.runDifferential > 0 ? '+' : '') + homeStats.runDifferential : 'N/A'}">+31</span></div>
         <div class="stat-row"><span class="sr-label">Runs/Game</span><span class="sr-value" th:text="${homeStats.runsPerGame != null ? #numbers.formatDecimal(homeStats.runsPerGame,1,2) : 'N/A'}">5.12</span></div>
@@ -362,11 +362,11 @@
           <div class="pf-lbl">RHB</div>
         </div>
         <div class="pf-block">
-          <div class="pf-val" th:text="${park.lfHomeRunFactor ?: '—'}">118</div>
+          <div class="pf-val" th:text="${park.lfHomeRunFactor ?: 'N/A'}">118</div>
           <div class="pf-lbl">LF HR</div>
         </div>
         <div class="pf-block">
-          <div class="pf-val" th:text="${park.rfHomeRunFactor ?: '—'}">96</div>
+          <div class="pf-val" th:text="${park.rfHomeRunFactor ?: 'N/A'}">96</div>
           <div class="pf-lbl">RF HR</div>
         </div>
       </div>
