@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Sync / Data Updates — NumSOX</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}"/>
+</head>
+<body>
+<nav class="topbar">
+  <a class="topbar-brand" th:href="@{/}"><img class="brand-logo" th:src="@{/images/numsox-logo-cropped.png}" alt="NumSOX logo"/><span class="brand-text">NumSOX</span></a>
+  <div class="topbar-links">
+    <a th:href="@{/}">Dashboard</a>
+    <a th:href="@{/matchup}">Matchup Center</a>
+    <a th:href="@{/games}">Games</a>
+    <a th:href="@{/team-stats}">Team Stats</a>
+    <a th:href="@{/players}">Players</a>
+    <a th:href="@{/ballpark}">Ballpark Factors</a>
+    <a th:href="@{/sync}" class="active">Sync</a>
+  </div>
+</nav>
+
+<div class="page-content">
+
+  <div class="hero-card">
+    <div class="hero-label">DATA MANAGEMENT</div>
+    <h1>Sync / Data Updates</h1>
+    <p class="hero-desc">
+      Track when each data source was last refreshed. WAR, wRC+, and xFIP come from MLB's own
+      sabermetrics feed; Hard-Hit%, Barrel%, Exit Velocity, Whiff%, and Outs Above Average come
+      from Baseball Savant's public leaderboard export. DRS and UZR have no free public source and
+      are not available.
+    </p>
+  </div>
+
+  <!-- Sync Status Table -->
+  <div class="panel">
+    <div class="panel-title">Data Source Status</div>
+    <table class="sync-table">
+      <thead>
+        <tr>
+          <th>Data Type</th>
+          <th>Source</th>
+          <th>Last Updated</th>
+          <th>Status</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:if="${#lists.isEmpty(syncLogs)}">
+          <td colspan="5">No sync log entries. Click "Refresh All" to initialize.</td>
+        </tr>
+        <tr th:each="log : ${syncLogs}">
+          <td th:text="${log.displayLabel ?: log.dataType}">Schedule</td>
+          <td th:text="${log.sourceName ?: '—'}">MLB Stats API</td>
+          <td th:text="${log.lastUpdated != null ? #temporals.format(log.lastUpdated, 'MMM d, yyyy h:mm a') : 'Never'}">May 31, 2026 1:45 PM</td>
+          <td>
+            <span th:if="${log.status == 'Success'}" class="badge badge-win">&#10003; OK</span>
+            <span th:if="${log.status != 'Success'}" class="badge badge-loss" th:text="${log.status ?: 'Unknown'}">Error</span>
+          </td>
+          <td class="sync-notes" th:text="${log.notes ?: '—'}">Updated successfully.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Sync Actions -->
+  <div class="panel">
+    <div class="panel-title">Refresh Data</div>
+    <div class="sync-actions">
+      <form method="post" th:action="@{/sync/refresh}">
+        <input type="hidden" name="type" value="schedule"/>
+        <button type="submit" class="button secondary">Refresh Schedule</button>
+      </form>
+      <form method="post" th:action="@{/sync/refresh}">
+        <input type="hidden" name="type" value="team_stats"/>
+        <button type="submit" class="button secondary">Refresh Team Stats</button>
+      </form>
+      <form method="post" th:action="@{/sync/refresh}">
+        <input type="hidden" name="type" value="player_stats"/>
+        <button type="submit" class="button secondary">Refresh Player Stats</button>
+      </form>
+      <form method="post" th:action="@{/sync/refresh}">
+        <input type="hidden" name="type" value="advanced_metrics"/>
+        <button type="submit" class="button secondary">Refresh Statcast Metrics</button>
+      </form>
+      <form method="post" th:action="@{/sync/refresh}">
+        <input type="hidden" name="type" value="rosters"/>
+        <button type="submit" class="button secondary">Refresh Roster Only</button>
+      </form>
+      <form method="post" th:action="@{/sync/refresh}">
+        <input type="hidden" name="type" value="all"/>
+        <button type="submit" class="button">Refresh All</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Data Source Guide -->
+  <div class="panel">
+    <div class="panel-title">Data Source Guide</div>
+    <table class="sync-table">
+      <thead><tr><th>Stat</th><th>Source</th><th>Update Frequency</th></tr></thead>
+      <tbody>
+        <tr><td>Schedule, Rosters, Game Results, Team/Player Stat Lines</td><td>MLB Stats API</td><td>Live / on Refresh</td></tr>
+        <tr><td>Real WAR, wRC+, xFIP, FIP-, ERA-</td><td>MLB Stats API (sabermetrics feed)</td><td>On Refresh</td></tr>
+        <tr><td>Exit Velocity, Hard-Hit%, Barrel%, Whiff%, Pitch Velocity, OAA</td><td>Baseball Savant (public CSV export)</td><td>On Refresh</td></tr>
+        <tr><td>Park Factors</td><td>Multi-year static baseline (built in)</td><td>Fixed reference data</td></tr>
+        <tr><td>DRS, UZR</td><td>No free public source — not available</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <p class="sync-note">
+      <strong>Note:</strong> Statcast metrics are pulled from Baseball Savant's own public CSV leaderboard
+      export (the same endpoint behind their site's "Download CSV" button) — a first-party MLB data source,
+      not a scrape of a third-party site. DRS (Baseball Info Solutions) and UZR (FanGraphs) are proprietary
+      and have no free public API, so those two fields are intentionally left blank rather than estimated.
+    </p>
+  </div>
+
+</div>
+</body>
+</html>

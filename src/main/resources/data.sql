@@ -1,0 +1,4 @@
+-- data.sql is now DISABLED (sql.init.mode=never).
+-- Static seed data (teams, ballpark factors, player snapshots) is handled
+-- by MlbDataImportService.seedStaticDataIfNeeded() on first startup.
+-- Live schedule, standings, and team stats come from the MLB Stats API.

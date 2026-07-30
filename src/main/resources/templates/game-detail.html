@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title th:text="${'NumSOX Game - Red Sox vs ' + game.opponent}">Game Detail</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}"/>
+</head>
+<body>
+<nav class="topbar">
+  <a class="topbar-brand" th:href="@{/}"><img class="brand-logo" th:src="@{/images/numsox-logo-cropped.png}" alt="NumSOX logo"/><span class="brand-text">NumSOX</span></a>
+  <div class="topbar-links">
+    <a th:href="@{/}">Dashboard</a>
+    <a th:href="@{/matchup}">Matchup Center</a>
+    <a th:href="@{/games}" class="active">Games</a>
+    <a th:href="@{/team-stats}">Team Stats</a>
+    <a th:href="@{/players}">Players</a>
+    <a th:href="@{/ballpark}">Ballpark Factors</a>
+    <a th:href="@{/sync}">Sync</a>
+  </div>
+</nav>
+
+<div class="page-content">
+
+  <div class="hero-card">
+    <div class="hero-label" th:text="${game.homeAway == 'Home' ? 'HOME GAME' : 'AWAY GAME'}">HOME GAME</div>
+    <div class="game-detail-matchup">
+      <div class="game-detail-team">
+        <img class="game-detail-logo" th:src="${@teamLogoService.logoForName('Boston Red Sox')}" alt="Boston Red Sox logo"/>
+        <span>Red Sox</span>
+      </div>
+      <h1 th:text="${game.redSoxScore == null ? 'vs ' + game.opponent + ' - Scheduled' : game.redSoxScore + ' - ' + game.opponentScore}">Game Score</h1>
+      <div class="game-detail-team">
+        <img class="game-detail-logo" th:src="${@teamLogoService.logoForName(game.opponent)}" th:alt="${game.opponent + ' logo'}"/>
+        <span th:text="${game.opponent}">Yankees</span>
+      </div>
+    </div>
+    <div class="hero-record">
+      <span th:text="${#temporals.format(game.gameDate, 'EEEE, MMMM d, yyyy')}">Saturday, April 3, 2026</span>
+      <span class="sep">·</span>
+      <span th:text="${game.venue ?: '—'}">Fenway Park</span>
+      <span class="sep">·</span>
+      <span th:text="${game.status}">Final</span>
+      <span th:if="${game.result != null}" class="sep">·</span>
+      <span th:if="${game.result != null}"
+            th:text="${game.result}"
+            th:class="${game.result == 'W' ? 'badge badge-win' : 'badge badge-loss'}">W</span>
+    </div>
+  </div>
+
+  <div th:if="${'Scheduled'.equals(game.status)}" class="panel">
+    <a th:href="@{/matchup(gameId=${game.id})}" class="button">View Matchup Analysis &#8594;</a>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Add Game Note</div>
+    <form th:action="@{/games/{id}/notes(id=${game.id})}" method="post" class="note-form">
+      <label>Tag
+        <input name="tag" placeholder="bullpen, offense, defense, pitching..."/>
+      </label>
+      <label>Note
+        <textarea name="noteText" required placeholder="What happened in this game?"></textarea>
+      </label>
+      <button type="submit">Save Note</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Notes <span th:text="${'(' + #lists.size(game.notes) + ')'}"></span></div>
+    <div th:if="${#lists.isEmpty(game.notes)}" class="empty-state">
+      No notes yet. Add one above.
+    </div>
+    <div class="note" th:each="note : ${game.notes}">
+      <div>
+        <span class="tag" th:text="${(note.tag == null or #strings.isEmpty(note.tag)) ? 'general' : note.tag}">bullpen</span>
+        <p th:text="${note.noteText}" style="margin:8px 0">Good win.</p>
+        <small style="color:#667085" th:text="${#temporals.format(note.createdAt, 'MMM d, yyyy h:mm a')}">Apr 3, 2026</small>
+      </div>
+      <form th:action="@{/notes/{noteId}/delete(noteId=${note.id})}" method="post">
+        <input type="hidden" name="gameId" th:value="${game.id}"/>
+        <button class="danger" type="submit">Delete</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="nav-actions">
+    <a th:href="@{/games}" class="button secondary">&#8592; All Games</a>
+  </div>
+
+</div>
+</body>
+</html>

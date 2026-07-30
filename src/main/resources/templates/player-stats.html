@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Player Stats — NumSOX</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}"/>
+</head>
+<body>
+<nav class="topbar">
+  <a class="topbar-brand" th:href="@{/}"><img class="brand-logo" th:src="@{/images/numsox-logo-cropped.png}" alt="NumSOX logo"/><span class="brand-text">NumSOX</span></a>
+  <div class="topbar-links">
+    <a th:href="@{/}">Dashboard</a>
+    <a th:href="@{/matchup}">Matchup Center</a>
+    <a th:href="@{/games}">Games</a>
+    <a th:href="@{/team-stats}">Team Stats</a>
+    <a th:href="@{/players}" class="active">Players</a>
+    <a th:href="@{/ballpark}">Ballpark Factors</a>
+    <a th:href="@{/sync}">Sync</a>
+  </div>
+</nav>
+
+<div class="page-content">
+
+  <div class="hero-card">
+    <div class="hero-label">2026 SEASON</div>
+    <h1>Boston Red Sox — Roster &amp; Player Stats</h1>
+    <p class="hero-desc">Roster and live stat snapshots come from MLB Stats API. FIP is calculated from official MLB pitching lines; WAR and wRC+ are MLB-derived estimates when FanGraphs values are not available locally.</p>
+    <form th:action="@{/sync/refresh}" method="post" class="hero-actions">
+      <input type="hidden" name="type" value="player_stats"/>
+      <input type="hidden" name="returnTo" th:value="${'/players?tab=' + tab}"/>
+      <button type="submit">Refresh player stats</button>
+    </form>
+  </div>
+
+  <div class="tab-row">
+    <a th:href="@{/players(tab='roster')}"   th:classappend="${tab == 'roster'   ? ' tab-active' : ''}" class="tab-link">Roster</a>
+    <a th:href="@{/players(tab='hitters')}"  th:classappend="${tab == 'hitters'  ? ' tab-active' : ''}" class="tab-link">Hitters</a>
+    <a th:href="@{/players(tab='starters')}" th:classappend="${tab == 'starters' ? ' tab-active' : ''}" class="tab-link">Starting Pitchers</a>
+    <a th:href="@{/players(tab='bullpen')}"  th:classappend="${tab == 'bullpen'  ? ' tab-active' : ''}" class="tab-link">Bullpen</a>
+  </div>
+
+  <!-- ===== ROSTER ===== -->
+  <div th:if="${tab == 'roster'}">
+    <div th:if="${#lists.isEmpty(roster)}" class="panel">
+      <div class="panel-title">Roster Not Loaded Yet</div>
+      <p>Use <strong>Refresh roster</strong> above to import the current Red Sox active roster from MLB Stats API.</p>
+    </div>
+
+    <div th:if="${!#lists.isEmpty(roster)}" class="roster-grid">
+      <div th:each="p : ${roster}" class="player-card player-card-compact">
+        <div class="player-card-header">
+          <div class="player-info">
+            <span class="player-number" th:text="${'#' + (p.jerseyNumber ?: '?')}">#11</span>
+            <span class="player-name" th:text="${p.fullName}">Player Name</span>
+            <span class="player-position" th:text="${p.position ?: '—'}">OF</span>
+            <span class="player-bats" th:text="${'B/T: ' + (p.bats ?: '?') + '/' + (p.throwsHand ?: '?')}">B/T: R/R</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HITTERS ===== -->
+  <div th:if="${tab == 'hitters'}">
+    <div th:if="${#lists.isEmpty(hitters)}" class="panel">
+      <p>No hitter data available. Import data via the <a th:href="@{/sync}">Sync page</a>.</p>
+    </div>
+
+    <div th:each="h : ${hitters}" class="player-card">
+      <div class="player-card-header">
+        <div class="player-info">
+          <span class="player-number" th:text="${'#' + (h.player.jerseyNumber ?: '?')}">#11</span>
+          <span class="player-name" th:text="${h.player.fullName}">Rafael Devers</span>
+          <span class="player-position" th:text="${h.player.position}">3B</span>
+          <span class="player-bats" th:text="${'B/T: ' + (h.player.bats ?: '?') + '/' + (h.player.throwsHand ?: '?')}">B/T: L/R</span>
+        </div>
+      </div>
+
+      <!-- Quick View -->
+      <div class="player-stats-grid">
+        <div class="ps-item"><div class="ps-label">WAR est.</div><div class="ps-value" th:text="${h.war != null ? #numbers.formatDecimal(h.war,1,1) : '—'}">3.8</div></div>
+        <div class="ps-item"><div class="ps-label">wRC+ est.</div><div class="ps-value" th:text="${h.wrcPlus != null ? #numbers.formatDecimal(h.wrcPlus,1,0) : '—'}">137</div></div>
+        <div class="ps-item"><div class="ps-label">OPS</div><div class="ps-value" th:text="${h.ops != null ? #numbers.formatDecimal(h.ops,1,3) : '—'}">.884</div></div>
+        <div class="ps-item"><div class="ps-label">AVG</div><div class="ps-value" th:text="${h.avg != null ? #numbers.formatDecimal(h.avg,1,3) : '—'}">.286</div></div>
+        <div class="ps-item"><div class="ps-label">OBP</div><div class="ps-value" th:text="${h.obp != null ? #numbers.formatDecimal(h.obp,1,3) : '—'}">.362</div></div>
+        <div class="ps-item"><div class="ps-label">SLG</div><div class="ps-value" th:text="${h.slg != null ? #numbers.formatDecimal(h.slg,1,3) : '—'}">.522</div></div>
+        <div class="ps-item"><div class="ps-label">HR</div><div class="ps-value" th:text="${h.homeRuns ?: '—'}">14</div></div>
+        <div class="ps-item"><div class="ps-label">RBI</div><div class="ps-value" th:text="${h.rbi ?: '—'}">42</div></div>
+        <div class="ps-item"><div class="ps-label">R</div><div class="ps-value" th:text="${h.runs ?: '—'}">38</div></div>
+        <div class="ps-item"><div class="ps-label">SB</div><div class="ps-value" th:text="${h.stolenBases ?: '—'}">4</div></div>
+      </div>
+
+      <details class="stat-expander">
+        <summary>+ Advanced Stats</summary>
+        <div class="player-stats-grid">
+          <div class="ps-item"><div class="ps-label">BB%</div><div class="ps-value" th:text="${h.bbRate != null ? #numbers.formatDecimal(h.bbRate,1,1) + '%' : '—'}">10.2%</div></div>
+          <div class="ps-item"><div class="ps-label">K%</div><div class="ps-value" th:text="${h.kRate != null ? #numbers.formatDecimal(h.kRate,1,1) + '%' : '—'}">18.4%</div></div>
+          <div class="ps-item"><div class="ps-label">ISO</div><div class="ps-value" th:text="${h.iso != null ? #numbers.formatDecimal(h.iso,1,3) : '—'}">.236</div></div>
+          <div class="ps-item"><div class="ps-label">BABIP</div><div class="ps-value" th:text="${h.babip != null ? #numbers.formatDecimal(h.babip,1,3) : '—'}">.312</div></div>
+          <div class="ps-item"><div class="ps-label">Hard-Hit%</div><div class="ps-value" th:text="${h.hardHitRate != null ? #numbers.formatDecimal(h.hardHitRate,1,1) + '%' : '—'}">48.2%</div></div>
+          <div class="ps-item"><div class="ps-label">Barrel%</div><div class="ps-value" th:text="${h.barrelRate != null ? #numbers.formatDecimal(h.barrelRate,1,1) + '%' : '—'}">12.4%</div></div>
+          <div class="ps-item"><div class="ps-label">Avg EV</div><div class="ps-value" th:text="${h.avgExitVelocity != null ? #numbers.formatDecimal(h.avgExitVelocity,1,1) + ' mph' : '—'}">93.1 mph</div></div>
+          <div class="ps-item"><div class="ps-label">Launch Angle</div><div class="ps-value" th:text="${h.launchAngle != null ? #numbers.formatDecimal(h.launchAngle,1,1) + '°' : '—'}">14.2°</div></div>
+        </div>
+      </details>
+
+      <details class="stat-expander">
+        <summary>+ Fielding Stats</summary>
+        <div class="player-stats-grid">
+          <div class="ps-item"><div class="ps-label">OAA</div><div class="ps-value" th:text="${h.outsAboveAverage != null ? ((h.outsAboveAverage >= 0 ? '+' : '') + h.outsAboveAverage) : '—'}">-1</div></div>
+          <div class="ps-item"><div class="ps-label">Fld%</div><div class="ps-value" th:text="${h.fieldingPercentage != null ? #numbers.formatDecimal(h.fieldingPercentage,1,3) : '—'}">.962</div></div>
+        </div>
+      </details>
+
+      <details class="stat-expander">
+        <summary>+ What These Stats Mean</summary>
+        <div class="stat-explanation">
+          <p><strong>wRC+</strong> compares total offensive value to league average. 100 = average. 120 = 20% better than league average.</p>
+          <p><strong>WAR</strong> (Wins Above Replacement) estimates how many wins this player adds over a replacement-level player. 2+ is solid starter, 5+ is All-Star.</p>
+          <p><strong>ISO</strong> (Isolated Power) = SLG minus AVG. Measures raw power. .200+ is elite. .150 is average.</p>
+          <p><strong>Hard-Hit%</strong> is the percentage of batted balls hit at 95+ mph exit velocity. League average is ~38%.</p>
+          <p><strong>Barrel%</strong> is the percentage of balls hit with optimal EV + launch angle (think "squared up" contact). League average is ~7%.</p>
+          <p><strong>OAA</strong> (Outs Above Average) measures fielding range. Positive = better than average, negative = worse.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <!-- ===== STARTERS ===== -->
+  <div th:if="${tab == 'starters'}">
+    <div th:if="${#lists.isEmpty(starters)}" class="panel"><p>No starting pitcher data available.</p></div>
+
+    <div th:each="p : ${starters}" class="player-card">
+      <div class="player-card-header">
+        <div class="player-info">
+          <span class="player-number" th:text="${'#' + (p.player.jerseyNumber ?: '?')}">#47</span>
+          <span class="player-name" th:text="${p.player.fullName}">Garrett Crochet</span>
+          <span class="player-position">SP</span>
+          <span class="player-bats" th:text="${'Throws: ' + (p.player.throwsHand ?: '?')}">Throws: L</span>
+        </div>
+      </div>
+      <div class="player-stats-grid">
+        <div class="ps-item"><div class="ps-label">WAR est.</div><div class="ps-value" th:text="${p.war != null ? #numbers.formatDecimal(p.war,1,1) : '—'}">2.8</div></div>
+        <div class="ps-item"><div class="ps-label">ERA</div><div class="ps-value" th:text="${p.era != null ? #numbers.formatDecimal(p.era,1,2) : '—'}">3.18</div></div>
+        <div class="ps-item"><div class="ps-label">FIP</div><div class="ps-value" th:text="${p.fip != null ? #numbers.formatDecimal(p.fip,1,2) : '—'}">2.94</div></div>
+        <div class="ps-item"><div class="ps-label">WHIP</div><div class="ps-value" th:text="${p.whip != null ? #numbers.formatDecimal(p.whip,1,2) : '—'}">1.08</div></div>
+        <div class="ps-item"><div class="ps-label">K%</div><div class="ps-value" th:text="${p.kRate != null ? #numbers.formatDecimal(p.kRate,1,1) + '%' : '—'}">31.2%</div></div>
+        <div class="ps-item"><div class="ps-label">BB%</div><div class="ps-value" th:text="${p.bbRate != null ? #numbers.formatDecimal(p.bbRate,1,1) + '%' : '—'}">6.8%</div></div>
+        <div class="ps-item"><div class="ps-label">K-BB%</div><div class="ps-value" th:text="${p.kMinusBbRate != null ? #numbers.formatDecimal(p.kMinusBbRate,1,1) + '%' : '—'}">24.4%</div></div>
+        <div class="ps-item"><div class="ps-label">IP</div><div class="ps-value" th:text="${p.inningsPitched != null ? #numbers.formatDecimal(p.inningsPitched,1,1) : '—'}">72.1</div></div>
+        <div class="ps-item"><div class="ps-label">Opp OPS</div><div class="ps-value" th:text="${p.opponentOps != null ? #numbers.formatDecimal(p.opponentOps,1,3) : '—'}">.621</div></div>
+      </div>
+      <details class="stat-expander">
+        <summary>+ Advanced Pitching Stats</summary>
+        <div class="player-stats-grid">
+          <div class="ps-item"><div class="ps-label">xFIP</div><div class="ps-value" th:text="${p.xfip != null ? #numbers.formatDecimal(p.xfip,1,2) : '—'}">3.02</div></div>
+          <div class="ps-item"><div class="ps-label">HR/9</div><div class="ps-value" th:text="${p.hrPer9 != null ? #numbers.formatDecimal(p.hrPer9,1,2) : '—'}">0.87</div></div>
+          <div class="ps-item"><div class="ps-label">K/9</div><div class="ps-value" th:text="${p.kPer9 != null ? #numbers.formatDecimal(p.kPer9,1,1) : '—'}">11.2</div></div>
+          <div class="ps-item"><div class="ps-label">Whiff%</div><div class="ps-value" th:text="${p.whiffRate != null ? #numbers.formatDecimal(p.whiffRate,1,1) + '%' : '—'}">33.4%</div></div>
+          <div class="ps-item"><div class="ps-label">Chase%</div><div class="ps-value" th:text="${p.chaseRate != null ? #numbers.formatDecimal(p.chaseRate,1,1) + '%' : '—'}">31.8%</div></div>
+          <div class="ps-item"><div class="ps-label">Velocity</div><div class="ps-value" th:text="${p.avgFastballVelocity != null ? #numbers.formatDecimal(p.avgFastballVelocity,1,1) + ' mph' : '—'}">96.2 mph</div></div>
+          <div class="ps-item"><div class="ps-label">Hard-Hit%</div><div class="ps-value" th:text="${p.hardHitRateAllowed != null ? #numbers.formatDecimal(p.hardHitRateAllowed,1,1) + '%' : '—'}">32.1%</div></div>
+          <div class="ps-item"><div class="ps-label">Barrel%</div><div class="ps-value" th:text="${p.barrelRateAllowed != null ? #numbers.formatDecimal(p.barrelRateAllowed,1,1) + '%' : '—'}">5.2%</div></div>
+        </div>
+      </details>
+
+      <details class="stat-expander">
+        <summary>+ What These Stats Mean</summary>
+        <div class="stat-explanation">
+          <p><strong>FIP</strong> (Fielding Independent Pitching) measures what ERA should be based only on strikeouts, walks, and home runs. ERA can be affected by defense; FIP removes that noise.</p>
+          <p><strong>xFIP</strong> is like FIP but also normalizes home run rate. It's a better indicator of future performance.</p>
+          <p><strong>K-BB%</strong> is strikeout rate minus walk rate. Elite pitchers are 20%+. It's one of the best single indicators of pitching quality.</p>
+          <p><strong>Whiff%</strong> is the percentage of swings that miss. Higher = better for pitchers. 30%+ is elite.</p>
+          <p><strong>Hard-Hit%</strong> allowed: what percentage of balls put in play against this pitcher were hit 95+ mph. Lower is better for pitchers.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <!-- ===== BULLPEN ===== -->
+  <div th:if="${tab == 'bullpen'}">
+    <div th:if="${#lists.isEmpty(bullpen)}" class="panel"><p>No bullpen data available.</p></div>
+
+    <div th:each="p : ${bullpen}" class="player-card player-card-compact">
+      <div class="player-card-header">
+        <div class="player-info">
+          <span class="player-number" th:text="${'#' + (p.player.jerseyNumber ?: '?')}">#74</span>
+          <span class="player-name" th:text="${p.player.fullName}">Kenley Jansen</span>
+          <span class="player-position">RP</span>
+          <span class="player-bats" th:text="${'Throws: ' + (p.player.throwsHand ?: '?')}">Throws: R</span>
+        </div>
+      </div>
+      <div class="player-stats-grid">
+        <div class="ps-item"><div class="ps-label">WAR est.</div><div class="ps-value" th:text="${p.war != null ? #numbers.formatDecimal(p.war,1,1) : '—'}">0.8</div></div>
+        <div class="ps-item"><div class="ps-label">ERA</div><div class="ps-value" th:text="${p.era != null ? #numbers.formatDecimal(p.era,1,2) : '—'}">3.42</div></div>
+        <div class="ps-item"><div class="ps-label">FIP</div><div class="ps-value" th:text="${p.fip != null ? #numbers.formatDecimal(p.fip,1,2) : '—'}">3.18</div></div>
+        <div class="ps-item"><div class="ps-label">WHIP</div><div class="ps-value" th:text="${p.whip != null ? #numbers.formatDecimal(p.whip,1,2) : '—'}">1.12</div></div>
+        <div class="ps-item"><div class="ps-label">SV</div><div class="ps-value" th:text="${p.saves ?: 0}">12</div></div>
+        <div class="ps-item"><div class="ps-label">SVO</div><div class="ps-value" th:text="${p.saveOpportunities ?: 0}">12</div></div>
+        <div class="ps-item"><div class="ps-label">HLD</div><div class="ps-value" th:text="${p.holds ?: 0}">4</div></div>
+        <div class="ps-item"><div class="ps-label">BS</div><div class="ps-value" th:text="${p.blownSaves ?: 0}">0</div></div>
+        <div class="ps-item"><div class="ps-label">K%</div><div class="ps-value" th:text="${p.kRate != null ? #numbers.formatDecimal(p.kRate,1,1) + '%' : '—'}">28.4%</div></div>
+        <div class="ps-item"><div class="ps-label">BB%</div><div class="ps-value" th:text="${p.bbRate != null ? #numbers.formatDecimal(p.bbRate,1,1) + '%' : '—'}">8.1%</div></div>
+        <div class="ps-item"><div class="ps-label">IP</div><div class="ps-value" th:text="${p.inningsPitched != null ? #numbers.formatDecimal(p.inningsPitched,1,1) : '—'}">24.2</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

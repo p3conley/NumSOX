@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Matchup Center — NumSOX</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}"/>
+</head>
+<body>
+<nav class="topbar">
+  <a class="topbar-brand" th:href="@{/}"><img class="brand-logo" th:src="@{/images/numsox-logo-cropped.png}" alt="NumSOX logo"/><span class="brand-text">NumSOX</span></a>
+  <div class="topbar-links">
+    <a th:href="@{/}">Dashboard</a>
+    <a th:href="@{/matchup}" class="active">Matchup Center</a>
+    <a th:href="@{/games}">Games</a>
+    <a th:href="@{/team-stats}">Team Stats</a>
+    <a th:href="@{/players}">Players</a>
+    <a th:href="@{/ballpark}">Ballpark Factors</a>
+    <a th:href="@{/sync}">Sync</a>
+  </div>
+</nav>
+
+<div class="page-content">
+
+  <div th:if="${noGame}" class="panel">
+    <p>No games found. Add game data to get started.</p>
+  </div>
+
+  <div th:if="${game}">
+
+    <!-- Calendar game selector -->
+    <section class="matchup-calendar panel" aria-label="Matchup calendar">
+      <div class="calendar-toolbar">
+        <div>
+          <div class="selector-label">Select Game</div>
+          <h2 th:text="${calendarTitle}">June 2026</h2>
+        </div>
+        <div class="calendar-nav" aria-label="Calendar month navigation">
+          <a th:href="@{/matchup(month=${previousCalendarMonth})}" aria-label="Previous month">&lsaquo;</a>
+          <a th:href="@{/matchup(month=${currentCalendarMonth})}">Today</a>
+          <a th:href="@{/matchup(month=${nextCalendarMonth})}" aria-label="Next month">&rsaquo;</a>
+        </div>
+      </div>
+
+      <div class="calendar-weekdays" aria-hidden="true">
+        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+      </div>
+
+      <div class="calendar-grid">
+        <th:block th:each="week : ${calendarWeeks}">
+          <div th:each="day : ${week}"
+               class="calendar-day"
+               th:classappend="${(!day.currentMonth ? ' is-muted' : '') + (day.today ? ' is-today' : '') + (day.selected ? ' is-selected' : '')}">
+            <div class="calendar-date">
+              <span th:text="${day.dayNumber}">1</span>
+            </div>
+            <div class="calendar-games" th:if="${!day.games.isEmpty()}">
+              <a th:each="g : ${day.games}"
+                 class="calendar-game"
+                 th:href="@{/matchup(gameId=${g.id},month=${calendarMonth})}"
+                 th:classappend="${g.id == game.id ? ' active' : ''}">
+                <img class="calendar-team-logo" th:src="${@teamLogoService.logoForName(g.opponent)}" th:alt="${g.opponent + ' logo'}"/>
+                <span class="calendar-opponent">
+                  <span th:text="${g.homeAway == 'Home' ? 'vs' : '@'}">vs</span>
+                  <strong th:text="${g.opponent}">Yankees</strong>
+                </span>
+                <span class="calendar-status"
+                      th:text="${g.redSoxScore != null ? 'BOS ' + g.redSoxScore + ', ' + g.opponent + ' ' + g.opponentScore : g.status}">Scheduled</span>
+              </a>
+            </div>
+          </div>
+        </th:block>
+      </div>
+    </section>
+
+    <!-- Header -->
+    <div class="matchup-header">
+      <div class="matchup-team away-team">
+        <div class="team-type">AWAY</div>
+        <img class="matchup-team-logo" th:src="${@teamLogoService.logoForName(awayTeamName)}" th:alt="${awayTeamName + ' logo'}"/>
+        <div class="team-name" th:text="${awayTeamName}">Boston Red Sox</div>
+        <div class="team-record" th:text="${awayRecord}">28 - 24</div>
+        <div class="team-last10">Last 10: <span th:text="${awayLast10}">6-4</span></div>
+        <div class="team-starter">
+          Starter: <strong th:text="${awayStarterName}">To be announced</strong>
+          <span th:if="${awayStarterPredicted}" class="starter-source predicted">Predicted</span>
+          <span th:if="${awayStarterConfirmed}" class="starter-source confirmed">Confirmed</span>
+          <span class="starter-fip" th:if="${awayStarter != null and awayStarter.era != null}"
+                th:text="${'(' + #numbers.formatDecimal(awayStarter.era, 1, 2) + ' ERA)'}"></span>
+          <span class="starter-fip" th:if="${awayStarterConfirmed and awayStarter == null}">(stats unavailable)</span>
+        </div>
+      </div>
+
+      <div class="matchup-center-info">
+        <div class="matchup-vs">@</div>
+        <div class="matchup-scoreline" th:text="${scoreline}">No score yet</div>
+        <div class="matchup-date" th:text="${#temporals.format(game.gameDate, 'EEEE, MMMM d')}">Sunday, June 1</div>
+        <div class="matchup-venue" th:text="${game.venue}">Yankee Stadium</div>
+      </div>
+
+      <div class="matchup-team home-team">
+        <div class="team-type">HOME</div>
+        <img class="matchup-team-logo" th:src="${@teamLogoService.logoForName(homeTeamName)}" th:alt="${homeTeamName + ' logo'}"/>
+        <div class="team-name" th:text="${homeTeamName}">New York Yankees</div>
+        <div class="team-record" th:text="${homeRecord}">30 - 22</div>
+        <div class="team-last10">Last 10: <span th:text="${homeLast10}">7-3</span></div>
+        <div class="team-starter">
+          Starter: <strong th:text="${homeStarterName}">To be announced</strong>
+          <span th:if="${homeStarterPredicted}" class="starter-source predicted">Predicted</span>
+          <span th:if="${homeStarterConfirmed}" class="starter-source confirmed">Confirmed</span>
+          <span class="starter-fip" th:if="${homeStarter != null and homeStarter.era != null}"
+                th:text="${'(' + #numbers.formatDecimal(homeStarter.era, 1, 2) + ' ERA)'}"></span>
+          <span class="starter-fip" th:if="${homeStarterConfirmed and homeStarter == null}">(stats unavailable)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Win Probability -->
+    <div th:if="${winProb}" class="win-prob-section">
+      <div class="win-prob-title">NumSOX Estimated Win Probability</div>
+      <div class="win-prob-numbers">
+        <span class="prob-team" th:text="${awayTeamName}">Red Sox</span>
+        <span class="prob-pct away-pct" th:text="${winProb.awayWinPct + '%'}">47%</span>
+        <div class="prob-bar-wrap">
+          <div class="prob-bar" th:style="${'--away-pct: ' + winProb.awayWinPct + '%'}"></div>
+        </div>
+        <span class="prob-pct home-pct" th:text="${winProb.homeWinPct + '%'}">53%</span>
+        <span class="prob-team right-align" th:text="${homeTeamName}">Yankees</span>
+      </div>
+      <div class="win-prob-confidence">
+        Confidence: <span th:text="${winProb.confidenceLevel}">Medium</span>
+      </div>
+      <div th:if="${winProb.mainReasons != null and !winProb.mainReasons.isEmpty()}" class="main-reasons">
+        <div class="reasons-title">What moved the number</div>
+        <ol>
+          <li th:each="r : ${winProb.mainReasons}" th:text="${r}">Offense leans away.</li>
+        </ol>
+      </div>
+      <div class="win-prob-disclaimer">
+        <span th:text="${winProb.modelSummary}">Weighted model summary.</span>
+        It is not gambling advice and is not an official sportsbook line.
+      </div>
+    </div>
+
+    <div th:if="${winProb.historicalCalibration}" class="panel calibration-panel">
+      <div class="panel-title">Model Audit: March 26-May 31 Backtest</div>
+      <div class="calibration-grid">
+        <div>
+          <div class="stat-label">Backtest Accuracy</div>
+          <div class="stat-value small-value">
+            <span th:text="${winProb.historicalCalibration.correctPredictions}">0</span>-<span th:text="${winProb.historicalCalibration.sampleSize - winProb.historicalCalibration.correctPredictions}">0</span>
+          </div>
+          <div class="stat-sub" th:text="${#numbers.formatDecimal(winProb.historicalCalibration.accuracy * 100, 1, 1) + '% directional'}">55.0% directional</div>
+        </div>
+        <div>
+          <div class="stat-label">Brier Score</div>
+          <div class="stat-value small-value" th:text="${#numbers.formatDecimal(winProb.historicalCalibration.brierScore, 1, 3)}">0.250</div>
+          <div class="stat-sub">Lower is better</div>
+        </div>
+        <div>
+          <div class="stat-label">Raw Red Sox</div>
+          <div class="stat-value small-value" th:text="${winProb.historicalCalibration.rawRedSoxPct + '%'}">50%</div>
+          <div class="stat-sub">Before calibration</div>
+        </div>
+        <div>
+          <div class="stat-label">Calibrated Red Sox</div>
+          <div class="stat-value small-value" th:text="${winProb.historicalCalibration.calibratedRedSoxPct + '%'}">50%</div>
+          <div class="stat-sub" th:text="${(winProb.historicalCalibration.adjustmentPoints >= 0 ? '+' : '') + winProb.historicalCalibration.adjustmentPoints + ' pts'}">+0 pts</div>
+        </div>
+      </div>
+      <details class="stat-expander">
+        <summary>+ Why the calibration moved</summary>
+        <div class="stat-explanation">
+          <p th:each="note : ${winProb.historicalCalibration.notes}" th:text="${note}">Calibration note.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- Strengths & Weaknesses -->
+    <div class="sw-grid">
+      <div class="sw-col">
+        <div class="sw-header away-header" th:text="${awayTeamName + ' Strengths'}">Away Strengths</div>
+        <ul class="strength-list">
+          <li th:each="s : ${winProb.awayStrengths}" th:text="${s}">Strength</li>
+        </ul>
+        <div class="sw-header weakness-header">Weaknesses</div>
+        <ul class="weakness-list">
+          <li th:each="w : ${winProb.awayWeaknesses}" th:text="${w}">Weakness</li>
+        </ul>
+      </div>
+      <div class="sw-col">
+        <div class="sw-header home-header" th:text="${homeTeamName + ' Strengths'}">Home Strengths</div>
+        <ul class="strength-list">
+          <li th:each="s : ${winProb.homeStrengths}" th:text="${s}">Strength</li>
+        </ul>
+        <div class="sw-header weakness-header">Weaknesses</div>
+        <ul class="weakness-list">
+          <li th:each="w : ${winProb.homeWeaknesses}" th:text="${w}">Weakness</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Category Comparison Table -->
+    <div th:if="${winProb.categories}" class="panel">
+      <div class="panel-title">Category Comparison</div>
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th th:text="${awayTeamName}">Away</th>
+            <th>Category</th>
+            <th th:text="${homeTeamName}">Home</th>
+            <th>Edge</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="cat : ${winProb.categories}"
+              th:classappend="${cat.awayEdge ? 'edge-away' : (cat.homeEdge ? 'edge-home' : 'edge-even')}">
+            <td class="cat-away" th:text="${cat.awayValue}">106 wRC+</td>
+            <td class="cat-name" th:text="${cat.category}">Offense</td>
+            <td class="cat-home" th:text="${cat.homeValue}">112 wRC+</td>
+            <td class="cat-edge">
+              <span th:if="${cat.awayEdge}" class="edge-badge edge-badge-away">Away</span>
+              <span th:if="${cat.homeEdge}" class="edge-badge edge-badge-home">Home</span>
+              <span th:if="${cat.even}" class="edge-badge edge-badge-even">Even</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Quick Stats Side by Side -->
+    <div class="two-col-stats">
+      <div class="stats-col" th:if="${awayStats}">
+        <div class="stats-col-header away-header" th:text="${awayTeamName + ' — Quick Stats'}">Away Quick Stats</div>
+        <div class="stat-row"><span class="sr-label">Record</span><span class="sr-value" th:text="${awayStats.record}">28-24</span></div>
+        <div class="stat-row"><span class="sr-label">Run Diff</span><span class="sr-value" th:text="${awayStats.runDifferential != null ? (awayStats.runDifferential > 0 ? '+' : '') + awayStats.runDifferential : 'N/A'}">+22</span></div>
+        <div class="stat-row"><span class="sr-label">Runs/Game</span><span class="sr-value" th:text="${awayStats.runsPerGame != null ? #numbers.formatDecimal(awayStats.runsPerGame,1,2) : 'N/A'}">4.84</span></div>
+        <div class="stat-row"><span class="sr-label">Team OPS</span><span class="sr-value" th:text="${awayStats.teamOps != null ? #numbers.formatDecimal(awayStats.teamOps,1,3) : 'N/A'}">.751</span></div>
+        <div class="stat-row"><span class="sr-label">Team ERA</span><span class="sr-value" th:text="${awayStats.teamEra != null ? #numbers.formatDecimal(awayStats.teamEra,1,2) : 'N/A'}">3.89</span></div>
+        <div class="stat-row"><span class="sr-label">Bullpen ERA</span><span class="sr-value" th:text="${awayStats.bullpenEra != null ? #numbers.formatDecimal(awayStats.bullpenEra,1,2) : 'N/A'}">3.55</span></div>
+        <div class="stat-row"><span class="sr-label">Def. Efficiency</span><span class="sr-value" th:text="${awayStats.defensiveEfficiency != null ? #numbers.formatDecimal(awayStats.defensiveEfficiency,1,3) : 'N/A'}">.702</span></div>
+
+        <details class="stat-expander">
+          <summary>+ Advanced Stats</summary>
+          <div class="stat-row"><span class="sr-label">wRC+</span><span class="sr-value" th:text="${awayStats.teamWrcPlus != null ? #numbers.formatDecimal(awayStats.teamWrcPlus,1,0) : 'N/A'}">108</span></div>
+          <div class="stat-row"><span class="sr-label">Team OBP</span><span class="sr-value" th:text="${awayStats.teamObp != null ? #numbers.formatDecimal(awayStats.teamObp,1,3) : 'N/A'}">.328</span></div>
+          <div class="stat-row"><span class="sr-label">Team SLG</span><span class="sr-value" th:text="${awayStats.teamSlg != null ? #numbers.formatDecimal(awayStats.teamSlg,1,3) : 'N/A'}">.423</span></div>
+          <div class="stat-row"><span class="sr-label">K%</span><span class="sr-value" th:text="${awayStats.teamKRate != null ? #numbers.formatDecimal(awayStats.teamKRate,1,1) + '%' : 'N/A'}">23.1%</span></div>
+          <div class="stat-row"><span class="sr-label">BB%</span><span class="sr-value" th:text="${awayStats.teamBbRate != null ? #numbers.formatDecimal(awayStats.teamBbRate,1,1) + '%' : 'N/A'}">8.8%</span></div>
+          <div class="stat-row"><span class="sr-label">Team FIP</span><span class="sr-value" th:text="${awayStats.teamFip != null ? #numbers.formatDecimal(awayStats.teamFip,1,2) : 'N/A'}">3.74</span></div>
+          <div class="stat-row"><span class="sr-label">OAA</span><span class="sr-value" th:text="${awayStats.outsAboveAverage != null ? ((awayStats.outsAboveAverage > 0 ? '+' : '') + awayStats.outsAboveAverage) : 'N/A'}">+2</span></div>
+        </details>
+      </div>
+
+      <div class="stats-col" th:if="${homeStats}">
+        <div class="stats-col-header home-header" th:text="${homeTeamName + ' — Quick Stats'}">Home Quick Stats</div>
+        <div class="stat-row"><span class="sr-label">Record</span><span class="sr-value" th:text="${homeStats.record}">30-22</span></div>
+        <div class="stat-row"><span class="sr-label">Run Diff</span><span class="sr-value" th:text="${homeStats.runDifferential != null ? (homeStats.runDifferential > 0 ? '+' : '') + homeStats.runDifferential : 'N/A'}">+31</span></div>
+        <div class="stat-row"><span class="sr-label">Runs/Game</span><span class="sr-value" th:text="${homeStats.runsPerGame != null ? #numbers.formatDecimal(homeStats.runsPerGame,1,2) : 'N/A'}">5.12</span></div>
+        <div class="stat-row"><span class="sr-label">Team OPS</span><span class="sr-value" th:text="${homeStats.teamOps != null ? #numbers.formatDecimal(homeStats.teamOps,1,3) : 'N/A'}">.775</span></div>
+        <div class="stat-row"><span class="sr-label">Team ERA</span><span class="sr-value" th:text="${homeStats.teamEra != null ? #numbers.formatDecimal(homeStats.teamEra,1,2) : 'N/A'}">3.65</span></div>
+        <div class="stat-row"><span class="sr-label">Bullpen ERA</span><span class="sr-value" th:text="${homeStats.bullpenEra != null ? #numbers.formatDecimal(homeStats.bullpenEra,1,2) : 'N/A'}">3.82</span></div>
+        <div class="stat-row"><span class="sr-label">Def. Efficiency</span><span class="sr-value" th:text="${homeStats.defensiveEfficiency != null ? #numbers.formatDecimal(homeStats.defensiveEfficiency,1,3) : 'N/A'}">.709</span></div>
+
+        <details class="stat-expander">
+          <summary>+ Advanced Stats</summary>
+          <div class="stat-row"><span class="sr-label">wRC+</span><span class="sr-value" th:text="${homeStats.teamWrcPlus != null ? #numbers.formatDecimal(homeStats.teamWrcPlus,1,0) : 'N/A'}">114</span></div>
+          <div class="stat-row"><span class="sr-label">Team OBP</span><span class="sr-value" th:text="${homeStats.teamObp != null ? #numbers.formatDecimal(homeStats.teamObp,1,3) : 'N/A'}">.338</span></div>
+          <div class="stat-row"><span class="sr-label">Team SLG</span><span class="sr-value" th:text="${homeStats.teamSlg != null ? #numbers.formatDecimal(homeStats.teamSlg,1,3) : 'N/A'}">.437</span></div>
+          <div class="stat-row"><span class="sr-label">K%</span><span class="sr-value" th:text="${homeStats.teamKRate != null ? #numbers.formatDecimal(homeStats.teamKRate,1,1) + '%' : 'N/A'}">21.8%</span></div>
+          <div class="stat-row"><span class="sr-label">BB%</span><span class="sr-value" th:text="${homeStats.teamBbRate != null ? #numbers.formatDecimal(homeStats.teamBbRate,1,1) + '%' : 'N/A'}">9.2%</span></div>
+          <div class="stat-row"><span class="sr-label">Team FIP</span><span class="sr-value" th:text="${homeStats.teamFip != null ? #numbers.formatDecimal(homeStats.teamFip,1,2) : 'N/A'}">3.58</span></div>
+          <div class="stat-row"><span class="sr-label">OAA</span><span class="sr-value" th:text="${homeStats.outsAboveAverage != null ? ((homeStats.outsAboveAverage > 0 ? '+' : '') + homeStats.outsAboveAverage) : 'N/A'}">+8</span></div>
+        </details>
+      </div>
+    </div>
+
+    <!-- Pitcher Matchup -->
+    <div class="two-col-stats">
+      <div class="stats-col">
+        <div class="stats-col-header away-header">Away Starter</div>
+        <div class="pitcher-name">
+          <span th:text="${awayStarterName}">To be announced</span>
+          <span th:if="${awayStarterPredicted}" class="predicted-box">Predicted</span>
+        </div>
+        <div th:if="${awayStarterPredicted}" class="prediction-note" th:text="${awayStarterNote}">Predicted from recent rotation order.</div>
+        <div th:if="${awayStarter == null}" class="stat-explanation">
+          <p th:text="${awayStarterNote}">Probable starter has not been announced yet.</p>
+        </div>
+        <div th:if="${awayStarter != null}">
+        <div class="stat-row"><span class="sr-label">ERA</span><span class="sr-value" th:text="${awayStarter.era != null ? #numbers.formatDecimal(awayStarter.era,1,2) : 'N/A'}">3.85</span></div>
+        <div class="stat-row"><span class="sr-label">FIP</span><span class="sr-value" th:text="${awayStarter.fip != null ? #numbers.formatDecimal(awayStarter.fip,1,2) : 'N/A'}">3.72</span></div>
+        <div class="stat-row"><span class="sr-label">WHIP</span><span class="sr-value" th:text="${awayStarter.whip != null ? #numbers.formatDecimal(awayStarter.whip,1,2) : 'N/A'}">1.22</span></div>
+        <div class="stat-row"><span class="sr-label">K%</span><span class="sr-value" th:text="${awayStarter.kRate != null ? #numbers.formatDecimal(awayStarter.kRate,1,1) + '%' : 'N/A'}">24.1%</span></div>
+        <div class="stat-row"><span class="sr-label">K-BB%</span><span class="sr-value" th:text="${awayStarter.kMinusBbRate != null ? #numbers.formatDecimal(awayStarter.kMinusBbRate,1,1) + '%' : 'N/A'}">16.3%</span></div>
+        <details class="stat-expander">
+          <summary>+ Advanced Pitching Stats</summary>
+          <div class="stat-row"><span class="sr-label">xFIP</span><span class="sr-value" th:text="${awayStarter.xfip != null ? #numbers.formatDecimal(awayStarter.xfip,1,2) : 'N/A'}">3.85</span></div>
+          <div class="stat-row"><span class="sr-label">HR/9</span><span class="sr-value" th:text="${awayStarter.hrPer9 != null ? #numbers.formatDecimal(awayStarter.hrPer9,1,2) : 'N/A'}">1.18</span></div>
+          <div class="stat-row"><span class="sr-label">Whiff%</span><span class="sr-value" th:text="${awayStarter.whiffRate != null ? #numbers.formatDecimal(awayStarter.whiffRate,1,1) + '%' : 'N/A'}">27.4%</span></div>
+          <div class="stat-row"><span class="sr-label">Hard-Hit%</span><span class="sr-value" th:text="${awayStarter.hardHitRateAllowed != null ? #numbers.formatDecimal(awayStarter.hardHitRateAllowed,1,1) + '%' : 'N/A'}">36.2%</span></div>
+          <div class="stat-row"><span class="sr-label">Barrel%</span><span class="sr-value" th:text="${awayStarter.barrelRateAllowed != null ? #numbers.formatDecimal(awayStarter.barrelRateAllowed,1,1) + '%' : 'N/A'}">7.1%</span></div>
+          <div class="stat-row"><span class="sr-label">Velocity</span><span class="sr-value" th:text="${awayStarter.avgFastballVelocity != null ? #numbers.formatDecimal(awayStarter.avgFastballVelocity,1,1) + ' mph' : 'N/A'}">95.2 mph</span></div>
+        </details>
+        </div>
+      </div>
+
+      <div class="stats-col">
+        <div class="stats-col-header home-header">Home Starter</div>
+        <div class="pitcher-name">
+          <span th:text="${homeStarterName}">To be announced</span>
+          <span th:if="${homeStarterPredicted}" class="predicted-box">Predicted</span>
+        </div>
+        <div th:if="${homeStarterPredicted}" class="prediction-note" th:text="${homeStarterNote}">Predicted from recent rotation order.</div>
+        <div th:if="${homeStarter == null}" class="stat-explanation">
+          <p th:text="${homeStarterNote}">Probable starter has not been announced yet.</p>
+        </div>
+        <div th:if="${homeStarter != null}">
+        <div class="stat-row"><span class="sr-label">ERA</span><span class="sr-value" th:text="${homeStarter.era != null ? #numbers.formatDecimal(homeStarter.era,1,2) : 'N/A'}">3.24</span></div>
+        <div class="stat-row"><span class="sr-label">FIP</span><span class="sr-value" th:text="${homeStarter.fip != null ? #numbers.formatDecimal(homeStarter.fip,1,2) : 'N/A'}">3.01</span></div>
+        <div class="stat-row"><span class="sr-label">WHIP</span><span class="sr-value" th:text="${homeStarter.whip != null ? #numbers.formatDecimal(homeStarter.whip,1,2) : 'N/A'}">1.12</span></div>
+        <div class="stat-row"><span class="sr-label">K%</span><span class="sr-value" th:text="${homeStarter.kRate != null ? #numbers.formatDecimal(homeStarter.kRate,1,1) + '%' : 'N/A'}">28.4%</span></div>
+        <div class="stat-row"><span class="sr-label">K-BB%</span><span class="sr-value" th:text="${homeStarter.kMinusBbRate != null ? #numbers.formatDecimal(homeStarter.kMinusBbRate,1,1) + '%' : 'N/A'}">21.6%</span></div>
+        <details class="stat-expander">
+          <summary>+ Advanced Pitching Stats</summary>
+          <div class="stat-row"><span class="sr-label">xFIP</span><span class="sr-value" th:text="${homeStarter.xfip != null ? #numbers.formatDecimal(homeStarter.xfip,1,2) : 'N/A'}">3.12</span></div>
+          <div class="stat-row"><span class="sr-label">HR/9</span><span class="sr-value" th:text="${homeStarter.hrPer9 != null ? #numbers.formatDecimal(homeStarter.hrPer9,1,2) : 'N/A'}">0.98</span></div>
+          <div class="stat-row"><span class="sr-label">Whiff%</span><span class="sr-value" th:text="${homeStarter.whiffRate != null ? #numbers.formatDecimal(homeStarter.whiffRate,1,1) + '%' : 'N/A'}">31.2%</span></div>
+          <div class="stat-row"><span class="sr-label">Hard-Hit%</span><span class="sr-value" th:text="${homeStarter.hardHitRateAllowed != null ? #numbers.formatDecimal(homeStarter.hardHitRateAllowed,1,1) + '%' : 'N/A'}">33.1%</span></div>
+          <div class="stat-row"><span class="sr-label">Barrel%</span><span class="sr-value" th:text="${homeStarter.barrelRateAllowed != null ? #numbers.formatDecimal(homeStarter.barrelRateAllowed,1,1) + '%' : 'N/A'}">5.8%</span></div>
+          <div class="stat-row"><span class="sr-label">Velocity</span><span class="sr-value" th:text="${homeStarter.avgFastballVelocity != null ? #numbers.formatDecimal(homeStarter.avgFastballVelocity,1,1) + ' mph' : 'N/A'}">97.3 mph</span></div>
+        </details>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ballpark Factors -->
+    <div th:if="${park}" class="panel ballpark-panel">
+      <div class="panel-title">&#9913; Ballpark: <span th:text="${park.venueName}">Yankee Stadium</span></div>
+      <div class="ballpark-summary" th:text="${winProb.ballparkNarrative}">Narrative here.</div>
+      <div th:if="${winProb.parkHighlights != null}" class="park-highlight-list">
+        <div th:each="h : ${winProb.parkHighlights}" th:text="${h}">Park insight</div>
+      </div>
+      <div class="park-factors-quick">
+        <div class="pf-block">
+          <div class="pf-val" th:text="${park.homeRunParkFactor}">112</div>
+          <div class="pf-lbl">HR</div>
+        </div>
+        <div class="pf-block">
+          <div class="pf-val" th:text="${park.runParkFactor}">104</div>
+          <div class="pf-lbl">Runs</div>
+        </div>
+        <div class="pf-block">
+          <div class="pf-val" th:text="${park.doubleParkFactor}">94</div>
+          <div class="pf-lbl">Doubles</div>
+        </div>
+        <div class="pf-block">
+          <div class="pf-val" th:text="${park.lhbParkFactor}">108</div>
+          <div class="pf-lbl">LHB</div>
+        </div>
+        <div class="pf-block">
+          <div class="pf-val" th:text="${park.rhbParkFactor}">98</div>
+          <div class="pf-lbl">RHB</div>
+        </div>
+        <div class="pf-block">
+          <div class="pf-val" th:text="${park.lfHomeRunFactor ?: '—'}">118</div>
+          <div class="pf-lbl">LF HR</div>
+        </div>
+        <div class="pf-block">
+          <div class="pf-val" th:text="${park.rfHomeRunFactor ?: '—'}">96</div>
+          <div class="pf-lbl">RF HR</div>
+        </div>
+      </div>
+      <details class="stat-expander">
+        <summary>+ Show All Ballpark Factors</summary>
+        <div class="stat-row"><span class="sr-label">Overall Park Factor</span><span class="sr-value" th:text="${park.parkFactor}">103</span></div>
+        <div class="stat-row"><span class="sr-label">Run Park Factor</span><span class="sr-value" th:text="${park.runParkFactor}">104</span></div>
+        <div class="stat-row"><span class="sr-label">HR Park Factor</span><span class="sr-value" th:text="${park.homeRunParkFactor}">112</span></div>
+        <div class="stat-row"><span class="sr-label">Hit Park Factor</span><span class="sr-value" th:text="${park.hitParkFactor}">101</span></div>
+        <div class="stat-row"><span class="sr-label">Double Park Factor</span><span class="sr-value" th:text="${park.doubleParkFactor}">94</span></div>
+        <div class="stat-row"><span class="sr-label">Triple Park Factor</span><span class="sr-value" th:text="${park.tripleParkFactor}">78</span></div>
+        <div class="stat-row"><span class="sr-label">LHB Park Factor</span><span class="sr-value" th:text="${park.lhbParkFactor}">108</span></div>
+        <div class="stat-row"><span class="sr-label">RHB Park Factor</span><span class="sr-value" th:text="${park.rhbParkFactor}">98</span></div>
+        <div class="stat-row"><span class="sr-label">Strikeout Factor</span><span class="sr-value" th:text="${park.strikeoutParkFactor}">99</span></div>
+        <div class="stat-row"><span class="sr-label">Walk Factor</span><span class="sr-value" th:text="${park.walkParkFactor}">101</span></div>
+      </details>
+      <div class="park-legend">100 = league average. Above 100 = favors offense for that stat.</div>
+    </div>
+
+  </div><!-- end th:if game -->
+</div>
+</body>
+</html>

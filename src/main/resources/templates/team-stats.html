@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Team Stats — NumSOX</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}"/>
+</head>
+<body>
+<nav class="topbar">
+  <a class="topbar-brand" th:href="@{/}"><img class="brand-logo" th:src="@{/images/numsox-logo-cropped.png}" alt="NumSOX logo"/><span class="brand-text">NumSOX</span></a>
+  <div class="topbar-links">
+    <a th:href="@{/}">Dashboard</a>
+    <a th:href="@{/matchup}">Matchup Center</a>
+    <a th:href="@{/games}">Games</a>
+    <a th:href="@{/team-stats}" class="active">Team Stats</a>
+    <a th:href="@{/players}">Players</a>
+    <a th:href="@{/ballpark}">Ballpark Factors</a>
+    <a th:href="@{/sync}">Sync</a>
+  </div>
+</nav>
+
+<div class="page-content">
+
+  <!-- Team Selector -->
+  <div class="game-selector panel">
+    <span class="selector-label">Team:</span>
+    <div class="selector-links">
+      <a th:each="t : ${allTeams}"
+         th:href="@{/team-stats(teamCode=${t.teamCode})}"
+         th:classappend="${t.teamCode == selectedCode ? ' selector-active' : ''}">
+         <img class="selector-team-logo" th:src="${@teamLogoService.logoForName(t.teamName)}" th:alt="${t.shortName + ' logo'}"/>
+         <span th:text="${t.shortName}">Red Sox</span>
+      </a>
+    </div>
+  </div>
+
+  <div th:if="${team}">
+    <div class="hero-card">
+      <div class="hero-label" th:text="${team.league + ' ' + team.division}">AL East</div>
+      <div class="team-stats-title">
+        <img class="team-stats-logo" th:src="${@teamLogoService.logoForName(team.teamName)}" th:alt="${team.teamName + ' logo'}"/>
+        <h1 th:text="${team.teamName}">Boston Red Sox</h1>
+      </div>
+      <div th:if="${stats}" class="hero-record">
+        <span th:text="${stats.record}">28-24</span>
+        <span class="sep">·</span>
+        <span th:text="${team.homeVenue}">Fenway Park</span>
+        <span class="sep">·</span>
+        <span>Last 10: <strong th:text="${stats.last10Record}">6-4</strong></span>
+        <span class="sep">·</span>
+        <span>Streak: <strong th:text="${stats.currentStreak ?: '—'}">W2</strong></span>
+      </div>
+    </div>
+
+    <div th:if="${stats == null}" class="panel">
+      <p>No stats available for this team. Import data via the <a th:href="@{/sync}">Sync page</a>.</p>
+    </div>
+
+    <div th:if="${stats}">
+      <!-- Quick View -->
+      <div class="section-header">Team Quick View</div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Record</div><div class="stat-value" th:text="${stats.record}">28-24</div></div>
+        <div class="stat-card"><div class="stat-label">Run Diff</div><div class="stat-value" th:text="${stats.runDifferential != null ? (stats.runDifferential > 0 ? '+' : '') + stats.runDifferential : 'N/A'}">+22</div></div>
+        <div class="stat-card"><div class="stat-label">Runs/Game</div><div class="stat-value" th:text="${stats.runsPerGame != null ? #numbers.formatDecimal(stats.runsPerGame,1,2) : 'N/A'}">4.84</div></div>
+        <div class="stat-card"><div class="stat-label">Team OPS</div><div class="stat-value" th:text="${stats.teamOps != null ? #numbers.formatDecimal(stats.teamOps,1,3) : 'N/A'}">.751</div></div>
+        <div class="stat-card"><div class="stat-label">Team ERA</div><div class="stat-value" th:text="${stats.teamEra != null ? #numbers.formatDecimal(stats.teamEra,1,2) : 'N/A'}">3.89</div></div>
+        <div class="stat-card"><div class="stat-label">Bullpen ERA</div><div class="stat-value" th:text="${stats.bullpenEra != null ? #numbers.formatDecimal(stats.bullpenEra,1,2) : 'N/A'}">3.55</div></div>
+        <div class="stat-card"><div class="stat-label">Def. Eff.</div><div class="stat-value" th:text="${stats.defensiveEfficiency != null ? #numbers.formatDecimal(stats.defensiveEfficiency,1,3) : 'N/A'}">.702</div></div>
+        <div class="stat-card"><div class="stat-label">Runs Scored</div><div class="stat-value" th:text="${stats.runsScored}">252</div></div>
+        <div class="stat-card"><div class="stat-label">Runs Allowed</div><div class="stat-value" th:text="${stats.runsAllowed}">230</div></div>
+      </div>
+
+      <!-- Advanced -->
+      <details class="section-expander">
+        <summary class="section-expander-label">+ Show Advanced Team Stats</summary>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">wRC+</div><div class="stat-value" th:text="${stats.teamWrcPlus != null ? #numbers.formatDecimal(stats.teamWrcPlus,1,0) : 'N/A'}">108</div><div class="stat-sub">100 = avg</div></div>
+          <div class="stat-card"><div class="stat-label">Team OBP</div><div class="stat-value" th:text="${stats.teamObp != null ? #numbers.formatDecimal(stats.teamObp,1,3) : 'N/A'}">.328</div></div>
+          <div class="stat-card"><div class="stat-label">Team SLG</div><div class="stat-value" th:text="${stats.teamSlg != null ? #numbers.formatDecimal(stats.teamSlg,1,3) : 'N/A'}">.423</div></div>
+          <div class="stat-card"><div class="stat-label">Team WAR</div><div class="stat-value" th:text="${stats.teamWar != null ? #numbers.formatDecimal(stats.teamWar,1,1) : 'N/A'}">18.4</div></div>
+          <div class="stat-card"><div class="stat-label">Team FIP</div><div class="stat-value" th:text="${stats.teamFip != null ? #numbers.formatDecimal(stats.teamFip,1,2) : 'N/A'}">3.74</div></div>
+          <div class="stat-card"><div class="stat-label">Team WHIP</div><div class="stat-value" th:text="${stats.teamWhip != null ? #numbers.formatDecimal(stats.teamWhip,1,2) : 'N/A'}">1.28</div></div>
+          <div class="stat-card"><div class="stat-label">K%</div><div class="stat-value" th:text="${stats.teamKRate != null ? #numbers.formatDecimal(stats.teamKRate,1,1) + '%' : 'N/A'}">23.1%</div></div>
+          <div class="stat-card"><div class="stat-label">BB%</div><div class="stat-value" th:text="${stats.teamBbRate != null ? #numbers.formatDecimal(stats.teamBbRate,1,1) + '%' : 'N/A'}">8.8%</div></div>
+          <div class="stat-card"><div class="stat-label">HR Allowed</div><div class="stat-value" th:text="${stats.homeRunsAllowed}">68</div></div>
+          <div class="stat-card"><div class="stat-label">Bullpen FIP</div><div class="stat-value" th:text="${stats.bullpenFip != null ? #numbers.formatDecimal(stats.bullpenFip,1,2) : 'N/A'}">3.68</div></div>
+          <div class="stat-card"><div class="stat-label">OAA</div><div class="stat-value" th:text="${stats.outsAboveAverage != null ? ((stats.outsAboveAverage > 0 ? '+' : '') + stats.outsAboveAverage) : 'N/A'}">+2</div></div>
+        </div>
+      </details>
+
+      <!-- Recent Form -->
+      <div class="section-header">Recent Form</div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Last 10</div><div class="stat-value" th:text="${stats.last10Record}">6-4</div></div>
+        <div class="stat-card"><div class="stat-label">L5 Run Diff</div><div class="stat-value" th:text="${stats.last5RunDifferential != null ? ((stats.last5RunDifferential > 0 ? '+' : '') + stats.last5RunDifferential) : 'N/A'}">+8</div></div>
+        <div class="stat-card"><div class="stat-label">L5 R Scored</div><div class="stat-value" th:text="${stats.last5RunsScored}">26</div></div>
+        <div class="stat-card"><div class="stat-label">L5 R Allowed</div><div class="stat-value" th:text="${stats.last5RunsAllowed}">18</div></div>
+        <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" th:text="${stats.currentStreak ?: '—'}">W2</div></div>
+      </div>
+
+      <div class="data-freshness">
+        Source: <span th:text="${stats.sourceName ?: 'Manual'}">FanGraphs</span>
+        · Last updated: <span th:text="${stats.sourceLastUpdated ?: 'Unknown'}">2026-05-31</span>
+        · <a th:href="@{/sync}">Refresh</a>
+      </div>
+    </div>
+  </div>
+
+  <div th:unless="${team}" class="panel">
+    <p>Team not found. Check your data or <a th:href="@{/sync}">sync data</a>.</p>
+  </div>
+
+</div>
+</body>
+</html>

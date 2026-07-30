@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Ballpark Factors — NumSOX</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}"/>
+</head>
+<body>
+<nav class="topbar">
+  <a class="topbar-brand" th:href="@{/}"><img class="brand-logo" th:src="@{/images/numsox-logo-cropped.png}" alt="NumSOX logo"/><span class="brand-text">NumSOX</span></a>
+  <div class="topbar-links">
+    <a th:href="@{/}">Dashboard</a>
+    <a th:href="@{/matchup}">Matchup Center</a>
+    <a th:href="@{/games}">Games</a>
+    <a th:href="@{/team-stats}">Team Stats</a>
+    <a th:href="@{/players}">Players</a>
+    <a th:href="@{/ballpark}" class="active">Ballpark Factors</a>
+    <a th:href="@{/sync}">Sync</a>
+  </div>
+</nav>
+
+<div class="page-content">
+
+  <div class="hero-card">
+    <div class="hero-label">PARK ANALYSIS</div>
+    <h1>Ballpark Factors</h1>
+    <p class="hero-desc">
+      Some ballparks increase offense. Some suppress it. Park factors use <strong>100 as league average</strong>.
+      A score of 110 means 10% more of that event happens at that park compared to a neutral site.
+      Below 100 means the park suppresses that outcome.
+    </p>
+  </div>
+
+  <!-- Fenway featured -->
+  <div th:if="${fenway}" class="hero-card fenway-card">
+    <div class="hero-label">HOME PARK</div>
+    <h2 th:text="${fenway.venueName}">Fenway Park</h2>
+    <div class="ballpark-meta">
+      <span th:text="${fenway.city}">Boston, MA</span>
+      <span th:if="${fenway.capacity}" th:text="${' · Capacity: ' + #numbers.formatInteger(fenway.capacity, 1, 'COMMA')}"> · Capacity: 37,755</span>
+      <span th:if="${fenway.surface}" th:text="${' · ' + fenway.surface}"> · Grass</span>
+    </div>
+    <div th:if="${fenway.notableFeatures}" class="notable-features" th:text="${fenway.notableFeatures}">The Green Monster in left field...</div>
+    <div class="park-factors-quick">
+      <div class="pf-block">
+        <div class="pf-val" th:text="${fenway.parkFactor}">104</div>
+        <div class="pf-lbl">Overall</div>
+      </div>
+      <div class="pf-block">
+        <div class="pf-val" th:text="${fenway.runParkFactor}">106</div>
+        <div class="pf-lbl">Runs</div>
+      </div>
+      <div class="pf-block">
+        <div class="pf-val" th:text="${fenway.homeRunParkFactor}">97</div>
+        <div class="pf-lbl">HR</div>
+      </div>
+      <div class="pf-block">
+        <div class="pf-val" th:text="${fenway.doubleParkFactor}">128</div>
+        <div class="pf-lbl">Doubles</div>
+      </div>
+      <div class="pf-block">
+        <div class="pf-val" th:text="${fenway.tripleParkFactor}">88</div>
+        <div class="pf-lbl">Triples</div>
+      </div>
+      <div class="pf-block">
+        <div class="pf-val" th:text="${fenway.lhbParkFactor}">101</div>
+        <div class="pf-lbl">LHB</div>
+      </div>
+      <div class="pf-block">
+        <div class="pf-val" th:text="${fenway.rhbParkFactor}">107</div>
+        <div class="pf-lbl">RHB</div>
+      </div>
+    </div>
+    <details class="stat-expander">
+      <summary>+ Show Advanced Park Factors</summary>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Single Factor</div><div class="stat-value" th:text="${fenway.singleParkFactor ?: 'N/A'}">102</div></div>
+        <div class="stat-card"><div class="stat-label">Walk Factor</div><div class="stat-value" th:text="${fenway.walkParkFactor ?: 'N/A'}">98</div></div>
+        <div class="stat-card"><div class="stat-label">Strikeout Factor</div><div class="stat-value" th:text="${fenway.strikeoutParkFactor ?: 'N/A'}">97</div></div>
+        <div class="stat-card"><div class="stat-label">BABIP Factor</div><div class="stat-value" th:text="${fenway.babipParkFactor ?: 'N/A'}">104</div></div>
+        <div class="stat-card"><div class="stat-label">LF HR Factor</div><div class="stat-value" th:text="${fenway.lfHomeRunFactor ?: 'N/A'}">82</div></div>
+        <div class="stat-card"><div class="stat-label">CF HR Factor</div><div class="stat-value" th:text="${fenway.cfHomeRunFactor ?: 'N/A'}">98</div></div>
+        <div class="stat-card"><div class="stat-label">RF HR Factor</div><div class="stat-value" th:text="${fenway.rfHomeRunFactor ?: 'N/A'}">112</div></div>
+        <div class="stat-card"><div class="stat-label">Multi-Year Factor</div><div class="stat-value" th:text="${fenway.multiYearParkFactor ?: 'N/A'}">105</div></div>
+      </div>
+    </details>
+    <div class="park-legend">100 = league average. Above 100 = favors offense for that stat. Below 100 = suppresses.</div>
+  </div>
+
+  <!-- All Parks -->
+  <div class="section-header">All Tracked Ballparks</div>
+  <div th:if="${#lists.isEmpty(parks)}" class="panel">
+    <p>No park factor data loaded. <a th:href="@{/sync}">Import data</a> to see ballpark factors.</p>
+  </div>
+
+  <div th:each="park : ${parks}" class="player-card">
+    <div class="player-card-header">
+      <div class="player-info">
+        <span class="player-name" th:text="${park.venueName}">Fenway Park</span>
+        <span class="player-position" th:if="${park.team}" th:text="${park.team.shortName}">Red Sox</span>
+        <span class="player-bats" th:text="${park.city}">Boston, MA</span>
+      </div>
+    </div>
+    <div class="park-factors-quick">
+      <div class="pf-block">
+        <div class="pf-val" th:classappend="${park.parkFactor != null and park.parkFactor > 103 ? 'pf-high' : (park.parkFactor != null and park.parkFactor < 97 ? 'pf-low' : '')}"
+             th:text="${park.parkFactor ?: '—'}">104</div>
+        <div class="pf-lbl">Overall</div>
+      </div>
+      <div class="pf-block">
+        <div class="pf-val" th:classappend="${park.runParkFactor != null and park.runParkFactor > 103 ? 'pf-high' : (park.runParkFactor != null and park.runParkFactor < 97 ? 'pf-low' : '')}"
+             th:text="${park.runParkFactor ?: '—'}">106</div>
+        <div class="pf-lbl">Runs</div>
+      </div>
+      <div class="pf-block">
+        <div class="pf-val" th:classappend="${park.homeRunParkFactor != null and park.homeRunParkFactor > 103 ? 'pf-high' : (park.homeRunParkFactor != null and park.homeRunParkFactor < 97 ? 'pf-low' : '')}"
+             th:text="${park.homeRunParkFactor ?: '—'}">97</div>
+        <div class="pf-lbl">HR</div>
+      </div>
+      <div class="pf-block">
+        <div class="pf-val" th:text="${park.doubleParkFactor ?: '—'}">128</div>
+        <div class="pf-lbl">2B</div>
+      </div>
+      <div class="pf-block">
+        <div class="pf-val" th:text="${park.lhbParkFactor ?: '—'}">101</div>
+        <div class="pf-lbl">LHB</div>
+      </div>
+      <div class="pf-block">
+        <div class="pf-val" th:text="${park.rhbParkFactor ?: '—'}">107</div>
+        <div class="pf-lbl">RHB</div>
+      </div>
+    </div>
+    <div th:if="${park.notableFeatures}" class="notable-features" th:text="${park.notableFeatures}">Notable features here.</div>
+  </div>
+
+</div>
+</body>
+</html>

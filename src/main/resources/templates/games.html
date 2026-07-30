@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Games — NumSOX</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}"/>
+</head>
+<body>
+<nav class="topbar">
+  <a class="topbar-brand" th:href="@{/}"><img class="brand-logo" th:src="@{/images/numsox-logo-cropped.png}" alt="NumSOX logo"/><span class="brand-text">NumSOX</span></a>
+  <div class="topbar-links">
+    <a th:href="@{/}">Dashboard</a>
+    <a th:href="@{/matchup}">Matchup Center</a>
+    <a th:href="@{/games}" class="active">Games</a>
+    <a th:href="@{/team-stats}">Team Stats</a>
+    <a th:href="@{/players}">Players</a>
+    <a th:href="@{/ballpark}">Ballpark Factors</a>
+    <a th:href="@{/sync}">Sync</a>
+  </div>
+</nav>
+
+<div class="page-content">
+
+  <div class="panel">
+    <div class="panel-title">Filter Games</div>
+    <form class="filters" th:action="@{/games}" method="get">
+      <label>Opponent
+        <input type="text" name="opponent" placeholder="Yankees" th:value="${opponent}"/>
+      </label>
+      <label>Result
+        <select name="result">
+          <option value="">All</option>
+          <option value="W" th:selected="${result == 'W'}">Wins</option>
+          <option value="L" th:selected="${result == 'L'}">Losses</option>
+        </select>
+      </label>
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <button type="submit">Apply</button>
+        <a class="button secondary" th:href="@{/games}">Clear</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title" th:text="${#lists.size(games)} + ' Games'">10 Games</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th><th>Opponent</th><th>H/A</th><th>Venue</th><th>Score</th><th>Result</th><th>Status</th><th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="game : ${games}"
+            th:classappend="${game.result == 'W' ? 'row-win' : (game.result == 'L' ? 'row-loss' : '')}">
+          <td th:text="${#temporals.format(game.gameDate, 'MMM d')}">Apr 3</td>
+          <td>
+            <a class="team-link" th:href="@{/games/{id}(id=${game.id})}">
+              <img class="table-team-logo" th:src="${@teamLogoService.logoForName(game.opponent)}" th:alt="${game.opponent + ' logo'}"/>
+              <span th:text="${game.opponent}">Yankees</span>
+            </a>
+          </td>
+          <td th:text="${game.homeAway}">Home</td>
+          <td th:text="${game.venue ?: '—'}">Fenway Park</td>
+          <td th:text="${game.redSoxScore == null ? '—' : game.redSoxScore + '-' + game.opponentScore}">5-3</td>
+          <td>
+            <span th:if="${game.result != null}"
+                  th:text="${game.result}"
+                  th:class="${game.result == 'W' ? 'badge badge-win' : 'badge badge-loss'}">W</span>
+            <span th:if="${game.result == null}" class="badge badge-scheduled">SCH</span>
+          </td>
+          <td th:text="${game.status}">Final</td>
+          <td th:text="${#lists.size(game.notes)}">0</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+</body>
+</html>
