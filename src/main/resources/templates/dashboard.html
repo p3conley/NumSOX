@@ -7,31 +7,9 @@
   <link rel="stylesheet" th:href="@{/css/styles.css}"/>
 </head>
 <body>
-<nav class="topbar">
-  <a class="topbar-brand" th:href="@{/}"><img class="brand-logo" th:src="@{/images/numsox-logo-cropped.png}" alt="NumSOX logo"/><span class="brand-text">NumSOX</span></a>
-  <div class="topbar-links">
-    <a th:href="@{/}" class="active">Dashboard</a>
-    <a th:href="@{/matchup}">Matchup Center</a>
-    <a th:href="@{/games}">Games</a>
-    <a th:href="@{/team-stats}">Team Stats</a>
-    <a th:href="@{/players}">Players</a>
-    <a th:href="@{/ballpark}">Ballpark Factors</a>
-    <a th:href="@{/sync}">Sync</a>
-  </div>
-</nav>
+<nav th:replace="~{fragments/nav :: topbar('dashboard')}"></nav>
 
 <div class="page-content">
-
-  <section class="brand-hero">
-    <div class="brand-hero-logo-wrap">
-      <img class="brand-hero-logo" th:src="@{/images/numsox-logo-cropped.png}" alt="NumSOX"/>
-    </div>
-    <div>
-      <div class="hero-label">BASEBALL INTELLIGENCE</div>
-      <h1>Red Sox analytics, game context, and matchup probabilities.</h1>
-      <p class="hero-desc">Simple first. Advanced stats only when opened.</p>
-    </div>
-  </section>
 
   <!-- Featured Matchup Preview -->
   <div th:if="${featuredGame}" class="today-hero">

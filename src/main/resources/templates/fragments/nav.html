@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="topbar(active)" class="topbar">
+  <a class="topbar-brand" th:href="@{/}">
+    <img class="brand-logo" th:src="@{/images/numsox-logo-cropped.png}" alt="NumSOX logo"/>
+    <span class="brand-text">NumSOX</span>
+    <span class="topbar-tagline">Red Sox analytics &amp; matchup probabilities</span>
+  </a>
+  <div class="topbar-links">
+    <a th:href="@{/}" th:classappend="${active == 'dashboard'} ? ' active'">Dashboard</a>
+    <a th:href="@{/matchup}" th:classappend="${active == 'matchup'} ? ' active'">Matchup Center</a>
+    <a th:href="@{/games}" th:classappend="${active == 'games'} ? ' active'">Games</a>
+    <a th:href="@{/team-stats}" th:classappend="${active == 'team-stats'} ? ' active'">Team Stats</a>
+    <a th:href="@{/players}" th:classappend="${active == 'players'} ? ' active'">Players</a>
+    <a th:href="@{/ballpark}" th:classappend="${active == 'ballpark'} ? ' active'">Ballpark Factors</a>
+    <a th:href="@{/sync}" th:classappend="${active == 'sync'} ? ' active'">Sync</a>
+  </div>
+</nav>
+</body>
+</html>

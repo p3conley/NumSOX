@@ -6,18 +6,7 @@
   <link rel="stylesheet" th:href="@{/css/styles.css}"/>
 </head>
 <body>
-<nav class="topbar">
-  <a class="topbar-brand" th:href="@{/}"><img class="brand-logo" th:src="@{/images/numsox-logo-cropped.png}" alt="NumSOX logo"/><span class="brand-text">NumSOX</span></a>
-  <div class="topbar-links">
-    <a th:href="@{/}">Dashboard</a>
-    <a th:href="@{/matchup}">Matchup Center</a>
-    <a th:href="@{/games}">Games</a>
-    <a th:href="@{/team-stats}" class="active">Team Stats</a>
-    <a th:href="@{/players}">Players</a>
-    <a th:href="@{/ballpark}">Ballpark Factors</a>
-    <a th:href="@{/sync}">Sync</a>
-  </div>
-</nav>
+<nav th:replace="~{fragments/nav :: topbar('team-stats')}"></nav>
 
 <div class="page-content">
 
