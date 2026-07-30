@@ -1,170 +1,89 @@
-# Red Sox Intelligence Dashboard Starter
+# NumSOX
 
-This is a beginner-friendly starter project for a Red Sox portfolio app.
+A Boston Red Sox analytics dashboard built with Java and Spring Boot. NumSOX pulls live schedule, roster, and stat data from the MLB Stats API and Baseball Savant, then turns it into a guided, story-first view of each game: who's playing, who's pitching, who has the edge, and why — with deeper sabermetrics available on demand rather than dumped on the page.
 
-It already includes:
+## Features
+
+- **Dashboard** — featured game with a live scoreboard, win probability, ballpark factor summary, and Red Sox season snapshot
+- **League standings** — full AL/NL breakdown by division, with games-back, wild-card position, run differential, and home/away splits
+- **Matchup Center** — side-by-side team comparison, probable starters, category-by-category breakdown, strengths/weaknesses, ballpark fit, and a historical calibration backtest for the win probability model
+- **Games** — full season schedule and results, with per-game notes
+- **Team stats** — every MLB team's offense, pitching, bullpen, and defensive metrics
+- **Players** — roster, hitters, starters, and bullpen views with expandable advanced-stat and Statcast sections
+- **Ballpark factors** — park-adjusted run/HR/hit factors for all 30 current MLB venues
+- **Sync** — a status page showing when each data source last refreshed, with manual refresh controls per data type
+
+## Data sources
+
+| Data | Source |
+|---|---|
+| Schedule, results, rosters, box scores | [MLB Stats API](https://statsapi.mlb.com) |
+| Team/player WAR, wRC+, xFIP, FIP-, ERA- | MLB Stats API sabermetrics feed |
+| Exit velocity, hard-hit%, barrel%, whiff%, pitch velocity, Outs Above Average | [Baseball Savant](https://baseballsavant.mlb.com) public leaderboard CSV export |
+| Ballpark factors | Built-in multi-year static reference data |
+
+**Not available:** DRS (Baseball Info Solutions) and UZR (FanGraphs) are both proprietary datasets with no free public API, so NumSOX intentionally omits them rather than fabricate or estimate them.
+
+Both live data sources are first-party MLB properties. Data is fetched read-only, on-demand, via each site's own public export endpoints — this project does not scrape rendered pages or bypass any access controls.
+
+## Tech stack
 
 - Java 21
-- Spring Boot
-- Thymeleaf pages
-- Spring Data JPA
-- Sample Red Sox game data
-- Game list page
-- Game detail page
-- Game notes feature
-- Basic filtering by opponent and result
-- H2 demo database by default
-- PostgreSQL config for the real portfolio version
+- Spring Boot 3.5 (Web, Thymeleaf, Spring Data JPA)
+- H2 (file-based, default) or PostgreSQL
+- Jackson (JSON + CSV)
 
-## What this starter does right now
+## Getting started
 
-When you run it, you can open:
+### Prerequisites
 
-```text
-http://localhost:8080
-```
+- JDK 21
+- Apache Maven (this project does not bundle the Maven wrapper — install Maven separately if `mvn` isn't recognized)
 
-You will see a basic Red Sox dashboard.
-
-You can also open:
-
-```text
-http://localhost:8080/games
-```
-
-That page shows sample Red Sox games from the database.
-
-Click a game opponent name to open the game detail page. From there, you can add and delete personal game notes.
-
-## Apps you need installed
-
-Install these first:
-
-1. Visual Studio Code
-2. JDK 21
-3. Git
-4. PostgreSQL and pgAdmin, for later
-5. Postman, for later API testing
-
-For VS Code, install these extensions:
-
-- Extension Pack for Java
-- Spring Boot Extension Pack
-
-## How to open this project in VS Code
-
-1. Download and unzip this project.
-2. Open VS Code.
-3. Click **File**.
-4. Click **Open Folder**.
-5. Select the unzipped `red-sox-tracker-starter` folder.
-6. Wait for the Java extensions to finish loading.
-
-## How to run it in VS Code
-
-Open the VS Code terminal and run:
+### Run it
 
 ```bash
 mvn spring-boot:run
 ```
 
-On Windows, you can also double-click `run-app.bat`, or open PowerShell in the project folder and run:
-
-```powershell
-.\run-app.ps1
-```
+On Windows, you can also double-click `run-app.bat`, or run `.\run-app.ps1` from PowerShell.
 
 Then open:
 
-```text
+```
 http://localhost:8080
 ```
 
-## Maven requirement
+On first launch, the app seeds static reference data and pulls the current season's schedule, standings, team stats, rosters, player stats, and Statcast metrics automatically. This takes a few seconds.
 
-This starter does not include the Maven wrapper, so install Apache Maven if `mvn` is not recognized in your terminal. After installing Maven, close and reopen VS Code.
+### Refreshing data
 
-## Default database mode
+There is no scheduled background job — data updates on startup and whenever you click a **Refresh** button on the [Sync](http://localhost:8080/sync) page (or "Refresh score" on the dashboard for the featured game). Restart the app or hit Refresh to pull the latest scores and stats.
 
-The app starts with an H2 in-memory database.
+## Database
 
-That means:
+By default the app uses a file-based H2 database at `./data/redsox-tracker`, so fetched data survives restarts. Browse it at `http://localhost:8080/h2-console` using the JDBC URL from `application.properties`.
 
-- You do not need PostgreSQL immediately.
-- Sample data loads from `src/main/resources/data.sql`.
-- Data resets every time you restart the app.
+To use PostgreSQL instead:
 
-This is intentional so you can see the app working before dealing with database setup.
+1. Create a database named `redsox_tracker`.
+2. Set your password in `src/main/resources/application-postgres.properties`.
+3. Run with the `postgres` profile:
 
-## H2 console
+   ```bash
+   mvn spring-boot:run -Dspring-boot.run.profiles=postgres
+   ```
 
-You can view the demo database here:
+## Project structure
 
-```text
-http://localhost:8080/h2-console
 ```
-
-Use:
-
-```text
-JDBC URL: jdbc:h2:mem:redsoxtracker
-User Name: sa
-Password: leave blank
+src/main/java/com/example/redsoxtracker/
+  controller/   Thymeleaf page controllers
+  service/      Data import, standings, matchup, win-probability, ballpark-factor logic
+  domain/       JPA entities
+  dto/          View-model objects for templates
+  repository/   Spring Data repositories
+src/main/resources/
+  templates/    Thymeleaf pages
+  static/       CSS, images, team logos
 ```
-
-## PostgreSQL setup later
-
-When you are ready to use PostgreSQL:
-
-1. Open pgAdmin.
-2. Create a database named:
-
-```text
-redsox_tracker
-```
-
-3. Open this file:
-
-```text
-src/main/resources/application-postgres.properties
-```
-
-4. Replace this line:
-
-```text
-spring.datasource.password=CHANGE_ME_TO_YOUR_POSTGRES_PASSWORD
-```
-
-with your real PostgreSQL password.
-
-5. Run the app with the postgres profile:
-
-Windows PowerShell:
-
-```powershell
-mvn spring-boot:run -Dspring-boot.run.profiles=postgres
-```
-
-Mac/Linux/Git Bash:
-
-```bash
-mvn spring-boot:run -Dspring-boot.run.profiles=postgres
-```
-
-## Suggested next features
-
-Build these in order:
-
-1. Add a manual Add Game form.
-2. Add Edit Game and Delete Game buttons.
-3. Add filters for home/away and scheduled/final games.
-4. Add a real Panic Meter service instead of the hardcoded 38/100.
-5. Add a Player entity and Players page.
-6. Add a Fenway Planner table.
-7. Add an MLB API sync service.
-8. Add tests for the Panic Meter and GameService.
-9. Deploy the app.
-
-## Resume description once improved
-
-Red Sox Intelligence Dashboard is a Java Spring Boot and PostgreSQL web application that tracks Boston Red Sox games, notes, trends, and fan planning data using searchable dashboards and custom analytics such as opponent records and a Red Sox Panic Meter.
