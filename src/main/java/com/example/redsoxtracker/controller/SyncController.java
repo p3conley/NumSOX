@@ -22,6 +22,13 @@ public class SyncController {
         return "sync";
     }
 
+    /** Pulls fresh schedule/score data then returns to the dashboard, for the auto-refresh meta tag. */
+    @GetMapping("/live-refresh")
+    public String liveRefresh() {
+        syncService.refreshSchedule();
+        return "redirect:/";
+    }
+
     @PostMapping("/sync/refresh")
     public String refresh(@RequestParam(name = "type", defaultValue = "all") String type,
                           @RequestParam(name = "returnTo", required = false) String returnTo) {

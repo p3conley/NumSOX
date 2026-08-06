@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <title>NumSOX</title>
-  <meta th:if="${featuredIsLive}" http-equiv="refresh" content="45"/>
+  <meta th:if="${featuredGame != null and featuredIsToday and featuredGame.status != 'Final'}" http-equiv="refresh" content="45;url=/live-refresh"/>
   <link rel="stylesheet" th:href="@{/css/styles.css}"/>
 </head>
 <body>
@@ -68,11 +68,6 @@
         <div class="matchup-side-record" th:text="${featuredHomeRecord != null ? '(' + featuredHomeRecord + ')' : '(record unavailable)'}">(30 - 24)</div>
         <div class="matchup-side-score" th:if="${featuredHomeScore != null}" th:text="${featuredHomeScore}">4</div>
       </div>
-      <form class="matchup-refresh" th:action="@{/sync/refresh}" method="post">
-        <input type="hidden" name="type" value="schedule"/>
-        <input type="hidden" name="returnTo" value="/"/>
-        <button class="button glass-button" type="submit">Refresh score</button>
-      </form>
     </div>
 
     <div th:if="${scoreboard}" class="monster-board">
