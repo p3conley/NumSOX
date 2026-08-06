@@ -477,7 +477,7 @@ body {
     border: 3px solid rgba(219, 231, 210, 0.75);
     border-radius: 6px;
     background:
-        linear-gradient(180deg, rgba(42,62,54,0.98), rgba(29,48,41,0.98));
+        linear-gradient(180deg, var(--green) 0%, var(--green-dark) 100%);
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16), 0 14px 36px rgba(0,0,0,0.20);
 }
 
@@ -495,6 +495,7 @@ body {
 .monster-grid {
     display: grid;
     grid-template-columns: minmax(24px, .32fr) minmax(64px, 1.2fr) repeat(10, minmax(17px, .48fr)) repeat(3, minmax(21px, .36fr));
+    grid-auto-rows: clamp(20px, 3vw, 30px);
     gap: clamp(2px, .35vw, 3px);
     align-items: stretch;
 }
@@ -585,6 +586,80 @@ body {
     text-overflow: clip;
     white-space: nowrap;
 }
+
+/* ===== PREVIOUS GAME BOX SCORE ===== */
+.prev-game-board {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.prev-game-win {
+    border-color: var(--green);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16), 0 14px 36px rgba(0,0,0,0.20), 0 0 0 3px rgba(84,121,109,0.4);
+}
+
+.prev-game-loss {
+    border-color: var(--red);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16), 0 14px 36px rgba(0,0,0,0.20), 0 0 0 3px rgba(215,39,45,0.4);
+}
+
+.prev-game-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 0 2px;
+}
+
+.prev-game-matchup {
+    color: white;
+    font-weight: 800;
+    font-size: 14px;
+}
+
+.prev-game-date {
+    color: rgba(255,255,255,0.65);
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: auto;
+    margin-left: 10px;
+}
+
+.prev-result-pill {
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: white;
+}
+
+.prev-result-pill.is-win { background: var(--green); }
+.prev-result-pill.is-loss { background: var(--red); }
+
+/* ===== RECENT GAMES SCROLL ===== */
+.games-scroll {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.games-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+tr.row-current td {
+    border-top: 2px solid #ffd700;
+    border-bottom: 2px solid #ffd700;
+    box-shadow: inset 0 0 10px rgba(255,215,0,0.3);
+}
+
+tr.row-current td:first-child { border-left: 2px solid #ffd700; }
+tr.row-current td:last-child { border-right: 2px solid #ffd700; }
 
 .panel {
     padding: 20px 24px;
@@ -1700,6 +1775,7 @@ textarea { min-height: 100px; resize: vertical; }
     .monster-title { letter-spacing: 0.32em; }
     .monster-grid {
         grid-template-columns: minmax(18px, .26fr) minmax(50px, 1fr) repeat(10, minmax(13px, .36fr)) repeat(3, minmax(16px, .28fr));
+        grid-auto-rows: 18px;
         gap: 2px;
     }
     .monster-cell { min-height: 18px; font-size: clamp(9px, 2.15vw, 12px); }

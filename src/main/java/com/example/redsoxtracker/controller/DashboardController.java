@@ -14,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Controller
@@ -40,7 +41,8 @@ public class DashboardController {
 
     @GetMapping("/")
     public String dashboard(Model model) {
-        model.addAttribute("games", gameRepository.findAllByOrderByGameDateAsc());
+        List<Game> games = gameRepository.findAllByOrderByGameDateAsc();
+        model.addAttribute("games", games);
         model.addAttribute("wins", gameService.countWins());
         model.addAttribute("losses", gameService.countLosses());
 
@@ -66,6 +68,20 @@ public class DashboardController {
             Optional<BallparkFactorSnapshot> park = matchupService.getParkForGame(game);
             park.ifPresent(p -> model.addAttribute("featuredPark", p));
             liveScoreboardService.buildForGame(game).ifPresent(s -> model.addAttribute("scoreboard", s));
+        }
+
+        // Previous completed game box score (skip if it's the same game already shown above)
+        Optional<Game> previousGame = games.stream()
+                .filter(g -> "Final".equals(g.getStatus()))
+                .filter(g -> featuredGame.isEmpty() || !g.getId().equals(featuredGame.get().getId()))
+                .reduce((first, second) -> second);
+        if (previousGame.isPresent()) {
+            Game prev = previousGame.get();
+            model.addAttribute("previousGame", prev);
+            boolean prevRedSoxAreAway = "Away".equalsIgnoreCase(prev.getHomeAway());
+            model.addAttribute("previousAwayTeam", prevRedSoxAreAway ? "Boston Red Sox" : prev.getOpponent());
+            model.addAttribute("previousHomeTeam", prevRedSoxAreAway ? prev.getOpponent() : "Boston Red Sox");
+            liveScoreboardService.buildForGame(prev).ifPresent(s -> model.addAttribute("previousScoreboard", s));
         }
 
         // Red Sox team stats for sidebar

@@ -33,7 +33,7 @@
             <path d="M8,50 C2,32 0,14 10,2 C16,16 20,34 24,50 Z" fill="url(#hornGradAway)"/>
             <path d="M112,50 C118,32 120,14 110,2 C104,16 100,34 96,50 Z" fill="url(#hornGradAway)"/>
             <defs><linearGradient id="hornGradAway" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#3a0d0d"/><stop offset="100%" stop-color="#8a1c22"/>
+              <stop offset="0%" stop-color="#ff3b3b"/><stop offset="55%" stop-color="#d10000"/><stop offset="100%" stop-color="#7a0000"/>
             </linearGradient></defs>
           </svg>
         </div>
@@ -60,7 +60,7 @@
             <path d="M8,50 C2,32 0,14 10,2 C16,16 20,34 24,50 Z" fill="url(#hornGradHome)"/>
             <path d="M112,50 C118,32 120,14 110,2 C104,16 100,34 96,50 Z" fill="url(#hornGradHome)"/>
             <defs><linearGradient id="hornGradHome" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#3a0d0d"/><stop offset="100%" stop-color="#8a1c22"/>
+              <stop offset="0%" stop-color="#ff3b3b"/><stop offset="55%" stop-color="#d10000"/><stop offset="100%" stop-color="#7a0000"/>
             </linearGradient></defs>
           </svg>
         </div>
@@ -165,6 +165,42 @@
     </div>
   </div>
 
+  <!-- Previous Game Box Score -->
+  <div th:if="${previousScoreboard != null}" class="section-header">Previous Game</div>
+  <div th:if="${previousScoreboard != null}"
+       th:class="${'monster-board prev-game-board ' + (previousGame.result == 'W' ? 'prev-game-win' : 'prev-game-loss')}">
+    <div class="prev-game-header">
+      <span class="prev-game-matchup"
+            th:text="${previousGame.homeAway == 'Away' ? 'Boston Red Sox @ ' + previousGame.opponent : previousGame.opponent + ' @ Boston Red Sox'}">Red Sox @ Yankees</span>
+      <span class="prev-game-date" th:text="${#temporals.format(previousGame.gameDate, 'EEE, MMM d')}">Wed, Jul 29</span>
+      <span th:class="${'prev-result-pill ' + (previousGame.result == 'W' ? 'is-win' : 'is-loss')}"
+            th:text="${(previousGame.result == 'W' ? 'Win' : 'Loss') + ' · Final'}">Win &middot; Final</span>
+    </div>
+    <div class="monster-title">American</div>
+    <div class="monster-grid">
+      <div class="monster-cell monster-label">P</div>
+      <div class="monster-cell team-head"></div>
+      <div th:each="i : ${previousScoreboard.innings}" class="monster-cell inning-num" th:text="${i.number}">1</div>
+      <div class="monster-cell inning-num">R</div>
+      <div class="monster-cell inning-num">H</div>
+      <div class="monster-cell inning-num">E</div>
+
+      <div class="monster-cell pitcher-slot"></div>
+      <div class="monster-cell team-name" th:classappend="${previousScoreboard.awayName == 'BOSTON' ? ' boston' : ''}" th:text="${previousScoreboard.awayName}">TB</div>
+      <div th:each="i : ${previousScoreboard.innings}" class="monster-cell run-cell" th:text="${i.awayRuns != null ? i.awayRuns : ''}">0</div>
+      <div class="monster-cell total-cell" th:text="${previousScoreboard.awayRuns ?: 0}">0</div>
+      <div class="monster-cell total-cell" th:text="${previousScoreboard.awayHits ?: 0}">0</div>
+      <div class="monster-cell total-cell" th:text="${previousScoreboard.awayErrors ?: 0}">0</div>
+
+      <div class="monster-cell pitcher-slot"></div>
+      <div class="monster-cell team-name" th:classappend="${previousScoreboard.homeName == 'BOSTON' ? ' boston' : ''}" th:text="${previousScoreboard.homeName}">BOSTON</div>
+      <div th:each="i : ${previousScoreboard.innings}" class="monster-cell run-cell" th:classappend="${i.homeRuns != null and i.homeRuns > 0 ? ' lit' : ''}" th:text="${i.homeRuns != null ? i.homeRuns : ''}">0</div>
+      <div class="monster-cell total-cell" th:text="${previousScoreboard.homeRuns ?: 0}">9</div>
+      <div class="monster-cell total-cell" th:text="${previousScoreboard.homeHits ?: 0}">13</div>
+      <div class="monster-cell total-cell" th:text="${previousScoreboard.homeErrors ?: 0}">0</div>
+    </div>
+  </div>
+
   <!-- Red Sox Season Summary -->
   <div th:if="${bosStats}" class="section-header">Red Sox Season at a Glance</div>
   <div th:if="${bosStats}" class="stat-grid">
@@ -255,35 +291,37 @@
   <!-- Recent Games -->
   <div class="section-header">Recent &amp; Upcoming Games</div>
   <div class="panel">
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th><th>Opponent</th><th>H/A</th><th>Venue</th><th>Score</th><th>Result</th><th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr th:each="g : ${games}"
-            th:classappend="${g.result == 'W' ? 'row-win' : (g.result == 'L' ? 'row-loss' : '')}">
-          <td th:text="${#temporals.format(g.gameDate, 'MMM d')}">Apr 3</td>
-          <td>
-            <a class="team-link" th:href="@{/games/{id}(id=${g.id})}">
-              <img class="table-team-logo" th:src="${@teamLogoService.logoForName(g.opponent)}" th:alt="${g.opponent + ' logo'}"/>
-              <span th:text="${g.opponent}">Yankees</span>
-            </a>
-          </td>
-          <td th:text="${g.homeAway}">Home</td>
-          <td th:text="${g.venue ?: 'N/A'}">Fenway Park</td>
-          <td th:text="${g.redSoxScore != null ? g.redSoxScore + '-' + g.opponentScore : 'N/A'}">5-3</td>
-          <td>
-            <span th:if="${g.result != null}"
-                  th:text="${g.result}"
-                  th:class="${g.result == 'W' ? 'badge badge-win' : 'badge badge-loss'}">W</span>
-            <span th:if="${g.result == null}" class="badge badge-scheduled">SCH</span>
-          </td>
-          <td th:text="${g.status}">Final</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="games-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th><th>Opponent</th><th>H/A</th><th>Venue</th><th>Score</th><th>Result</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="g : ${games}"
+              th:classappend="${(g.result == 'W' ? 'row-win' : (g.result == 'L' ? 'row-loss' : '')) + (featuredGame != null and g.id == featuredGame.id ? ' row-current' : '')}">
+            <td th:text="${#temporals.format(g.gameDate, 'MMM d')}">Apr 3</td>
+            <td>
+              <a class="team-link" th:href="@{/games/{id}(id=${g.id})}">
+                <img class="table-team-logo" th:src="${@teamLogoService.logoForName(g.opponent)}" th:alt="${g.opponent + ' logo'}"/>
+                <span th:text="${g.opponent}">Yankees</span>
+              </a>
+            </td>
+            <td th:text="${g.homeAway}">Home</td>
+            <td th:text="${g.venue ?: 'N/A'}">Fenway Park</td>
+            <td th:text="${g.redSoxScore != null ? g.redSoxScore + '-' + g.opponentScore : 'N/A'}">5-3</td>
+            <td>
+              <span th:if="${g.result != null}"
+                    th:text="${g.result}"
+                    th:class="${g.result == 'W' ? 'badge badge-win' : 'badge badge-loss'}">W</span>
+              <span th:if="${g.result == null}" class="badge badge-scheduled">SCH</span>
+            </td>
+            <td th:text="${g.status}">Final</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <div class="nav-actions">
@@ -293,5 +331,17 @@
   </div>
 
 </div>
+
+<script>
+  window.addEventListener('load', function () {
+    var current = document.querySelector('.row-current');
+    var box = document.querySelector('.games-scroll');
+    if (current && box) {
+      var boxRect = box.getBoundingClientRect();
+      var rowRect = current.getBoundingClientRect();
+      box.scrollTop += (rowRect.bottom - boxRect.bottom);
+    }
+  });
+</script>
 </body>
 </html>
