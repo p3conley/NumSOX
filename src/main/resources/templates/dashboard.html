@@ -21,7 +21,22 @@
     <div class="matchup-strip">
       <div class="matchup-side">
         <div class="matchup-side-label">Away</div>
-        <img class="featured-team-logo" th:src="${@teamLogoService.logoForName(featuredAwayTeam)}" th:alt="${featuredAwayTeam + ' logo'}"/>
+        <div class="logo-crown">
+          <img class="featured-team-logo" th:src="${@teamLogoService.logoForName(featuredAwayTeam)}" th:alt="${featuredAwayTeam + ' logo'}"/>
+          <svg th:if="${featuredAwayTeam == 'Boston Red Sox'}" class="crown-icon halo-icon" viewBox="0 0 120 50" aria-hidden="true">
+            <ellipse cx="60" cy="27" rx="46" ry="15" fill="none" stroke="url(#haloGradAway)" stroke-width="7"/>
+            <defs><linearGradient id="haloGradAway" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#fff6c8"/><stop offset="55%" stop-color="#ffd700"/><stop offset="100%" stop-color="#d4a900"/>
+            </linearGradient></defs>
+          </svg>
+          <svg th:unless="${featuredAwayTeam == 'Boston Red Sox'}" class="crown-icon horns-icon" viewBox="0 0 120 50" aria-hidden="true">
+            <path d="M8,50 C2,32 0,14 10,2 C16,16 20,34 24,50 Z" fill="url(#hornGradAway)"/>
+            <path d="M112,50 C118,32 120,14 110,2 C104,16 100,34 96,50 Z" fill="url(#hornGradAway)"/>
+            <defs><linearGradient id="hornGradAway" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#3a0d0d"/><stop offset="100%" stop-color="#8a1c22"/>
+            </linearGradient></defs>
+          </svg>
+        </div>
         <div class="matchup-side-name" th:text="${featuredAwayTeam}">Boston Red Sox</div>
         <div class="matchup-side-record" th:text="${featuredAwayRecord != null ? '(' + featuredAwayRecord + ')' : '(record unavailable)'}">(24 - 33)</div>
         <div class="matchup-side-score" th:if="${featuredAwayScore != null}" th:text="${featuredAwayScore}">9</div>
@@ -33,7 +48,22 @@
       </div>
       <div class="matchup-side home">
         <div class="matchup-side-label">Home</div>
-        <img class="featured-team-logo" th:src="${@teamLogoService.logoForName(featuredHomeTeam)}" th:alt="${featuredHomeTeam + ' logo'}"/>
+        <div class="logo-crown">
+          <img class="featured-team-logo" th:src="${@teamLogoService.logoForName(featuredHomeTeam)}" th:alt="${featuredHomeTeam + ' logo'}"/>
+          <svg th:if="${featuredHomeTeam == 'Boston Red Sox'}" class="crown-icon halo-icon" viewBox="0 0 120 50" aria-hidden="true">
+            <ellipse cx="60" cy="27" rx="46" ry="15" fill="none" stroke="url(#haloGradHome)" stroke-width="7"/>
+            <defs><linearGradient id="haloGradHome" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#fff6c8"/><stop offset="55%" stop-color="#ffd700"/><stop offset="100%" stop-color="#d4a900"/>
+            </linearGradient></defs>
+          </svg>
+          <svg th:unless="${featuredHomeTeam == 'Boston Red Sox'}" class="crown-icon horns-icon" viewBox="0 0 120 50" aria-hidden="true">
+            <path d="M8,50 C2,32 0,14 10,2 C16,16 20,34 24,50 Z" fill="url(#hornGradHome)"/>
+            <path d="M112,50 C118,32 120,14 110,2 C104,16 100,34 96,50 Z" fill="url(#hornGradHome)"/>
+            <defs><linearGradient id="hornGradHome" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#3a0d0d"/><stop offset="100%" stop-color="#8a1c22"/>
+            </linearGradient></defs>
+          </svg>
+        </div>
         <div class="matchup-side-name" th:text="${featuredHomeTeam}">Guardians</div>
         <div class="matchup-side-record" th:text="${featuredHomeRecord != null ? '(' + featuredHomeRecord + ')' : '(record unavailable)'}">(30 - 24)</div>
         <div class="matchup-side-score" th:if="${featuredHomeScore != null}" th:text="${featuredHomeScore}">4</div>

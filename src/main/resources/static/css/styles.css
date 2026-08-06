@@ -305,20 +305,47 @@ body {
 }
 
 .featured-team-logo {
-    width: 68px;
-    height: 68px;
+    width: 86px;
+    height: 86px;
     object-fit: contain;
     display: block;
-    margin-top: 10px;
-    padding: 14px;
+    padding: 17px;
     box-sizing: border-box;
     background: #ffffff;
     border-radius: 50%;
     box-shadow: 0 6px 16px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.5);
+    position: relative;
+    z-index: 2;
 }
 
-.matchup-side.home .featured-team-logo {
+/* Wraps the featured-matchup logo so the halo/horns can be positioned around it. */
+.logo-crown {
+    position: relative;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+.matchup-side.home .logo-crown {
     margin-left: auto;
+}
+
+.crown-icon {
+    position: absolute;
+    z-index: 1;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 74%;
+    pointer-events: none;
+}
+
+.halo-icon {
+    filter: drop-shadow(0 2px 8px rgba(255,215,0,0.55));
+}
+
+.horns-icon {
+    top: -6px;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
 }
 
 .matchup-side-label,
@@ -997,12 +1024,12 @@ button.danger { background: #7a1724; }
 }
 
 .matchup-team-logo {
-    width: 86px;
-    height: 86px;
+    width: 108px;
+    height: 108px;
     object-fit: contain;
     display: block;
     margin: 8px 0 12px;
-    padding: 17px;
+    padding: 21px;
     box-sizing: border-box;
     background: #ffffff;
     border-radius: 50%;
@@ -1627,14 +1654,14 @@ textarea { min-height: 100px; resize: vertical; }
         padding: 6px;
     }
     .featured-team-logo {
-        width: 54px;
-        height: 54px;
-        padding: 11px;
+        width: 68px;
+        height: 68px;
+        padding: 14px;
     }
     .matchup-team-logo {
-        width: 66px;
-        height: 66px;
-        padding: 13px;
+        width: 82px;
+        height: 82px;
+        padding: 16px;
     }
     .home-team .matchup-team-logo {
         margin-left: 0;
