@@ -55,9 +55,13 @@ public class MatchupService {
 
         // Hold a just-finished game here for an hour before rolling over to the next one,
         // so the final score stays up instead of flipping straight to the next matchup.
+        // The game-date bound is a safety net: only a game played today or last night can
+        // hold the spot, so a bad timestamp can never pin an old game to the dashboard.
         LocalDateTime holdUntil = LocalDateTime.now().minusHours(POST_GAME_HOLD_HOURS);
+        LocalDate earliestHoldable = today.minusDays(1);
         Optional<Game> justFinished = allGames.stream()
                 .filter(g -> "Final".equals(g.getStatus()))
+                .filter(g -> !g.getGameDate().isBefore(earliestHoldable))
                 .filter(g -> g.getFinalizedAt() != null && g.getFinalizedAt().isAfter(holdUntil))
                 .reduce((first, second) -> second);
         if (justFinished.isPresent()) return justFinished;

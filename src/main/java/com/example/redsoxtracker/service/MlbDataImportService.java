@@ -145,13 +145,22 @@ public class MlbDataImportService {
             oppErrors = bosIsAway ? intOrNull(lineHome, "errors") : intOrNull(lineAway, "errors");
         }
 
-        Game game = gameRepo.findByMlbGameId(gamePk).orElse(new Game());
+        Optional<Game> existing = gameRepo.findByMlbGameId(gamePk);
+        Game game = existing.orElseGet(Game::new);
+        String previousStatus = existing.map(Game::getStatus).orElse(null);
+
         game.setMlbGameId(gamePk);
         game.setGameDate(gameDate);
         if (startTime != null) game.setStartTime(startTime);
         game.setStartTimeTbd(startTimeTbd);
-        // Stamp the first time we see this game as Final so the dashboard can hold it briefly.
-        if ("Final".equals(status) && game.getFinalizedAt() == null) {
+        // Stamp only when we actually watch a game finish, meaning a row we already had
+        // flipped from live/scheduled to Final. A row that arrives already Final is a
+        // backfill of an old game, and stamping it would make the whole season look like
+        // it just ended, which pins a stale game to the dashboard after every fresh deploy.
+        boolean justFinished = "Final".equals(status)
+                && previousStatus != null
+                && !"Final".equals(previousStatus);
+        if (justFinished && game.getFinalizedAt() == null) {
             game.setFinalizedAt(LocalDateTime.now());
         }
         game.setOpponent(oppName);
