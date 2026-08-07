@@ -15,7 +15,9 @@
   <div th:if="${featuredGame}" class="today-hero">
     <div class="today-hero-top">
       <div class="hero-label" th:text="${featuredIsToday ? 'TODAY' : 'NEXT MATCHUP'}">TODAY</div>
-      <div class="live-pill" th:classappend="${featuredIsLive ? ' is-live' : ''}" th:text="${featuredIsLive ? 'Live' : featuredGame.status}">Scheduled</div>
+      <div class="live-pill"
+           th:classappend="${featuredIsLive ? ' is-live' : (featuredGame.result == 'W' ? ' is-win' : (featuredGame.result == 'L' ? ' is-loss' : ''))}"
+           th:text="${featuredIsLive ? 'Live' : featuredGame.status}">Scheduled</div>
     </div>
 
     <div class="matchup-strip">
@@ -44,6 +46,8 @@
       <div class="matchup-center">
         <div class="matchup-at-symbol">@</div>
         <div class="matchup-meta" th:text="${#temporals.format(featuredGame.gameDate, 'EEE, MMM d')}">Sun, May 31</div>
+        <div class="matchup-meta" th:if="${featuredGame.status == 'Scheduled'}"
+             th:text="${featuredGame.startTime == null or featuredGame.startTimeTbd == true ? 'Time TBD' : #temporals.format(featuredGame.startTime, 'h:mm a')}">7:10 PM</div>
         <div class="matchup-meta" th:text="${featuredGame.venue ?: 'TBD'}">Progressive Field</div>
       </div>
       <div class="matchup-side home">
@@ -72,7 +76,7 @@
 
     <div th:if="${scoreboard}" class="monster-board">
       <div class="monster-title">American</div>
-      <div class="monster-grid">
+      <div class="monster-grid" th:style="'--innings: ' + ${scoreboard.innings.size()}">
         <div class="monster-cell monster-label">P</div>
         <div class="monster-cell team-head"></div>
         <div th:each="i : ${scoreboard.innings}" class="monster-cell inning-num" th:text="${i.number}">1</div>
@@ -82,14 +86,18 @@
 
         <div class="monster-cell pitcher-slot">38</div>
         <div class="monster-cell team-name" th:classappend="${scoreboard.awayName == 'BOSTON' ? ' boston' : ''}" th:text="${scoreboard.awayName}">TB</div>
-        <div th:each="i : ${scoreboard.innings}" class="monster-cell run-cell" th:text="${i.awayRuns != null ? i.awayRuns : ''}">0</div>
+        <div th:each="i : ${scoreboard.innings}" class="monster-cell run-cell"
+             th:classappend="${scoreboard.live and scoreboard.topHalf and i.number == scoreboard.currentInning ? ' lit' : ''}"
+             th:text="${i.awayRuns != null ? i.awayRuns : ''}">0</div>
         <div class="monster-cell total-cell" th:text="${scoreboard.awayRuns ?: 0}">0</div>
         <div class="monster-cell total-cell" th:text="${scoreboard.awayHits ?: 0}">0</div>
         <div class="monster-cell total-cell" th:text="${scoreboard.awayErrors ?: 0}">0</div>
 
         <div class="monster-cell pitcher-slot">32</div>
         <div class="monster-cell team-name" th:classappend="${scoreboard.homeName == 'BOSTON' ? ' boston' : ''}" th:text="${scoreboard.homeName}">BOSTON</div>
-        <div th:each="i : ${scoreboard.innings}" class="monster-cell run-cell" th:classappend="${i.homeRuns != null and i.homeRuns > 0 ? ' lit' : ''}" th:text="${i.homeRuns != null ? i.homeRuns : ''}">0</div>
+        <div th:each="i : ${scoreboard.innings}" class="monster-cell run-cell"
+             th:classappend="${scoreboard.live and scoreboard.bottomHalf and i.number == scoreboard.currentInning ? ' lit' : ''}"
+             th:text="${i.homeRuns != null ? i.homeRuns : ''}">0</div>
         <div class="monster-cell total-cell" th:text="${scoreboard.homeRuns ?: 0}">9</div>
         <div class="monster-cell total-cell" th:text="${scoreboard.homeHits ?: 0}">13</div>
         <div class="monster-cell total-cell" th:text="${scoreboard.homeErrors ?: 0}">0</div>
@@ -172,7 +180,7 @@
             th:text="${(previousGame.result == 'W' ? 'Win' : 'Loss') + ' · Final'}">Win &middot; Final</span>
     </div>
     <div class="monster-title">American</div>
-    <div class="monster-grid">
+    <div class="monster-grid" th:style="'--innings: ' + ${previousScoreboard.innings.size()}">
       <div class="monster-cell monster-label">P</div>
       <div class="monster-cell team-head"></div>
       <div th:each="i : ${previousScoreboard.innings}" class="monster-cell inning-num" th:text="${i.number}">1</div>
@@ -189,7 +197,7 @@
 
       <div class="monster-cell pitcher-slot"></div>
       <div class="monster-cell team-name" th:classappend="${previousScoreboard.homeName == 'BOSTON' ? ' boston' : ''}" th:text="${previousScoreboard.homeName}">BOSTON</div>
-      <div th:each="i : ${previousScoreboard.innings}" class="monster-cell run-cell" th:classappend="${i.homeRuns != null and i.homeRuns > 0 ? ' lit' : ''}" th:text="${i.homeRuns != null ? i.homeRuns : ''}">0</div>
+      <div th:each="i : ${previousScoreboard.innings}" class="monster-cell run-cell" th:text="${i.homeRuns != null ? i.homeRuns : ''}">0</div>
       <div class="monster-cell total-cell" th:text="${previousScoreboard.homeRuns ?: 0}">9</div>
       <div class="monster-cell total-cell" th:text="${previousScoreboard.homeHits ?: 0}">13</div>
       <div class="monster-cell total-cell" th:text="${previousScoreboard.homeErrors ?: 0}">0</div>
@@ -201,37 +209,45 @@
   <div th:if="${bosStats}" class="stat-grid">
     <div class="stat-card">
       <div class="stat-label">Record</div>
-      <div class="stat-value" th:text="${bosStats.record}">28-24</div>
+      <div class="stat-value" th:text="${bosRecord != null ? bosRecord.record : bosStats.record}">28-24</div>
+      <div class="stat-sub" th:if="${rankSummary.record.label != null}" th:text="${rankSummary.record.label}">1st in MLB</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Run Differential</div>
       <div class="stat-value"
            th:text="${bosStats.runDifferential != null ? (bosStats.runDifferential > 0 ? '+' : '') + bosStats.runDifferential : 'N/A'}">+22</div>
+      <div class="stat-sub" th:if="${rankSummary.runDifferential.label != null}" th:text="${rankSummary.runDifferential.label}">1st in MLB</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Team OPS</div>
       <div class="stat-value" th:text="${bosStats.teamOps != null ? #numbers.formatDecimal(bosStats.teamOps, 1, 3) : 'N/A'}">.751</div>
+      <div class="stat-sub" th:if="${rankSummary.ops.label != null}" th:text="${rankSummary.ops.label}">1st in MLB</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Team ERA</div>
       <div class="stat-value" th:text="${bosStats.teamEra != null ? #numbers.formatDecimal(bosStats.teamEra, 1, 2) : 'N/A'}">3.89</div>
+      <div class="stat-sub" th:if="${rankSummary.era.label != null}" th:text="${rankSummary.era.label}">1st in MLB</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Bullpen ERA</div>
       <div class="stat-value" th:text="${bosStats.bullpenEra != null ? #numbers.formatDecimal(bosStats.bullpenEra, 1, 2) : 'N/A'}">3.55</div>
+      <div class="stat-sub" th:if="${rankSummary.bullpenEra.label != null}" th:text="${rankSummary.bullpenEra.label}">1st in MLB</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">wRC+</div>
       <div class="stat-value" th:text="${bosStats.teamWrcPlus != null ? #numbers.formatDecimal(bosStats.teamWrcPlus, 1, 0) : 'N/A'}">108</div>
       <div class="stat-sub">100 = league avg</div>
+      <div class="stat-sub" th:if="${rankSummary.wrcPlus.label != null}" th:text="${rankSummary.wrcPlus.label}">1st in MLB</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Last 10</div>
-      <div class="stat-value" th:text="${bosStats.last10Record}">6-4</div>
+      <div class="stat-value" th:text="${bosRecord != null ? bosRecord.last10 : bosStats.last10Record}">6-4</div>
+      <div class="stat-sub" th:if="${rankSummary.last10.label != null}" th:text="${rankSummary.last10.label}">1st in MLB</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Streak</div>
-      <div class="stat-value" th:text="${bosStats.currentStreak != null ? bosStats.currentStreak : 'N/A'}">W2</div>
+      <div class="stat-value" th:text="${bosRecord != null ? bosRecord.streak : (bosStats.currentStreak != null ? bosStats.currentStreak : 'N/A')}">W2</div>
+      <div class="stat-sub" th:if="${rankSummary.streak.label != null}" th:text="${rankSummary.streak.label}">1st in MLB</div>
     </div>
   </div>
 
@@ -305,7 +321,8 @@
             </td>
             <td th:text="${g.homeAway}">Home</td>
             <td th:text="${g.venue ?: 'N/A'}">Fenway Park</td>
-            <td th:text="${g.redSoxScore != null ? g.redSoxScore + '-' + g.opponentScore : 'N/A'}">5-3</td>
+            <td th:text="${g.redSoxScore != null ? g.redSoxScore + '-' + g.opponentScore
+                            : (g.startTime == null or g.startTimeTbd == true ? 'Time TBD' : #temporals.format(g.startTime, 'h:mm a'))}">5-3</td>
             <td>
               <span th:if="${g.result != null}"
                     th:text="${g.result}"

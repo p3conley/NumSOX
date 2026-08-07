@@ -8,8 +8,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
@@ -105,6 +107,10 @@ public class MlbDataImportService {
         if (officialDate.isEmpty()) return false;
         LocalDate gameDate = LocalDate.parse(officialDate);
 
+        // MLB reports first pitch as a UTC instant; store it in the app's local zone.
+        LocalDateTime startTime = parseStartTime(g.path("gameDate").asText(null));
+        boolean startTimeTbd = g.path("status").path("startTimeTBD").asBoolean(false);
+
         String abstractState  = g.path("status").path("abstractGameState").asText("Preview");
         String detailedState  = g.path("status").path("detailedState").asText("");
         String status = mapStatus(abstractState, detailedState);
@@ -142,6 +148,12 @@ public class MlbDataImportService {
         Game game = gameRepo.findByMlbGameId(gamePk).orElse(new Game());
         game.setMlbGameId(gamePk);
         game.setGameDate(gameDate);
+        if (startTime != null) game.setStartTime(startTime);
+        game.setStartTimeTbd(startTimeTbd);
+        // Stamp the first time we see this game as Final so the dashboard can hold it briefly.
+        if ("Final".equals(status) && game.getFinalizedAt() == null) {
+            game.setFinalizedAt(LocalDateTime.now());
+        }
         game.setOpponent(oppName);
         game.setHomeAway(homeAway);
         game.setVenue(venue);
@@ -706,6 +718,16 @@ public class MlbDataImportService {
         snap.setSourceLastUpdated(LocalDate.now());
         pitcherStatRepo.save(snap);
         return true;
+    }
+
+    /** MLB sends first pitch as a UTC instant, e.g. "2026-08-07T23:10:00Z". */
+    private LocalDateTime parseStartTime(String isoInstant) {
+        if (isoInstant == null || isoInstant.isBlank()) return null;
+        try {
+            return LocalDateTime.ofInstant(Instant.parse(isoInstant), ZoneId.systemDefault());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private Double parseInnings(String text) {

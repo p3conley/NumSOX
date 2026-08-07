@@ -62,6 +62,12 @@ public class LiveScoreboardService {
             String half = linescore.path("inningHalf").asText("");
             int inning = linescore.path("currentInning").asInt(0);
             view.setInningState((half.isBlank() || inning == 0) ? status : half + " " + inning);
+            // Only the frame in progress lights up on the board; everything else reads white.
+            if (inning > 0) {
+                view.setCurrentInning(inning);
+                view.setInningHalf(half);
+                view.setLive("In Progress".equalsIgnoreCase(status) || !half.isBlank());
+            }
         }
         return Optional.of(view);
     }

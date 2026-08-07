@@ -8,6 +8,8 @@ import com.example.redsoxtracker.service.GameService;
 import com.example.redsoxtracker.service.LiveScoreboardService;
 import com.example.redsoxtracker.service.MatchupService;
 import com.example.redsoxtracker.service.StandingsService;
+import com.example.redsoxtracker.service.TeamRankingService;
+import com.example.redsoxtracker.service.TeamRecordService;
 import com.example.redsoxtracker.service.TeamStatsService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,17 +28,22 @@ public class DashboardController {
     private final MatchupService matchupService;
     private final TeamStatsService teamStatsService;
     private final StandingsService standingsService;
+    private final TeamRankingService teamRankingService;
+    private final TeamRecordService teamRecordService;
 
     public DashboardController(GameRepository gameRepository, GameService gameService,
                                LiveScoreboardService liveScoreboardService,
                                MatchupService matchupService, TeamStatsService teamStatsService,
-                               StandingsService standingsService) {
+                               StandingsService standingsService, TeamRankingService teamRankingService,
+                               TeamRecordService teamRecordService) {
         this.gameRepository = gameRepository;
         this.gameService = gameService;
         this.liveScoreboardService = liveScoreboardService;
         this.matchupService = matchupService;
         this.teamStatsService = teamStatsService;
         this.standingsService = standingsService;
+        this.teamRankingService = teamRankingService;
+        this.teamRecordService = teamRecordService;
     }
 
     @GetMapping("/")
@@ -86,6 +93,10 @@ public class DashboardController {
 
         // Red Sox team stats for sidebar
         teamStatsService.getLatestStats("BOS").ifPresent(s -> model.addAttribute("bosStats", s));
+        // Record, last 10 and streak come from the game log whenever it is ahead of the feed.
+        model.addAttribute("bosRecord",
+                teamRecordService.bosRecord(teamStatsService.getLatestStats("BOS").orElse(null)));
+        model.addAttribute("rankSummary", teamRankingService.rankBos());
 
         model.addAttribute("standings", standingsService.buildStandings());
 

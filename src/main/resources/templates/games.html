@@ -50,7 +50,8 @@
           </td>
           <td th:text="${game.homeAway}">Home</td>
           <td th:text="${game.venue ?: 'N/A'}">Fenway Park</td>
-          <td th:text="${game.redSoxScore == null ? 'N/A' : game.redSoxScore + '-' + game.opponentScore}">5-3</td>
+          <td th:text="${game.redSoxScore != null ? game.redSoxScore + '-' + game.opponentScore
+                          : (game.startTime == null or game.startTimeTbd == true ? 'Time TBD' : #temporals.format(game.startTime, 'h:mm a'))}">5-3</td>
           <td>
             <span th:if="${game.result != null}"
                   th:text="${game.result}"

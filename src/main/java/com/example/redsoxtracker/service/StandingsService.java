@@ -5,6 +5,7 @@ import com.example.redsoxtracker.domain.TeamStatSnapshot;
 import com.example.redsoxtracker.dto.DivisionStandings;
 import com.example.redsoxtracker.dto.LeagueStandings;
 import com.example.redsoxtracker.dto.StandingsRow;
+import com.example.redsoxtracker.dto.TeamRecord;
 import com.example.redsoxtracker.repository.TeamRepository;
 import com.example.redsoxtracker.repository.TeamStatSnapshotRepository;
 import org.springframework.stereotype.Service;
@@ -19,10 +20,13 @@ public class StandingsService {
 
     private final TeamRepository teamRepository;
     private final TeamStatSnapshotRepository snapshotRepository;
+    private final TeamRecordService teamRecordService;
 
-    public StandingsService(TeamRepository teamRepository, TeamStatSnapshotRepository snapshotRepository) {
+    public StandingsService(TeamRepository teamRepository, TeamStatSnapshotRepository snapshotRepository,
+                            TeamRecordService teamRecordService) {
         this.teamRepository = teamRepository;
         this.snapshotRepository = snapshotRepository;
+        this.teamRecordService = teamRecordService;
     }
 
     public List<LeagueStandings> buildStandings() {
@@ -35,14 +39,21 @@ public class StandingsService {
             TeamStatSnapshot snap = snapOpt.get();
             if (snap.getWins() == null || snap.getLosses() == null) continue;
 
+            boolean isRedSox = "BOS".equals(team.getTeamCode());
+            // The app scores Red Sox games itself, so its own log can be ahead of this feed.
+            TeamRecord record = isRedSox
+                    ? teamRecordService.bosRecord(snap)
+                    : new TeamRecord(snap.getWins(), snap.getLosses(),
+                                     snap.getLast10Record(), snap.getCurrentStreak(), false);
+
             StandingsRow row = new StandingsRow(
                     team.getShortName(),
-                    snap.getWins(), snap.getLosses(),
-                    pct(snap.getWins(), snap.getLosses()),
+                    record.getWins(), record.getLosses(),
+                    pct(record.getWins(), record.getLosses()),
                     snap.getGamesBack() != null ? snap.getGamesBack() : "-",
                     snap.getWildCardGamesBack() != null ? snap.getWildCardGamesBack() : "-",
-                    snap.getLast10Record(),
-                    snap.getCurrentStreak() != null ? snap.getCurrentStreak() : "-",
+                    record.getLast10(),
+                    record.getStreak(),
                     snap.getRunsScored(), snap.getRunsAllowed(), snap.getRunDifferential(),
                     snap.getHomeRecord() != null ? snap.getHomeRecord() : "-",
                     snap.getAwayRecord() != null ? snap.getAwayRecord() : "-",
@@ -50,7 +61,7 @@ public class StandingsService {
                     Boolean.TRUE.equals(snap.getDivisionLeader()),
                     snap.getDivisionRank(),
                     snap.getWildCardRank(),
-                    "BOS".equals(team.getTeamCode())
+                    isRedSox
             );
 
             byLeagueThenDivision

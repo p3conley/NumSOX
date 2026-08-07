@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +25,14 @@ public class Game {
 
     @NotNull
     private LocalDate gameDate;
+
+    /** First pitch in local time; null when MLB hasn't set it yet. */
+    private LocalDateTime startTime;
+
+    private Boolean startTimeTbd = false;
+
+    /** When this game was first observed as Final, used to hold it on the dashboard briefly. */
+    private LocalDateTime finalizedAt;
 
     @NotBlank
     private String opponent;
@@ -76,6 +85,30 @@ public class Game {
 
     public void setGameDate(LocalDate gameDate) {
         this.gameDate = gameDate;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public Boolean getStartTimeTbd() {
+        return startTimeTbd;
+    }
+
+    public void setStartTimeTbd(Boolean startTimeTbd) {
+        this.startTimeTbd = startTimeTbd;
+    }
+
+    public LocalDateTime getFinalizedAt() {
+        return finalizedAt;
+    }
+
+    public void setFinalizedAt(LocalDateTime finalizedAt) {
+        this.finalizedAt = finalizedAt;
     }
 
     public String getOpponent() {

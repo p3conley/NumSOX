@@ -18,6 +18,11 @@ public class ScoreboardView {
     private Integer outs;
     private String atBat;
     private String inningState;
+    /** The frame currently being played; null once the game is over. */
+    private Integer currentInning;
+    /** "Top" or "Bottom" for the half being played. */
+    private String inningHalf;
+    private boolean live;
     private List<InningLine> innings = new ArrayList<>();
 
     public String getAwayName() { return awayName; }
@@ -46,8 +51,20 @@ public class ScoreboardView {
     public void setAtBat(String atBat) { this.atBat = atBat; }
     public String getInningState() { return inningState; }
     public void setInningState(String inningState) { this.inningState = inningState; }
+    public Integer getCurrentInning() { return currentInning; }
+    public void setCurrentInning(Integer currentInning) { this.currentInning = currentInning; }
+    public String getInningHalf() { return inningHalf; }
+    public void setInningHalf(String inningHalf) { this.inningHalf = inningHalf; }
+    public boolean isLive() { return live; }
+    public void setLive(boolean live) { this.live = live; }
     public List<InningLine> getInnings() { return innings; }
     public void setInnings(List<InningLine> innings) { this.innings = innings; }
+
+    /** True while the visiting team is batting, so only their frame lights up. */
+    public boolean isTopHalf() { return inningHalf != null && inningHalf.toLowerCase().startsWith("top"); }
+
+    /** True while the home team is batting. */
+    public boolean isBottomHalf() { return inningHalf != null && inningHalf.toLowerCase().startsWith("bot"); }
 
     public static class InningLine {
         private int number;

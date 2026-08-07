@@ -7,6 +7,7 @@ import com.example.redsoxtracker.repository.GameRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -15,6 +16,9 @@ import java.util.Optional;
 
 @Service
 public class MatchupService {
+
+    /** How long a finished game stays featured before the next matchup takes over. */
+    private static final int POST_GAME_HOLD_HOURS = 1;
 
     private final GameRepository gameRepository;
     private final TeamStatsService teamStatsService;
@@ -49,8 +53,20 @@ public class MatchupService {
                 .reduce((first, second) -> second);
         if (liveGame.isPresent()) return liveGame;
 
+        // Hold a just-finished game here for an hour before rolling over to the next one,
+        // so the final score stays up instead of flipping straight to the next matchup.
+        LocalDateTime holdUntil = LocalDateTime.now().minusHours(POST_GAME_HOLD_HOURS);
+        Optional<Game> justFinished = allGames.stream()
+                .filter(g -> "Final".equals(g.getStatus()))
+                .filter(g -> g.getFinalizedAt() != null && g.getFinalizedAt().isAfter(holdUntil))
+                .reduce((first, second) -> second);
+        if (justFinished.isPresent()) return justFinished;
+
+        // Past the hold window a finished game drops into the Previous Game box, so skip
+        // finals here and let the next scheduled matchup take the spotlight.
         Optional<Game> todayGame = allGames.stream()
                 .filter(g -> g.getGameDate().isEqual(today))
+                .filter(g -> !"Final".equals(g.getStatus()))
                 .findFirst();
         if (todayGame.isPresent()) return todayGame;
 
