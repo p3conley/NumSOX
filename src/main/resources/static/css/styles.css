@@ -587,29 +587,29 @@ body {
         0 2px 3px rgba(0,0,0,0.75);
 }
 
-/* At bat, frame and the lamp panel read as one strip across the bottom of the board. */
+/* Batter left, frame centred, pitcher right. The outer columns are equal width so the
+   frame sits dead centre regardless of how long the two names are. */
 .monster-status {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    flex-wrap: wrap;
-    gap: clamp(12px, 1.6vw, 28px);
+    gap: clamp(10px, 1.4vw, 24px);
     margin-top: 12px;
     padding-top: 10px;
     border-top: 2px solid rgba(255,255,255,0.28);
 }
 
-/* Only the At Bat and Frame pairs. Left unscoped this also caught every div inside the
-   lamp panel, forcing them all to flex and overriding the rules that hide a group's
-   lamps or its caption. */
-.monster-status > div:not(.count-board) {
+.monster-status .status-mid { justify-content: center; }
+.monster-status .status-right { justify-content: flex-end; }
+
+.monster-status > div {
     display: flex;
     align-items: center;
     gap: 8px;
     min-width: 0;
 }
 
-/* Scoped past the lamp panel, whose spans are bulbs rather than labels. */
-.monster-status > div:not(.count-board) span {
+.monster-status > div span {
     color: rgba(255,255,255,0.72);
     font-size: clamp(10px, 1.3vw, 13px);
     font-weight: 900;
@@ -630,28 +630,32 @@ body {
 /* Real boards use lamps, not digits. An unlit lamp is still a physical bulb sunk into
    the wall, so it keeps a dark body and a rim shadow; lighting one adds the colour and
    the bloom it throws onto the paint around it. */
-/* Sits on the same line as At Bat and Frame, pushed to the right of the strip. */
+/* Its own row across the bottom of the board, centred. */
 .count-board {
-    display: flex;
-    align-items: center;
-    gap: clamp(12px, 1.6vw, 30px);
-    margin-left: auto;
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    justify-content: center;
+    align-items: start;
+    gap: clamp(18px, 3vw, 52px);
+    margin-top: 12px;
+    padding: clamp(10px, 1.1vw, 16px) clamp(12px, 1.4vw, 24px);
+    border-top: 2px solid rgba(255,255,255,0.28);
 }
 
 .count-group {
     display: grid;
     justify-items: center;
-    gap: 5px;
-    min-width: clamp(58px, 6.2vw, 92px);
+    gap: 7px;
+    min-width: clamp(78px, 9vw, 128px);
 }
 
 .count-label {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
     color: #ffffff;
     font-family: "Arial Narrow", Arial, sans-serif;
-    font-size: clamp(11px, 1vw, 16px);
+    font-size: clamp(13px, 1.35vw, 21px);
     font-weight: 900;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -664,18 +668,18 @@ body {
 .count-label::before,
 .count-label::after {
     content: '';
-    width: clamp(8px, 0.85vw, 14px);
+    width: clamp(9px, 1.1vw, 18px);
     height: 3px;
     border-radius: 2px;
     background: #05100c;
     box-shadow: 0 1px 0 rgba(255,255,255,0.10);
 }
 
-.count-lamps { display: flex; gap: clamp(5px, 0.6vw, 9px); }
+.count-lamps { display: flex; gap: clamp(6px, 0.8vw, 12px); }
 
 .lamp {
-    width: clamp(13px, 1.25vw, 20px);
-    height: clamp(13px, 1.25vw, 20px);
+    width: clamp(15px, 1.7vw, 26px);
+    height: clamp(15px, 1.7vw, 26px);
     border-radius: 50%;
     border: 2px solid rgba(0,0,0,0.72);
     /* Off: a dull, dark bulb sitting in its socket. */
@@ -715,10 +719,10 @@ body {
 .count-flash {
     display: none;
     font-family: "Arial Narrow", Arial, sans-serif;
-    font-size: clamp(13px, 1.25vw, 20px);
+    font-size: clamp(15px, 1.7vw, 26px);
     font-weight: 900;
     letter-spacing: 0.07em;
-    line-height: clamp(13px, 1.25vw, 20px);
+    line-height: clamp(15px, 1.7vw, 26px);
     text-transform: uppercase;
     white-space: nowrap;
 }
@@ -758,13 +762,12 @@ body {
 }
 
 @media (max-width: 768px) {
-    /* Too narrow to sit beside At Bat, so the lamps take their own line. */
-    .count-board { margin-left: 0; width: 100%; justify-content: space-between; gap: 10px; }
-    .count-group { min-width: 0; gap: 4px; }
-    .count-label { font-size: clamp(9px, 2.2vw, 12px); gap: 4px; }
-    .count-label::before, .count-label::after { width: 6px; height: 2px; }
-    .lamp { width: clamp(10px, 2.6vw, 14px); height: clamp(10px, 2.6vw, 14px); border-width: 1.5px; }
-    .count-flash { font-size: clamp(10px, 2.6vw, 14px); line-height: clamp(10px, 2.6vw, 14px); }
+    .count-board { justify-content: space-between; gap: 10px; padding: 9px 4px; }
+    .count-group { min-width: 0; gap: 5px; }
+    .count-label { font-size: clamp(10px, 2.4vw, 13px); gap: 4px; }
+    .count-label::before, .count-label::after { width: 7px; height: 2px; }
+    .lamp { width: clamp(11px, 3vw, 15px); height: clamp(11px, 3vw, 15px); border-width: 1.5px; }
+    .count-flash { font-size: clamp(11px, 3vw, 15px); line-height: clamp(11px, 3vw, 15px); }
 }
 
 /* ===== GAMECAST: PLAY BY PLAY, BOX SCORE, GAME INFO ===== */
@@ -2264,8 +2267,12 @@ textarea { min-height: 100px; resize: vertical; }
         grid-template-columns: minmax(0, 1.4fr) repeat(4, minmax(0, .7fr));
         gap: 5px;
     }
-    .monster-status > div:not(.count-board) { gap: 4px; }
-    .monster-status > div:not(.count-board) span { font-size: clamp(8px, 1.8vw, 10px); }
+    /* Three names across is too tight on a phone, so they stack. */
+    .monster-status { grid-template-columns: 1fr; gap: 4px; }
+    .monster-status .status-mid,
+    .monster-status .status-right { justify-content: flex-start; }
+    .monster-status > div { gap: 4px; }
+    .monster-status > div span { font-size: clamp(8px, 1.8vw, 10px); }
     .monster-status strong { font-size: clamp(9px, 1.9vw, 11px); min-width: 10px; }
     .matchup-header { grid-template-columns: 1fr; }
     .home-team { text-align: left; }

@@ -61,12 +61,15 @@ public class LiveScoreboardService {
             view.setStrikes(0);
             view.setOuts(0);
             view.setAtBat("Final");
+            view.setPitching("Final");
             view.setInningState("Final");
         } else {
             view.setBalls(intOrNull(linescore, "balls"));
             view.setStrikes(intOrNull(linescore, "strikes"));
             view.setOuts(intOrNull(linescore, "outs"));
             view.setAtBat(linescore.path("offense").path("batter").path("fullName").asText("Awaiting batter"));
+            // defense.pitcher is whoever is on the mound now; offense.pitcher is the other side's starter.
+            view.setPitching(linescore.path("defense").path("pitcher").path("fullName").asText("Awaiting pitcher"));
             String half = linescore.path("inningHalf").asText("");
             int inning = linescore.path("currentInning").asInt(0);
             view.setInningState((half.isBlank() || inning == 0) ? status : half + " " + inning);
@@ -114,6 +117,7 @@ public class LiveScoreboardService {
         view.setStrikes(0);
         view.setOuts(0);
         view.setAtBat("Awaiting live feed");
+        view.setPitching("Awaiting live feed");
         view.setInningState(game.getStatus());
         return view;
     }

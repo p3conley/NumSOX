@@ -17,6 +17,8 @@ public class ScoreboardView {
     private Integer strikes;
     private Integer outs;
     private String atBat;
+    /** Whoever is on the mound right now. */
+    private String pitching;
     private String inningState;
     /** The frame currently being played; null once the game is over. */
     private Integer currentInning;
@@ -58,6 +60,8 @@ public class ScoreboardView {
     public void setOuts(Integer outs) { this.outs = outs; }
     public String getAtBat() { return atBat; }
     public void setAtBat(String atBat) { this.atBat = atBat; }
+    public String getPitching() { return pitching; }
+    public void setPitching(String pitching) { this.pitching = pitching; }
     public String getInningState() { return inningState; }
     public void setInningState(String inningState) { this.inningState = inningState; }
     public String getInningPhase() { return inningPhase; }
