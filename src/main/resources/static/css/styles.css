@@ -762,7 +762,9 @@ body {
 }
 
 @media (max-width: 768px) {
-    .count-board { justify-content: space-between; gap: 10px; padding: 9px 4px; }
+    /* Stay centred as a group. Pushing them to the edges spread the three sets of lamps
+       across the whole board and stopped reading as one panel. */
+    .count-board { justify-content: center; gap: clamp(14px, 5vw, 30px); padding: 9px 4px; }
     .count-group { min-width: 0; gap: 5px; }
     .count-label { font-size: clamp(10px, 2.4vw, 13px); gap: 4px; }
     .count-label::before, .count-label::after { width: 7px; height: 2px; }
@@ -2263,17 +2265,17 @@ textarea { min-height: 100px; resize: vertical; }
     .monster-cell { min-height: 18px; font-size: clamp(9px, 2.15vw, 12px); }
     .monster-label, .inning-num { font-size: clamp(8px, 1.9vw, 11px); }
     .team-name.boston { font-size: clamp(9px, 2vw, 12px); }
-    .monster-status {
-        grid-template-columns: minmax(0, 1.4fr) repeat(4, minmax(0, .7fr));
-        gap: 5px;
-    }
-    /* Three names across is too tight on a phone, so they stack. */
-    .monster-status { grid-template-columns: 1fr; gap: 4px; }
-    .monster-status .status-mid,
-    .monster-status .status-right { justify-content: flex-start; }
-    .monster-status > div { gap: 4px; }
+    /* Batter, frame and pitcher stay on one line at every width; they shrink and wrap
+       inside their own column rather than stacking into a list. */
+    .monster-status { gap: 6px; }
+    .monster-status > div { gap: 4px; min-width: 0; }
     .monster-status > div span { font-size: clamp(8px, 1.8vw, 10px); }
-    .monster-status strong { font-size: clamp(9px, 1.9vw, 11px); min-width: 10px; }
+    .monster-status strong {
+        font-size: clamp(9px, 1.9vw, 11px);
+        min-width: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
     .matchup-header { grid-template-columns: 1fr; }
     .home-team { text-align: left; }
     .sw-grid, .two-col-stats { grid-template-columns: 1fr; }
