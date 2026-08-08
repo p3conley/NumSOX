@@ -107,14 +107,14 @@
         <div class="monster-cell total-cell" data-total="homeHits" th:text="${scoreboard.homeHits ?: 0}">13</div>
         <div class="monster-cell total-cell" data-total="homeErrors" th:text="${scoreboard.homeErrors ?: 0}">0</div>
       </div>
+      <!-- At bat, frame and the count all share one strip along the bottom of the board. -->
       <div class="monster-status">
-        <div><span>At Bat</span><strong data-live="atBat" th:text="${scoreboard.atBat}">Awaiting batter</strong></div>
-        <div><span>Frame</span><strong data-live="inningState" th:text="${scoreboard.inningState}">Live</strong></div>
-      </div>
+        <div><span>At Bat:</span><strong data-live="atBat" th:text="${scoreboard.atBat}">Awaiting batter</strong></div>
+        <div><span>Frame:</span><strong data-live="inningState" th:text="${scoreboard.inningState}">Live</strong></div>
 
-      <!-- Count panel: lamps rather than digits, the way the Monster reads it. -->
-      <div class="count-board" id="count-board"
-           th:attr="data-last-play=${scoreboard.lastPlayIndex}">
+        <!-- Count panel: lamps rather than digits, the way the Monster reads it. -->
+        <div class="count-board" id="count-board"
+             th:attr="data-last-play=${scoreboard.lastPlayIndex}">
         <div class="count-group" data-group="ball">
           <div class="count-label">Ball</div>
           <div class="count-lamps">
@@ -131,7 +131,7 @@
             <span class="lamp lamp-red" data-strike="1" th:classappend="${(scoreboard.strikes ?: 0) >= 1 ? ' is-on' : ''}"></span>
             <span class="lamp lamp-red" data-strike="2" th:classappend="${(scoreboard.strikes ?: 0) >= 2 ? ' is-on' : ''}"></span>
           </div>
-          <div class="count-flash is-red" data-flash="strike">Strike</div>
+          <div class="count-flash is-red" data-flash="strike">K</div>
         </div>
 
         <div class="count-group" data-group="out"
@@ -143,6 +143,7 @@
           </div>
           <div class="count-flash is-red" data-flash="out"
                th:text="${scoreboard.breakCaption ?: 'Mid'}">Mid 5th</div>
+        </div>
         </div>
       </div>
     </div>
@@ -806,7 +807,7 @@
       if (idx !== null && idx !== undefined) {
         if (!isNaN(lastPlaySeen) && idx > lastPlaySeen) {
           if (sb.lastPlayEvent === 'walk') flash('ball', 'Walk', 5000);
-          else if (sb.lastPlayEvent === 'strikeout') flash('strike', 'Strike', 5000);
+          else if (sb.lastPlayEvent === 'strikeout') flash('strike', 'K', 5000);
         }
         lastPlaySeen = idx;
       }

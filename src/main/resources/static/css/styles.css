@@ -587,23 +587,29 @@ body {
         0 2px 3px rgba(0,0,0,0.75);
 }
 
+/* At bat, frame and the lamp panel read as one strip across the bottom of the board. */
 .monster-status {
-    display: grid;
-    grid-template-columns: minmax(130px, 1.6fr) repeat(4, minmax(54px, 1fr));
-    gap: 10px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: clamp(12px, 1.6vw, 28px);
     margin-top: 12px;
     padding-top: 10px;
     border-top: 2px solid rgba(255,255,255,0.28);
 }
 
-.monster-status div {
+/* Only the At Bat and Frame pairs. Left unscoped this also caught every div inside the
+   lamp panel, forcing them all to flex and overriding the rules that hide a group's
+   lamps or its caption. */
+.monster-status > div:not(.count-board) {
     display: flex;
     align-items: center;
     gap: 8px;
     min-width: 0;
 }
 
-.monster-status span {
+/* Scoped past the lamp panel, whose spans are bulbs rather than labels. */
+.monster-status > div:not(.count-board) span {
     color: rgba(255,255,255,0.72);
     font-size: clamp(10px, 1.3vw, 13px);
     font-weight: 900;
@@ -624,31 +630,28 @@ body {
 /* Real boards use lamps, not digits. An unlit lamp is still a physical bulb sunk into
    the wall, so it keeps a dark body and a rim shadow; lighting one adds the colour and
    the bloom it throws onto the paint around it. */
+/* Sits on the same line as At Bat and Frame, pushed to the right of the strip. */
 .count-board {
-    display: grid;
-    grid-template-columns: repeat(3, auto);
-    justify-content: center;
-    align-items: start;
-    gap: clamp(18px, 3vw, 52px);
-    margin-top: 12px;
-    padding: clamp(10px, 1.1vw, 16px) clamp(12px, 1.4vw, 24px);
-    border-top: 2px solid rgba(255,255,255,0.28);
+    display: flex;
+    align-items: center;
+    gap: clamp(12px, 1.6vw, 30px);
+    margin-left: auto;
 }
 
 .count-group {
     display: grid;
     justify-items: center;
-    gap: 7px;
-    min-width: clamp(78px, 9vw, 128px);
+    gap: 5px;
+    min-width: clamp(58px, 6.2vw, 92px);
 }
 
 .count-label {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
     color: #ffffff;
     font-family: "Arial Narrow", Arial, sans-serif;
-    font-size: clamp(13px, 1.35vw, 21px);
+    font-size: clamp(11px, 1vw, 16px);
     font-weight: 900;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -657,22 +660,22 @@ body {
     text-shadow: 0 0 10px rgba(255,255,255,0.35), 0 2px 3px rgba(0,0,0,0.7);
 }
 
-/* The flanking rules from a real board's stencilled label. */
+/* The flanking rules are painted on the wall, not lit, so they read black. */
 .count-label::before,
 .count-label::after {
     content: '';
-    width: clamp(9px, 1.1vw, 18px);
+    width: clamp(8px, 0.85vw, 14px);
     height: 3px;
     border-radius: 2px;
-    background: rgba(255,255,255,0.85);
-    box-shadow: 0 0 6px rgba(255,255,255,0.3);
+    background: #05100c;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.10);
 }
 
-.count-lamps { display: flex; gap: clamp(6px, 0.8vw, 12px); }
+.count-lamps { display: flex; gap: clamp(5px, 0.6vw, 9px); }
 
 .lamp {
-    width: clamp(15px, 1.7vw, 26px);
-    height: clamp(15px, 1.7vw, 26px);
+    width: clamp(13px, 1.25vw, 20px);
+    height: clamp(13px, 1.25vw, 20px);
     border-radius: 50%;
     border: 2px solid rgba(0,0,0,0.72);
     /* Off: a dull, dark bulb sitting in its socket. */
@@ -712,10 +715,10 @@ body {
 .count-flash {
     display: none;
     font-family: "Arial Narrow", Arial, sans-serif;
-    font-size: clamp(15px, 1.7vw, 26px);
+    font-size: clamp(13px, 1.25vw, 20px);
     font-weight: 900;
     letter-spacing: 0.07em;
-    line-height: clamp(15px, 1.7vw, 26px);
+    line-height: clamp(13px, 1.25vw, 20px);
     text-transform: uppercase;
     white-space: nowrap;
 }
@@ -755,12 +758,13 @@ body {
 }
 
 @media (max-width: 768px) {
-    .count-board { gap: 14px; padding: 9px 6px; }
-    .count-group { min-width: 0; gap: 5px; }
-    .count-label { font-size: clamp(10px, 2.4vw, 13px); gap: 4px; }
-    .count-label::before, .count-label::after { width: 7px; height: 2px; }
-    .lamp { width: clamp(11px, 3vw, 15px); height: clamp(11px, 3vw, 15px); border-width: 1.5px; }
-    .count-flash { font-size: clamp(11px, 3vw, 15px); line-height: clamp(11px, 3vw, 15px); }
+    /* Too narrow to sit beside At Bat, so the lamps take their own line. */
+    .count-board { margin-left: 0; width: 100%; justify-content: space-between; gap: 10px; }
+    .count-group { min-width: 0; gap: 4px; }
+    .count-label { font-size: clamp(9px, 2.2vw, 12px); gap: 4px; }
+    .count-label::before, .count-label::after { width: 6px; height: 2px; }
+    .lamp { width: clamp(10px, 2.6vw, 14px); height: clamp(10px, 2.6vw, 14px); border-width: 1.5px; }
+    .count-flash { font-size: clamp(10px, 2.6vw, 14px); line-height: clamp(10px, 2.6vw, 14px); }
 }
 
 /* ===== GAMECAST: PLAY BY PLAY, BOX SCORE, GAME INFO ===== */
@@ -2260,8 +2264,8 @@ textarea { min-height: 100px; resize: vertical; }
         grid-template-columns: minmax(0, 1.4fr) repeat(4, minmax(0, .7fr));
         gap: 5px;
     }
-    .monster-status div { gap: 4px; }
-    .monster-status span { font-size: clamp(8px, 1.8vw, 10px); }
+    .monster-status > div:not(.count-board) { gap: 4px; }
+    .monster-status > div:not(.count-board) span { font-size: clamp(8px, 1.8vw, 10px); }
     .monster-status strong { font-size: clamp(9px, 1.9vw, 11px); min-width: 10px; }
     .matchup-header { grid-template-columns: 1fr; }
     .home-team { text-align: left; }
