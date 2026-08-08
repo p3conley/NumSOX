@@ -48,6 +48,14 @@ public class LiveScoreboardService {
 
         String status = root.path("gameData").path("status").path("detailedState").asText(game.getStatus());
         boolean finalGame = "Final".equalsIgnoreCase(status) || "Game Over".equalsIgnoreCase(status);
+
+        // Drives the bulb panel: Middle/End mean the side was retired, and the last
+        // completed at-bat tells the page whether to flash WALK or STRIKE.
+        view.setFinalGame(finalGame);
+        view.setInningPhase(linescore.path("inningState").asText(null));
+        view.setInningOrdinal(linescore.path("currentInningOrdinal").asText(null));
+        applyLastPlay(view, root.path("liveData").path("plays").path("allPlays"));
+
         if (finalGame) {
             view.setBalls(0);
             view.setStrikes(0);
@@ -70,6 +78,22 @@ public class LiveScoreboardService {
             }
         }
         return Optional.of(view);
+    }
+
+    /**
+     * The most recently completed at-bat. The count resets the instant a walk or a
+     * strikeout lands, so the bulbs alone can never show that it happened; the page
+     * flashes the word off the back of this instead.
+     */
+    private void applyLastPlay(ScoreboardView view, JsonNode allPlays) {
+        if (!allPlays.isArray()) return;
+        for (int i = allPlays.size() - 1; i >= 0; i--) {
+            JsonNode play = allPlays.get(i);
+            if (!play.path("about").path("isComplete").asBoolean(false)) continue;
+            view.setLastPlayEvent(play.path("result").path("eventType").asText(null));
+            view.setLastPlayIndex(play.path("about").path("atBatIndex").asInt());
+            return;
+        }
     }
 
     private ScoreboardView fallbackBoard(Game game) {

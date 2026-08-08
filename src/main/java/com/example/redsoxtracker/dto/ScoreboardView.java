@@ -22,6 +22,15 @@ public class ScoreboardView {
     private Integer currentInning;
     /** "Top" or "Bottom" for the half being played. */
     private String inningHalf;
+    /** Raw feed state: Top, Middle, Bottom or End. Middle and End mean the side was retired. */
+    private String inningPhase;
+    /** "5th", used for the MID/END caption between innings. */
+    private String inningOrdinal;
+    /** eventType of the most recently completed at-bat, e.g. "walk" or "strikeout". */
+    private String lastPlayEvent;
+    /** atBatIndex of that play, so the page can tell a new one from a repeat poll. */
+    private Integer lastPlayIndex;
+    private boolean finalGame;
     private boolean live;
     private List<InningLine> innings = new ArrayList<>();
 
@@ -51,6 +60,30 @@ public class ScoreboardView {
     public void setAtBat(String atBat) { this.atBat = atBat; }
     public String getInningState() { return inningState; }
     public void setInningState(String inningState) { this.inningState = inningState; }
+    public String getInningPhase() { return inningPhase; }
+    public void setInningPhase(String inningPhase) { this.inningPhase = inningPhase; }
+    public String getInningOrdinal() { return inningOrdinal; }
+    public void setInningOrdinal(String inningOrdinal) { this.inningOrdinal = inningOrdinal; }
+    public String getLastPlayEvent() { return lastPlayEvent; }
+    public void setLastPlayEvent(String lastPlayEvent) { this.lastPlayEvent = lastPlayEvent; }
+    public Integer getLastPlayIndex() { return lastPlayIndex; }
+    public void setLastPlayIndex(Integer lastPlayIndex) { this.lastPlayIndex = lastPlayIndex; }
+    public boolean isFinalGame() { return finalGame; }
+    public void setFinalGame(boolean finalGame) { this.finalGame = finalGame; }
+
+    /** Between halves the board shows MID/END rather than a live count. */
+    public boolean isBetweenInnings() {
+        return "Middle".equalsIgnoreCase(inningPhase) || "End".equalsIgnoreCase(inningPhase);
+    }
+
+    /** "MID 5TH", "END 5TH", or plain "END" once the game is over. */
+    public String getBreakCaption() {
+        if (finalGame) return "END";
+        if (!isBetweenInnings()) return null;
+        String prefix = "Middle".equalsIgnoreCase(inningPhase) ? "MID" : "END";
+        return inningOrdinal == null ? prefix : prefix + " " + inningOrdinal.toUpperCase();
+    }
+
     public Integer getCurrentInning() { return currentInning; }
     public void setCurrentInning(Integer currentInning) { this.currentInning = currentInning; }
     public String getInningHalf() { return inningHalf; }

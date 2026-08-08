@@ -620,6 +620,149 @@ body {
     white-space: nowrap;
 }
 
+/* ===== COUNT PANEL: BALL / STRIKE / OUT LAMPS ===== */
+/* Real boards use lamps, not digits. An unlit lamp is still a physical bulb sunk into
+   the wall, so it keeps a dark body and a rim shadow; lighting one adds the colour and
+   the bloom it throws onto the paint around it. */
+.count-board {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    justify-content: center;
+    align-items: start;
+    gap: clamp(18px, 3vw, 52px);
+    margin-top: 12px;
+    padding: clamp(10px, 1.1vw, 16px) clamp(12px, 1.4vw, 24px);
+    border-top: 2px solid rgba(255,255,255,0.28);
+}
+
+.count-group {
+    display: grid;
+    justify-items: center;
+    gap: 7px;
+    min-width: clamp(78px, 9vw, 128px);
+}
+
+.count-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #ffffff;
+    font-family: "Arial Narrow", Arial, sans-serif;
+    font-size: clamp(13px, 1.35vw, 21px);
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1;
+    /* The painted lettering catches the same light the lamps throw. */
+    text-shadow: 0 0 10px rgba(255,255,255,0.35), 0 2px 3px rgba(0,0,0,0.7);
+}
+
+/* The flanking rules from a real board's stencilled label. */
+.count-label::before,
+.count-label::after {
+    content: '';
+    width: clamp(9px, 1.1vw, 18px);
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.85);
+    box-shadow: 0 0 6px rgba(255,255,255,0.3);
+}
+
+.count-lamps { display: flex; gap: clamp(6px, 0.8vw, 12px); }
+
+.lamp {
+    width: clamp(15px, 1.7vw, 26px);
+    height: clamp(15px, 1.7vw, 26px);
+    border-radius: 50%;
+    border: 2px solid rgba(0,0,0,0.72);
+    /* Off: a dull, dark bulb sitting in its socket. */
+    background:
+        radial-gradient(circle at 34% 28%, rgba(255,255,255,0.10) 0%, transparent 46%),
+        #16241f;
+    box-shadow:
+        inset 0 2px 4px rgba(0,0,0,0.75),
+        inset 0 -1px 2px rgba(255,255,255,0.07);
+    transition: background 0.14s ease, box-shadow 0.2s ease;
+}
+
+/* On: colour, a hot highlight, and bloom spilling onto the wall. */
+.lamp-green.is-on {
+    background:
+        radial-gradient(circle at 34% 28%, rgba(255,255,255,0.85) 0%, rgba(120,240,120,0.5) 26%, transparent 55%),
+        radial-gradient(circle at 50% 55%, #58e558 0%, #22a622 78%);
+    box-shadow:
+        inset 0 1px 2px rgba(255,255,255,0.4),
+        inset 0 -2px 4px rgba(0,60,0,0.5),
+        0 0 10px rgba(70,225,70,0.85),
+        0 0 22px rgba(70,225,70,0.45);
+}
+
+.lamp-red.is-on {
+    background:
+        radial-gradient(circle at 34% 28%, rgba(255,255,255,0.8) 0%, rgba(255,140,120,0.5) 26%, transparent 55%),
+        radial-gradient(circle at 50% 55%, #e03a2f 0%, #9c1610 78%);
+    box-shadow:
+        inset 0 1px 2px rgba(255,255,255,0.35),
+        inset 0 -2px 4px rgba(70,0,0,0.55),
+        0 0 10px rgba(228,50,40,0.85),
+        0 0 22px rgba(228,50,40,0.42);
+}
+
+/* WALK / STRIKE / MID 5TH take the lamps' place, lit the same way. */
+.count-flash {
+    display: none;
+    font-family: "Arial Narrow", Arial, sans-serif;
+    font-size: clamp(15px, 1.7vw, 26px);
+    font-weight: 900;
+    letter-spacing: 0.07em;
+    line-height: clamp(15px, 1.7vw, 26px);
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.count-group.is-flashing .count-lamps { display: none; }
+.count-group.is-flashing .count-flash { display: block; }
+
+.count-flash.is-green {
+    color: #63f063;
+    text-shadow: 0 0 9px rgba(70,225,70,0.9), 0 0 20px rgba(70,225,70,0.5), 0 2px 3px rgba(0,0,0,0.6);
+}
+
+.count-flash.is-red {
+    color: #ff5347;
+    text-shadow: 0 0 9px rgba(228,50,40,0.9), 0 0 20px rgba(228,50,40,0.5), 0 2px 3px rgba(0,0,0,0.6);
+}
+
+/* A lamp coming on reads better with a brief surge, like a filament warming. */
+@keyframes lamp-strike {
+    0%   { transform: scale(1); filter: brightness(1); }
+    35%  { transform: scale(1.14); filter: brightness(1.5); }
+    100% { transform: scale(1); filter: brightness(1); }
+}
+
+.lamp.just-lit { animation: lamp-strike 0.34s ease-out; }
+
+@keyframes flash-in {
+    0%   { opacity: 0; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.count-group.is-flashing .count-flash { animation: flash-in 0.22s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+    .lamp.just-lit { animation: none; }
+    .count-group.is-flashing .count-flash { animation: none; }
+}
+
+@media (max-width: 768px) {
+    .count-board { gap: 14px; padding: 9px 6px; }
+    .count-group { min-width: 0; gap: 5px; }
+    .count-label { font-size: clamp(10px, 2.4vw, 13px); gap: 4px; }
+    .count-label::before, .count-label::after { width: 7px; height: 2px; }
+    .lamp { width: clamp(11px, 3vw, 15px); height: clamp(11px, 3vw, 15px); border-width: 1.5px; }
+    .count-flash { font-size: clamp(11px, 3vw, 15px); line-height: clamp(11px, 3vw, 15px); }
+}
+
 /* ===== GAMECAST: PLAY BY PLAY, BOX SCORE, GAME INFO ===== */
 /* Sits directly under the scoreboard and stays shut until asked for, so the dashboard
    still leads with the story and the detail is one click away. */

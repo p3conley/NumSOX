@@ -109,10 +109,41 @@
       </div>
       <div class="monster-status">
         <div><span>At Bat</span><strong data-live="atBat" th:text="${scoreboard.atBat}">Awaiting batter</strong></div>
-        <div><span>Ball</span><strong data-live="balls" th:text="${scoreboard.balls ?: 0}">0</strong></div>
-        <div><span>Strike</span><strong data-live="strikes" th:text="${scoreboard.strikes ?: 0}">0</strong></div>
-        <div><span>Out</span><strong data-live="outs" th:text="${scoreboard.outs ?: 0}">0</strong></div>
         <div><span>Frame</span><strong data-live="inningState" th:text="${scoreboard.inningState}">Live</strong></div>
+      </div>
+
+      <!-- Count panel: lamps rather than digits, the way the Monster reads it. -->
+      <div class="count-board" id="count-board"
+           th:attr="data-last-play=${scoreboard.lastPlayIndex}">
+        <div class="count-group" data-group="ball">
+          <div class="count-label">Ball</div>
+          <div class="count-lamps">
+            <span class="lamp lamp-green" data-ball="1" th:classappend="${(scoreboard.balls ?: 0) >= 1 ? ' is-on' : ''}"></span>
+            <span class="lamp lamp-green" data-ball="2" th:classappend="${(scoreboard.balls ?: 0) >= 2 ? ' is-on' : ''}"></span>
+            <span class="lamp lamp-green" data-ball="3" th:classappend="${(scoreboard.balls ?: 0) >= 3 ? ' is-on' : ''}"></span>
+          </div>
+          <div class="count-flash is-green" data-flash="ball">Walk</div>
+        </div>
+
+        <div class="count-group" data-group="strike">
+          <div class="count-label">Strike</div>
+          <div class="count-lamps">
+            <span class="lamp lamp-red" data-strike="1" th:classappend="${(scoreboard.strikes ?: 0) >= 1 ? ' is-on' : ''}"></span>
+            <span class="lamp lamp-red" data-strike="2" th:classappend="${(scoreboard.strikes ?: 0) >= 2 ? ' is-on' : ''}"></span>
+          </div>
+          <div class="count-flash is-red" data-flash="strike">Strike</div>
+        </div>
+
+        <div class="count-group" data-group="out"
+             th:classappend="${scoreboard.breakCaption != null ? ' is-flashing' : ''}">
+          <div class="count-label">Out</div>
+          <div class="count-lamps">
+            <span class="lamp lamp-red" data-out="1" th:classappend="${(scoreboard.outs ?: 0) >= 1 ? ' is-on' : ''}"></span>
+            <span class="lamp lamp-red" data-out="2" th:classappend="${(scoreboard.outs ?: 0) >= 2 ? ' is-on' : ''}"></span>
+          </div>
+          <div class="count-flash is-red" data-flash="out"
+               th:text="${scoreboard.breakCaption ?: 'Mid'}">Mid 5th</div>
+        </div>
       </div>
     </div>
 
@@ -700,10 +731,85 @@
         if (cell) cell.textContent = (sb[k] === null || sb[k] === undefined) ? 0 : sb[k];
       });
 
-      ['atBat','balls','strikes','outs','inningState'].forEach(function (k) {
+      ['atBat','inningState'].forEach(function (k) {
         var el = board.querySelector('[data-live="' + k + '"]');
-        if (el) el.textContent = (sb[k] === null || sb[k] === undefined) ? 0 : sb[k];
+        if (el) el.textContent = (sb[k] === null || sb[k] === undefined) ? '' : sb[k];
       });
+
+      applyCount(sb);
+    }
+
+    // ---- ball / strike / out lamps -------------------------------------------------
+    var countBoard = document.getElementById('count-board');
+    var lastPlaySeen = countBoard ? parseInt(countBoard.getAttribute('data-last-play'), 10) : NaN;
+    var flashTimers = {};
+
+    function group(name) {
+      return countBoard ? countBoard.querySelector('.count-group[data-group="' + name + '"]') : null;
+    }
+
+    function setLamps(attr, lit) {
+      if (!countBoard) return;
+      countBoard.querySelectorAll('[data-' + attr + ']').forEach(function (lamp) {
+        var n = parseInt(lamp.getAttribute('data-' + attr), 10);
+        var on = n <= lit;
+        // Only animate the bulb that just came on, not every lit one.
+        if (on && !lamp.classList.contains('is-on')) {
+          lamp.classList.add('just-lit');
+          window.setTimeout(function () { lamp.classList.remove('just-lit'); }, 360);
+        }
+        lamp.classList.toggle('is-on', on);
+      });
+    }
+
+    /** Show a word in place of a group's lamps, for `ms` or until told otherwise. */
+    function flash(name, text, ms) {
+      var g = group(name);
+      if (!g) return;
+      var el = g.querySelector('.count-flash');
+      if (el && text) el.textContent = text;
+      g.classList.add('is-flashing');
+      if (flashTimers[name]) window.clearTimeout(flashTimers[name]);
+      if (ms) {
+        flashTimers[name] = window.setTimeout(function () {
+          g.classList.remove('is-flashing');
+          flashTimers[name] = null;
+        }, ms);
+      }
+    }
+
+    function clearFlash(name) {
+      var g = group(name);
+      if (!g) return;
+      if (flashTimers[name]) { window.clearTimeout(flashTimers[name]); flashTimers[name] = null; }
+      g.classList.remove('is-flashing');
+    }
+
+    function applyCount(sb) {
+      if (!countBoard) return;
+
+      setLamps('ball', sb.balls || 0);
+      setLamps('strike', sb.strikes || 0);
+      setLamps('out', sb.outs || 0);
+
+      // Between halves, and at the end of the game, the out lamps give way to the caption.
+      if (sb.breakCaption) {
+        flash('out', sb.breakCaption, 0);
+      } else {
+        clearFlash('out');
+      }
+
+      // A walk or a strikeout resets the count before the lamps can show it, so the word
+      // is flashed off the back of the last completed at-bat instead. Only fire when the
+      // at-bat is genuinely new, never on a repeat poll or the first page load.
+      var idx = sb.lastPlayIndex;
+      if (idx !== null && idx !== undefined) {
+        if (!isNaN(lastPlaySeen) && idx > lastPlaySeen) {
+          if (sb.lastPlayEvent === 'walk') flash('ball', 'Walk', 5000);
+          else if (sb.lastPlayEvent === 'strikeout') flash('strike', 'Strike', 5000);
+        }
+        lastPlaySeen = idx;
+      }
     }
 
     function applyHeadline(data) {
