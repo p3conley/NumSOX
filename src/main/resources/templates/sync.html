@@ -61,6 +61,10 @@
         <button type="submit" class="button secondary">Refresh Schedule</button>
       </form>
       <form method="post" th:action="@{/sync/refresh}">
+        <input type="hidden" name="type" value="league_schedule"/>
+        <button type="submit" class="button secondary">Refresh League Results</button>
+      </form>
+      <form method="post" th:action="@{/sync/refresh}">
         <input type="hidden" name="type" value="team_stats"/>
         <button type="submit" class="button secondary">Refresh Team Stats</button>
       </form>

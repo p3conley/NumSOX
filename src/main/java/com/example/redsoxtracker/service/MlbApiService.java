@@ -41,6 +41,17 @@ public class MlbApiService {
         return get(url);
     }
 
+    /**
+     * Every club's games in the window, not just Boston's. Standings for a past date are
+     * tallied from this, so no team filter and no hydration beyond the bare result.
+     */
+    public JsonNode fetchLeagueSchedule(LocalDate from, LocalDate to) {
+        String url = BASE + "/schedule?sportId=1"
+                + "&startDate=" + fmt(from)
+                + "&endDate=" + fmt(to);
+        return get(url);
+    }
+
     /** AL standings (leagueId 103). */
     public JsonNode fetchAlStandings(int season) {
         String url = BASE + "/standings?leagueId=103&season=" + season;

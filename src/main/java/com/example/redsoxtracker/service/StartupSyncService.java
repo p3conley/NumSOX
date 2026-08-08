@@ -36,6 +36,14 @@ public class StartupSyncService {
         }
 
         try {
+            log.info("Fetching league-wide results for historical standings...");
+            int leagueGames = importer.importLeagueSchedule();
+            log.info("League schedule: {} games imported", leagueGames);
+        } catch (Exception e) {
+            log.warn("League schedule import failed: {}", e.getMessage());
+        }
+
+        try {
             log.info("Fetching standings...");
             importer.importStandings();
         } catch (Exception e) {

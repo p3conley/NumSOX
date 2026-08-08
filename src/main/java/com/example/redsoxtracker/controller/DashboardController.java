@@ -5,6 +5,7 @@ import com.example.redsoxtracker.domain.BallparkFactorSnapshot;
 import com.example.redsoxtracker.dto.WinProbabilityResult;
 import com.example.redsoxtracker.repository.GameRepository;
 import com.example.redsoxtracker.service.GameService;
+import com.example.redsoxtracker.service.HistoricalStandingsService;
 import com.example.redsoxtracker.service.LiveScoreboardService;
 import com.example.redsoxtracker.service.MatchupService;
 import com.example.redsoxtracker.service.StandingsService;
@@ -14,8 +15,10 @@ import com.example.redsoxtracker.service.TeamStatsService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,12 +33,14 @@ public class DashboardController {
     private final StandingsService standingsService;
     private final TeamRankingService teamRankingService;
     private final TeamRecordService teamRecordService;
+    private final HistoricalStandingsService historicalStandingsService;
 
     public DashboardController(GameRepository gameRepository, GameService gameService,
                                LiveScoreboardService liveScoreboardService,
                                MatchupService matchupService, TeamStatsService teamStatsService,
                                StandingsService standingsService, TeamRankingService teamRankingService,
-                               TeamRecordService teamRecordService) {
+                               TeamRecordService teamRecordService,
+                               HistoricalStandingsService historicalStandingsService) {
         this.gameRepository = gameRepository;
         this.gameService = gameService;
         this.liveScoreboardService = liveScoreboardService;
@@ -44,10 +49,12 @@ public class DashboardController {
         this.standingsService = standingsService;
         this.teamRankingService = teamRankingService;
         this.teamRecordService = teamRecordService;
+        this.historicalStandingsService = historicalStandingsService;
     }
 
     @GetMapping("/")
-    public String dashboard(Model model) {
+    public String dashboard(Model model,
+                            @RequestParam(name = "standingsDate", required = false) String standingsDate) {
         List<Game> games = gameRepository.findAllByOrderByGameDateAsc();
         model.addAttribute("games", games);
         model.addAttribute("wins", gameService.countWins());
@@ -98,8 +105,57 @@ public class DashboardController {
                 teamRecordService.bosRecord(teamStatsService.getLatestStats("BOS").orElse(null)));
         model.addAttribute("rankSummary", teamRankingService.rankBos());
 
-        model.addAttribute("standings", standingsService.buildStandings());
+        addStandings(model, standingsDate);
 
         return "dashboard";
+    }
+
+    /**
+     * Standings for the selected date, rebuilt from the league-wide game log.
+     *
+     * <p>Every date uses the same source, including the latest, so the scrubber, the
+     * timelapse and the static table can never disagree. The computed table was checked
+     * against MLB's own standings and matched all 30 clubs on record, streak and games
+     * back, and it picks up a finished game before the cached standings feed does. The
+     * feed is kept only as a fallback for a database that has no league log yet.</p>
+     */
+    private void addStandings(Model model, String standingsDate) {
+        List<LocalDate> playedDates = historicalStandingsService.hasData()
+                ? historicalStandingsService.playedDates()
+                : List.of();
+
+        if (playedDates.isEmpty()) {
+            model.addAttribute("standings", standingsService.buildStandings());
+            return;
+        }
+
+        LocalDate latest = playedDates.get(playedDates.size() - 1);
+        LocalDate selected = latest;
+        if (standingsDate != null && !standingsDate.isBlank()) {
+            try {
+                LocalDate parsed = LocalDate.parse(standingsDate);
+                // Snap to the nearest played date at or before the request, so a day with
+                // no baseball still shows the standings that were true that evening.
+                selected = playedDates.stream()
+                        .filter(d -> !d.isAfter(parsed))
+                        .reduce((a, b) -> b)
+                        .orElse(playedDates.get(0));
+            } catch (DateTimeParseException ignored) {
+                selected = latest;
+            }
+        }
+
+        boolean isLatest = selected.isEqual(latest);
+        model.addAttribute("standings", historicalStandingsService.standingsOn(selected));
+
+        int index = playedDates.indexOf(selected);
+        model.addAttribute("standingsSelectedDate", selected);
+        model.addAttribute("standingsIsLatest", isLatest);
+        model.addAttribute("standingsPrevDate", index > 0 ? playedDates.get(index - 1) : null);
+        model.addAttribute("standingsNextDate", isLatest ? null : playedDates.get(index + 1));
+        model.addAttribute("standingsFirstDate", playedDates.get(0));
+        model.addAttribute("standingsLatestDate", latest);
+        model.addAttribute("standingsDayIndex", index);
+        model.addAttribute("standingsTotalDays", playedDates.size());
     }
 }

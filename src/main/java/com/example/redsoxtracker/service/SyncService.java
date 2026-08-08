@@ -33,6 +33,16 @@ public class SyncService {
         }
     }
 
+    /** Every club's results, used to rebuild standings for any date in the season. */
+    @Transactional
+    public void refreshLeagueSchedule() {
+        try {
+            importer.importLeagueSchedule();
+        } catch (Exception e) {
+            markFailed("league_schedule", e.getMessage());
+        }
+    }
+
     @Transactional
     public void refreshStandings() {
         try {
@@ -83,6 +93,7 @@ public class SyncService {
     @Transactional
     public void refreshAll() {
         refreshSchedule();
+        refreshLeagueSchedule();
         refreshStandings();
         refreshTeamStats();
         refreshRoster();

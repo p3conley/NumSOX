@@ -34,6 +34,7 @@ public class SyncController {
                           @RequestParam(name = "returnTo", required = false) String returnTo) {
         switch (type) {
             case "schedule"   -> syncService.refreshSchedule();
+            case "league_schedule" -> syncService.refreshLeagueSchedule();
             case "standings"  -> syncService.refreshStandings();
             case "team_stats" -> syncService.refreshTeamStats();
             case "rosters"    -> syncService.refreshRoster();

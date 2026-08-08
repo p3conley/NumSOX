@@ -20,6 +20,7 @@ public class MlbDataImportService {
     private static final Logger log = LoggerFactory.getLogger(MlbDataImportService.class);
 
     private final GameRepository gameRepo;
+    private final LeagueGameRepository leagueGameRepo;
     private final TeamRepository teamRepo;
     private final PlayerRepository playerRepo;
     private final TeamStatSnapshotRepository teamStatRepo;
@@ -43,13 +44,15 @@ public class MlbDataImportService {
         Map.entry(119, "Dodgers"), Map.entry(135, "Padres"), Map.entry(137, "Giants")
     );
 
-    public MlbDataImportService(GameRepository gameRepo, TeamRepository teamRepo,
+    public MlbDataImportService(GameRepository gameRepo, LeagueGameRepository leagueGameRepo,
+                                TeamRepository teamRepo,
                                 PlayerRepository playerRepo,
                                 TeamStatSnapshotRepository teamStatRepo,
                                 HitterStatSnapshotRepository hitterStatRepo,
                                 PitcherStatSnapshotRepository pitcherStatRepo,
                                 SyncLogRepository syncLogRepo, MlbApiService api, BaseballSavantService savant) {
         this.gameRepo = gameRepo;
+        this.leagueGameRepo = leagueGameRepo;
         this.teamRepo = teamRepo;
         this.playerRepo = playerRepo;
         this.teamStatRepo = teamStatRepo;
@@ -81,6 +84,71 @@ public class MlbDataImportService {
         log.info("Schedule import: {} games saved/updated", count);
         markSynced("schedule", "MLB Stats API", count + " games imported for " + from + " – " + to);
         return count;
+    }
+
+    /**
+     * Import every club's games for the season so standings can be rebuilt for any date.
+     * Pulled in monthly windows because a single season-long request for all 30 teams is
+     * a large response and MLB is happier serving it in slices.
+     */
+    @Transactional
+    public int importLeagueSchedule() {
+        LocalDate seasonStart = LocalDate.of(api.currentSeason(), 3, 1);
+        LocalDate seasonEnd   = LocalDate.of(api.currentSeason(), 11, 15);
+
+        int count = 0;
+        LocalDate windowStart = seasonStart;
+        while (!windowStart.isAfter(seasonEnd)) {
+            LocalDate windowEnd = windowStart.plusMonths(1).minusDays(1);
+            if (windowEnd.isAfter(seasonEnd)) windowEnd = seasonEnd;
+            try {
+                JsonNode root = api.fetchLeagueSchedule(windowStart, windowEnd);
+                for (JsonNode dateNode : root.path("dates")) {
+                    for (JsonNode gameNode : dateNode.path("games")) {
+                        if (upsertLeagueGame(gameNode)) count++;
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("League schedule import failed for {} to {}: {}", windowStart, windowEnd, e.getMessage());
+            }
+            windowStart = windowStart.plusMonths(1);
+        }
+
+        log.info("League schedule import: {} games saved/updated", count);
+        markSynced("league_schedule", "MLB Stats API", count + " league games imported for season " + api.currentSeason());
+        return count;
+    }
+
+    private boolean upsertLeagueGame(JsonNode g) {
+        int gamePk = g.path("gamePk").asInt();
+        if (gamePk == 0) return false;
+
+        // Spring training and exhibition games share the schedule feed; only regular season counts.
+        String gameType = g.path("gameType").asText("R");
+        if (!"R".equals(gameType)) return false;
+
+        JsonNode home = g.path("teams").path("home");
+        JsonNode away = g.path("teams").path("away");
+        int homeId = home.path("team").path("id").asInt();
+        int awayId = away.path("team").path("id").asInt();
+        if (homeId == 0 || awayId == 0) return false;
+
+        String officialDate = g.path("officialDate").asText("");
+        if (officialDate.isEmpty()) return false;
+
+        String status = mapStatus(g.path("status").path("abstractGameState").asText("Preview"),
+                                  g.path("status").path("detailedState").asText(""));
+
+        LeagueGame lg = leagueGameRepo.findByMlbGameId(gamePk).orElseGet(LeagueGame::new);
+        lg.setMlbGameId(gamePk);
+        lg.setGameDate(LocalDate.parse(officialDate));
+        lg.setHomeTeamId(homeId);
+        lg.setAwayTeamId(awayId);
+        lg.setStatus(status);
+        lg.setHomeScore(home.path("score").isMissingNode() ? null : home.path("score").asInt());
+        lg.setAwayScore(away.path("score").isMissingNode() ? null : away.path("score").asInt());
+        leagueGameRepo.save(lg);
+        return true;
     }
 
     private boolean upsertGame(JsonNode g) {

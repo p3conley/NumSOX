@@ -253,7 +253,53 @@
 
   <!-- League Standings -->
   <div th:if="${standings != null and !standings.isEmpty()}" class="section-header">League Standings</div>
-  <div th:if="${standings != null and !standings.isEmpty()}" class="standings-wrap">
+
+  <!-- Date scrubber and season timelapse -->
+  <div th:if="${standingsSelectedDate != null}" class="standings-console" id="tl-console"
+       th:attr="data-day-index=${standingsDayIndex}, data-total-days=${standingsTotalDays}">
+    <div class="scrub-row">
+      <a class="scrub-arrow" id="tl-prev"
+         th:classappend="${standingsPrevDate == null ? ' is-disabled' : ''}"
+         th:href="${standingsPrevDate != null
+                     ? '/?standingsDate=' + #temporals.format(standingsPrevDate, 'yyyy-MM-dd') + '#standings'
+                     : '#'}"
+         aria-label="Previous day">&#8249;</a>
+
+      <div class="scrub-date">
+        <div class="scrub-date-main" id="tl-date"
+             th:text="${#temporals.format(standingsSelectedDate, 'MMMM d, yyyy')}">August 7, 2026</div>
+        <div class="scrub-date-sub" id="tl-daycount"
+             th:text="'Day ' + ${standingsDayIndex + 1} + ' of ' + ${standingsTotalDays}">Day 118 of 118</div>
+      </div>
+
+      <a class="scrub-arrow" id="tl-next"
+         th:classappend="${standingsIsLatest ? ' is-disabled' : ''}"
+         th:href="${standingsNextDate != null
+                     ? '/?standingsDate=' + #temporals.format(standingsNextDate, 'yyyy-MM-dd') + '#standings'
+                     : '#'}"
+         aria-label="Next day">&#8250;</a>
+    </div>
+
+    <div class="timelapse-row">
+      <button type="button" class="tl-btn tl-play" id="tl-play">
+        <span class="tl-icon" id="tl-icon">&#9654;</span><span id="tl-play-label">Timelapse</span>
+      </button>
+      <button type="button" class="tl-btn tl-ghost" id="tl-reset" title="Back to Opening Day">&#8634;</button>
+
+      <input type="range" class="tl-progress" id="tl-progress" min="0" max="0" value="0"
+             aria-label="Season progress"/>
+
+      <div class="tl-speeds" role="group" aria-label="Playback speed">
+        <span class="tl-speeds-label">Days<br/>per sec</span>
+        <button type="button" class="tl-speed" data-speed="2">2</button>
+        <button type="button" class="tl-speed is-active" data-speed="6">6</button>
+        <button type="button" class="tl-speed" data-speed="15">15</button>
+      </div>
+    </div>
+    <div class="tl-note" id="tl-note">Historical standings are rebuilt from every club's game results.</div>
+  </div>
+
+  <div th:if="${standings != null and !standings.isEmpty()}" class="standings-wrap" id="standings">
     <div th:each="lg : ${standings}" th:class="${'league-box league-' + #strings.toLowerCase(lg.league)}">
       <div class="league-box-title" th:text="${lg.fullName}">American League</div>
       <div th:each="dv : ${lg.divisions}" class="division-block">
@@ -268,8 +314,9 @@
                 <th>Home</th><th>Away</th><th>X-W/L</th>
               </tr>
             </thead>
-            <tbody>
-              <tr th:each="row : ${dv.rows}" th:classappend="${row.redSox ? 'standings-redsox' : ''}">
+            <tbody th:attr="data-division=${lg.league + ' ' + dv.name}">
+              <tr th:each="row : ${dv.rows}" th:classappend="${row.redSox ? 'standings-redsox' : ''}"
+                  th:attr="data-team=${row.teamName}">
                 <td class="tag-col">
                   <span th:if="${row.hasTag}" th:class="${'standings-tag ' + row.tagClass}" th:text="${row.tagLabel}">DIV</span>
                 </td>
@@ -277,20 +324,20 @@
                   <img class="table-team-logo" th:src="${@teamLogoService.logoForName(row.teamName)}" th:alt="${row.teamName + ' logo'}"/>
                   <span th:text="${row.teamName}">Red Sox</span>
                 </td>
-                <td th:text="${row.wins}">56</td>
-                <td th:text="${row.losses}">51</td>
-                <td th:text="${row.pct}">.523</td>
-                <td th:text="${row.gamesBack}">7.0</td>
-                <td th:text="${row.wildCardGamesBack}">+1.5</td>
-                <td th:text="${row.last10}">7-3</td>
-                <td th:text="${row.streak}">W1</td>
-                <td th:text="${row.runsScored ?: '-'}">449</td>
-                <td th:text="${row.runsAllowed ?: '-'}">400</td>
-                <td th:text="${row.runDifferential != null ? (row.runDifferential > 0 ? '+' : '') + row.runDifferential : '-'}"
+                <td data-col="w" th:text="${row.wins}">56</td>
+                <td data-col="l" th:text="${row.losses}">51</td>
+                <td data-col="pct" th:text="${row.pct}">.523</td>
+                <td data-col="gb" th:text="${row.gamesBack}">7.0</td>
+                <td data-col="wcgb" th:text="${row.wildCardGamesBack}">+1.5</td>
+                <td data-col="l10" th:text="${row.last10}">7-3</td>
+                <td data-col="strk" th:text="${row.streak}">W1</td>
+                <td data-col="rs" th:text="${row.runsScored ?: '-'}">449</td>
+                <td data-col="ra" th:text="${row.runsAllowed ?: '-'}">400</td>
+                <td data-col="diff" th:text="${row.runDifferential != null ? (row.runDifferential > 0 ? '+' : '') + row.runDifferential : '-'}"
                     th:classappend="${row.runDifferential != null and row.runDifferential > 0 ? 'diff-pos' : (row.runDifferential != null and row.runDifferential < 0 ? 'diff-neg' : '')}">+49</td>
-                <td th:text="${row.homeRecord}">25-29</td>
-                <td th:text="${row.awayRecord}">31-22</td>
-                <td th:text="${row.expectedRecord}">59-48</td>
+                <td data-col="home" th:text="${row.homeRecord}">25-29</td>
+                <td data-col="away" th:text="${row.awayRecord}">31-22</td>
+                <td data-col="xwl" th:text="${row.expectedRecord}">59-48</td>
               </tr>
             </tbody>
           </table>
@@ -354,6 +401,188 @@
       box.scrollTop += (rowRect.bottom - boxRect.bottom);
     }
   });
+</script>
+
+<!-- Season standings timelapse. The table Thymeleaf rendered is updated in place rather
+     than rebuilt, so a frame is a handful of text writes and a re-sort per division. -->
+<script>
+  (function () {
+    var console_ = document.getElementById('tl-console');
+    if (!console_) return;
+
+    var playBtn   = document.getElementById('tl-play');
+    var playLabel = document.getElementById('tl-play-label');
+    var playIcon  = document.getElementById('tl-icon');
+    var resetBtn  = document.getElementById('tl-reset');
+    var progress  = document.getElementById('tl-progress');
+    var dateEl    = document.getElementById('tl-date');
+    var countEl   = document.getElementById('tl-daycount');
+    var prevLink  = document.getElementById('tl-prev');
+    var nextLink  = document.getElementById('tl-next');
+    var noteEl    = document.getElementById('tl-note');
+    var speedBtns = Array.prototype.slice.call(document.querySelectorAll('.tl-speed'));
+
+    var frames = null;      // whole season, fetched on first play
+    var timer = null;
+    var daysPerSecond = 6;
+    var loading = false;
+
+    // Start where the server rendered us, so the scrubber agrees with the date on screen
+    // before any data is fetched.
+    var totalDays = parseInt(console_.getAttribute('data-total-days'), 10) || 1;
+    var index = parseInt(console_.getAttribute('data-day-index'), 10) || 0;
+    progress.max = Math.max(0, totalDays - 1);
+    progress.value = index;
+
+    var COLS = ['w','l','pct','gb','wcgb','l10','strk','rs','ra','diff','home','away','xwl'];
+
+    function setNote(text) { noteEl.textContent = text; }
+
+    function applyFrame(frame) {
+      var byDivision = {};
+      frame.rows.forEach(function (r) {
+        (byDivision[r.division] = byDivision[r.division] || []).push(r);
+      });
+
+      Object.keys(byDivision).forEach(function (division) {
+        var tbody = document.querySelector('tbody[data-division="' + division + '"]');
+        if (!tbody) return;
+
+        byDivision[division].forEach(function (r) {
+          var tr = tbody.querySelector('tr[data-team="' + r.team + '"]');
+          if (!tr) return;
+
+          COLS.forEach(function (col) {
+            var cell = tr.querySelector('td[data-col="' + col + '"]');
+            if (!cell) return;
+            var value = r[col];
+            if (col === 'diff' && value !== null && value !== undefined) {
+              cell.textContent = (value > 0 ? '+' : '') + value;
+              cell.classList.toggle('diff-pos', value > 0);
+              cell.classList.toggle('diff-neg', value < 0);
+            } else {
+              cell.textContent = (value === null || value === undefined) ? '-' : value;
+            }
+          });
+
+          // Division and wild card bookmarks move as the race changes.
+          var tagCell = tr.querySelector('td.tag-col');
+          if (tagCell) {
+            tagCell.innerHTML = r.hasTag
+              ? '<span class="standings-tag ' + r.tagClass + '">' + r.tagLabel + '</span>'
+              : '';
+          }
+        });
+
+        // Re-sort the division for this day.
+        byDivision[division]
+          .slice()
+          .sort(function (a, b) { return a.order - b.order; })
+          .forEach(function (r) {
+            var tr = tbody.querySelector('tr[data-team="' + r.team + '"]');
+            if (tr) tbody.appendChild(tr);
+          });
+      });
+
+      dateEl.textContent = frame.label;
+      countEl.textContent = 'Day ' + (index + 1) + ' of ' + frames.length;
+      progress.value = index;
+      updateArrows();
+    }
+
+    // Keep the manual arrows pointed at the day either side of wherever playback stopped.
+    function updateArrows() {
+      if (!frames) return;
+      var atStart = index <= 0;
+      var atEnd = index >= frames.length - 1;
+      prevLink.classList.toggle('is-disabled', atStart);
+      nextLink.classList.toggle('is-disabled', atEnd);
+      prevLink.setAttribute('href', atStart ? '#' : '/?standingsDate=' + frames[index - 1].date + '#standings');
+      nextLink.setAttribute('href', atEnd ? '#' : '/?standingsDate=' + frames[index + 1].date + '#standings');
+    }
+
+    function showPlaying(playing) {
+      playIcon.innerHTML = playing ? '&#10074;&#10074;' : '&#9654;';
+      playLabel.textContent = playing ? 'Pause' : (index >= (frames ? frames.length - 1 : 1) ? 'Replay' : 'Timelapse');
+      playBtn.classList.toggle('is-playing', playing);
+    }
+
+    function stop() {
+      if (timer) { clearInterval(timer); timer = null; }
+      showPlaying(false);
+    }
+
+    function tick() {
+      if (index >= frames.length - 1) { stop(); return; }
+      index++;
+      applyFrame(frames[index]);
+      if (index >= frames.length - 1) stop();
+    }
+
+    function start() {
+      stop();
+      if (index >= frames.length - 1) index = 0;   // replay from Opening Day
+      applyFrame(frames[index]);
+      timer = setInterval(tick, 1000 / daysPerSecond);
+      showPlaying(true);
+    }
+
+    function loadFrames() {
+      if (frames) return Promise.resolve(frames);
+      if (loading) return Promise.reject(new Error('already loading'));
+      loading = true;
+      setNote('Loading the season...');
+      return fetch('/api/standings-series')
+        .then(function (res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(function (data) {
+          frames = data.frames || [];
+          loading = false;
+          if (!frames.length) throw new Error('no frames');
+          progress.max = frames.length - 1;
+          setNote('Historical standings are rebuilt from every club’s game results.');
+          return frames;
+        })
+        .catch(function (err) {
+          loading = false;
+          setNote('Timelapse unavailable: ' + err.message);
+          throw err;
+        });
+    }
+
+    playBtn.addEventListener('click', function () {
+      if (timer) { stop(); return; }
+      loadFrames().then(start).catch(function () { /* note already shows why */ });
+    });
+
+    resetBtn.addEventListener('click', function () {
+      loadFrames().then(function () {
+        stop();
+        index = 0;
+        applyFrame(frames[0]);
+        showPlaying(false);
+      }).catch(function () {});
+    });
+
+    progress.addEventListener('input', function () {
+      loadFrames().then(function () {
+        stop();
+        index = Math.min(frames.length - 1, Math.max(0, parseInt(progress.value, 10) || 0));
+        applyFrame(frames[index]);
+      }).catch(function () {});
+    });
+
+    speedBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        speedBtns.forEach(function (b) { b.classList.remove('is-active'); });
+        btn.classList.add('is-active');
+        daysPerSecond = parseInt(btn.getAttribute('data-speed'), 10) || 6;
+        if (timer) start();   // apply the new rate without losing our place
+      });
+    });
+  })();
 </script>
 </body>
 </html>
