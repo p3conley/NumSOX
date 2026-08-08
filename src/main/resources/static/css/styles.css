@@ -620,6 +620,302 @@ body {
     white-space: nowrap;
 }
 
+/* ===== GAMECAST: PLAY BY PLAY, BOX SCORE, GAME INFO ===== */
+/* Sits directly under the scoreboard and stays shut until asked for, so the dashboard
+   still leads with the story and the detail is one click away. */
+.gamecast {
+    margin-top: 10px;
+    border: 2px solid rgba(219, 231, 210, 0.45);
+    border-radius: 8px;
+    background: rgba(18, 30, 27, 0.42);
+    overflow: hidden;
+}
+
+.gamecast-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 11px clamp(12px, 1vw, 18px);
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.9);
+    font-size: clamp(13px, 0.2vw + 11px, 15px);
+    font-weight: 750;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.16s ease;
+}
+
+.gamecast-toggle:hover { background: rgba(255,255,255,0.07); }
+
+.gamecast-plus {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.14);
+    font-size: 14px;
+    line-height: 1;
+}
+
+.gamecast-hint {
+    margin-left: auto;
+    color: rgba(255,255,255,0.6);
+    font-size: clamp(11px, 0.18vw + 9.5px, 13px);
+    font-weight: 600;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* A live game gets a pulsing dot so it is obvious the page is following along. */
+.gamecast-hint.is-live::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 7px;
+    border-radius: 50%;
+    background: var(--red);
+    animation: gamecast-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes gamecast-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(215,39,45,0.6); }
+    50%      { opacity: 0.55; box-shadow: 0 0 0 5px rgba(215,39,45,0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gamecast-hint.is-live::before { animation: none; }
+}
+
+.gamecast-body {
+    border-top: 1px solid rgba(255,255,255,0.16);
+    background: rgba(9, 18, 15, 0.34);
+}
+
+.gamecast-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 8px clamp(10px, 0.9vw, 16px) 0;
+}
+
+.gamecast-tab {
+    padding: 7px 14px;
+    border: none;
+    border-radius: 7px 7px 0 0;
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    font-size: clamp(12px, 0.16vw + 10.5px, 13.5px);
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.16s ease, color 0.16s ease;
+}
+
+.gamecast-tab:hover { background: rgba(255,255,255,0.09); color: #ffffff; }
+.gamecast-tab.is-active { background: rgba(255,255,255,0.15); color: #ffffff; }
+
+.gamecast-panel {
+    max-height: 460px;
+    overflow-y: auto;
+    padding: clamp(10px, 1vw, 16px) clamp(12px, 1.1vw, 20px) 16px;
+}
+
+.gamecast-empty { color: rgba(255,255,255,0.55); font-style: italic; }
+
+/* --- play by play --- */
+.half-inning + .half-inning { margin-top: 14px; }
+
+.half-inning-title {
+    position: sticky;
+    top: -2px;
+    z-index: 1;
+    margin: 0 0 8px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    background: rgba(84,121,109,0.92);
+    color: #ffffff;
+    font-size: clamp(11px, 0.16vw + 9.6px, 12.5px);
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.play-list { list-style: none; margin: 0; padding: 0; }
+
+.play {
+    padding: 9px 0 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.09);
+}
+
+.play:last-child { border-bottom: none; }
+
+/* Runs scored get a red rail, the way a scoring play stands out in a game log. */
+.play.is-scoring {
+    padding-left: 11px;
+    border-left: 3px solid var(--red);
+    background: rgba(215,39,45,0.07);
+    border-radius: 0 5px 5px 0;
+}
+
+.play-head { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+
+.play-event {
+    color: #ffffff;
+    font-size: clamp(12.5px, 0.18vw + 11px, 14.5px);
+    font-weight: 800;
+}
+
+.play-outs, .play-score {
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.78);
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.play-score { background: var(--red); color: #ffffff; }
+
+.play-desc {
+    margin-top: 3px;
+    color: rgba(255,255,255,0.76);
+    font-size: clamp(12px, 0.16vw + 10.6px, 13.5px);
+    line-height: 1.45;
+}
+
+.pitch-list {
+    list-style: none;
+    margin: 7px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.pitch {
+    display: grid;
+    grid-template-columns: 46px 68px 1fr auto;
+    gap: 8px;
+    align-items: baseline;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(0,0,0,0.26);
+    font-size: clamp(11px, 0.14vw + 10px, 12.5px);
+}
+
+.pitch-count { color: rgba(255,255,255,0.55); font-weight: 800; font-variant-numeric: tabular-nums; }
+.pitch-speed { color: #f7c948; font-weight: 800; font-variant-numeric: tabular-nums; }
+.pitch-type  { color: rgba(255,255,255,0.82); font-weight: 650; }
+.pitch-call  { color: rgba(255,255,255,0.55); font-weight: 650; text-align: right; }
+.pitch-call.in-play { color: #7ee0a6; font-weight: 800; }
+
+/* --- box score --- */
+.bx-team + .bx-team { margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.14); }
+
+.bx-team-name {
+    margin: 0 0 9px;
+    color: #ffffff;
+    font-size: clamp(13px, 0.2vw + 11px, 15.5px);
+    font-weight: 800;
+    letter-spacing: 0.03em;
+}
+
+.bx-scroll { overflow-x: auto; margin-bottom: 12px; }
+
+.bx-table {
+    width: 100%;
+    min-width: 470px;
+    border-collapse: collapse;
+    font-size: clamp(11.5px, 0.14vw + 10.4px, 13px);
+    font-variant-numeric: tabular-nums;
+}
+
+.bx-table th {
+    padding: 5px 7px;
+    border-bottom: 1px solid rgba(255,255,255,0.22);
+    background: transparent;
+    color: rgba(255,255,255,0.55);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.bx-table th:first-child { text-align: left; }
+
+.bx-table td {
+    padding: 5px 7px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.85);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.bx-table td.bx-name { text-align: left; color: #ffffff; font-weight: 650; }
+
+.bx-pos {
+    margin-left: 6px;
+    color: rgba(255,255,255,0.45);
+    font-size: 9.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+/* Substitutions are indented the way a printed box score sets them. */
+.bx-table tr.is-sub td.bx-name { padding-left: 18px; font-weight: 550; color: rgba(255,255,255,0.8); }
+
+.bx-table tr.bx-totals td {
+    border-top: 1px solid rgba(255,255,255,0.24);
+    border-bottom: none;
+    color: #ffffff;
+    font-weight: 800;
+}
+
+.bx-notes {
+    list-style: none;
+    margin: 0 0 4px;
+    padding: 9px 11px;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.24);
+    color: rgba(255,255,255,0.72);
+    font-size: clamp(11px, 0.14vw + 10px, 12.5px);
+    line-height: 1.6;
+}
+
+.bx-notes strong { color: #ffffff; margin-right: 5px; }
+
+/* --- game info --- */
+.gi-list { list-style: none; margin: 0; padding: 0; }
+
+.gi-list li {
+    display: grid;
+    grid-template-columns: minmax(110px, 170px) 1fr;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-size: clamp(11.5px, 0.16vw + 10.3px, 13px);
+}
+
+.gi-list li:last-child { border-bottom: none; }
+.gi-label { color: rgba(255,255,255,0.55); font-weight: 800; }
+.gi-value { color: rgba(255,255,255,0.86); }
+
+@media (max-width: 768px) {
+    .pitch { grid-template-columns: 40px 60px 1fr; }
+    .pitch-call { grid-column: 1 / -1; text-align: left; }
+    .gi-list li { grid-template-columns: 1fr; gap: 2px; }
+}
+
 /* ===== PREVIOUS GAME BOX SCORE ===== */
 .prev-game-board {
     margin-top: 0;

@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <title>NumSOX</title>
-  <meta th:if="${featuredGame != null and featuredIsToday and featuredGame.status != 'Final'}" http-equiv="refresh" content="45;url=/live-refresh"/>
+  <!-- No meta refresh: the scoreboard and game detail poll and update in place instead,
+       so a live game moves without the page reloading under you. -->
   <link rel="stylesheet" th:href="@{/css/styles.css}"/>
 </head>
 <body>
@@ -21,7 +22,7 @@
     </div>
 
     <div class="matchup-strip">
-      <div class="matchup-side">
+      <div class="matchup-side away">
         <div class="matchup-side-label">Away</div>
         <div class="logo-crown">
           <img class="featured-team-logo" th:src="${@teamLogoService.logoForName(featuredAwayTeam)}" th:alt="${featuredAwayTeam + ' logo'}"/>
@@ -41,7 +42,8 @@
         </div>
         <div class="matchup-side-name" th:text="${featuredAwayTeam}">Boston Red Sox</div>
         <div class="matchup-side-record" th:text="${featuredAwayRecord != null ? '(' + featuredAwayRecord + ')' : '(record unavailable)'}">(24 - 33)</div>
-        <div class="matchup-side-score" th:if="${featuredAwayScore != null}" th:text="${featuredAwayScore}">9</div>
+        <!-- Always present so a score can appear at first pitch without a reload. -->
+        <div class="matchup-side-score" th:text="${featuredAwayScore != null ? featuredAwayScore : ''}">9</div>
       </div>
       <div class="matchup-center">
         <div class="matchup-at-symbol">@</div>
@@ -70,11 +72,12 @@
         </div>
         <div class="matchup-side-name" th:text="${featuredHomeTeam}">Guardians</div>
         <div class="matchup-side-record" th:text="${featuredHomeRecord != null ? '(' + featuredHomeRecord + ')' : '(record unavailable)'}">(30 - 24)</div>
-        <div class="matchup-side-score" th:if="${featuredHomeScore != null}" th:text="${featuredHomeScore}">4</div>
+        <div class="matchup-side-score" th:text="${featuredHomeScore != null ? featuredHomeScore : ''}">4</div>
       </div>
     </div>
 
-    <div th:if="${scoreboard}" class="monster-board">
+    <div th:if="${scoreboard}" class="monster-board" id="live-board"
+         th:attr="data-innings=${scoreboard.innings.size()}">
       <div class="monster-title">American</div>
       <div class="monster-grid" th:style="'--innings: ' + ${scoreboard.innings.size()}">
         <div class="monster-cell monster-label">P</div>
@@ -87,27 +90,48 @@
         <div class="monster-cell pitcher-slot">38</div>
         <div class="monster-cell team-name" th:classappend="${scoreboard.awayName == 'BOSTON' ? ' boston' : ''}" th:text="${scoreboard.awayName}">TB</div>
         <div th:each="i : ${scoreboard.innings}" class="monster-cell run-cell"
+             th:attr="data-away-inning=${i.number}"
              th:classappend="${scoreboard.live and scoreboard.topHalf and i.number == scoreboard.currentInning ? ' lit' : ''}"
              th:text="${i.awayRuns != null ? i.awayRuns : ''}">0</div>
-        <div class="monster-cell total-cell" th:text="${scoreboard.awayRuns ?: 0}">0</div>
-        <div class="monster-cell total-cell" th:text="${scoreboard.awayHits ?: 0}">0</div>
-        <div class="monster-cell total-cell" th:text="${scoreboard.awayErrors ?: 0}">0</div>
+        <div class="monster-cell total-cell" data-total="awayRuns" th:text="${scoreboard.awayRuns ?: 0}">0</div>
+        <div class="monster-cell total-cell" data-total="awayHits" th:text="${scoreboard.awayHits ?: 0}">0</div>
+        <div class="monster-cell total-cell" data-total="awayErrors" th:text="${scoreboard.awayErrors ?: 0}">0</div>
 
         <div class="monster-cell pitcher-slot">32</div>
         <div class="monster-cell team-name" th:classappend="${scoreboard.homeName == 'BOSTON' ? ' boston' : ''}" th:text="${scoreboard.homeName}">BOSTON</div>
         <div th:each="i : ${scoreboard.innings}" class="monster-cell run-cell"
+             th:attr="data-home-inning=${i.number}"
              th:classappend="${scoreboard.live and scoreboard.bottomHalf and i.number == scoreboard.currentInning ? ' lit' : ''}"
              th:text="${i.homeRuns != null ? i.homeRuns : ''}">0</div>
-        <div class="monster-cell total-cell" th:text="${scoreboard.homeRuns ?: 0}">9</div>
-        <div class="monster-cell total-cell" th:text="${scoreboard.homeHits ?: 0}">13</div>
-        <div class="monster-cell total-cell" th:text="${scoreboard.homeErrors ?: 0}">0</div>
+        <div class="monster-cell total-cell" data-total="homeRuns" th:text="${scoreboard.homeRuns ?: 0}">9</div>
+        <div class="monster-cell total-cell" data-total="homeHits" th:text="${scoreboard.homeHits ?: 0}">13</div>
+        <div class="monster-cell total-cell" data-total="homeErrors" th:text="${scoreboard.homeErrors ?: 0}">0</div>
       </div>
       <div class="monster-status">
-        <div><span>At Bat</span><strong th:text="${scoreboard.atBat}">Awaiting batter</strong></div>
-        <div><span>Ball</span><strong th:text="${scoreboard.balls ?: 0}">0</strong></div>
-        <div><span>Strike</span><strong th:text="${scoreboard.strikes ?: 0}">0</strong></div>
-        <div><span>Out</span><strong th:text="${scoreboard.outs ?: 0}">0</strong></div>
-        <div><span>Frame</span><strong th:text="${scoreboard.inningState}">Live</strong></div>
+        <div><span>At Bat</span><strong data-live="atBat" th:text="${scoreboard.atBat}">Awaiting batter</strong></div>
+        <div><span>Ball</span><strong data-live="balls" th:text="${scoreboard.balls ?: 0}">0</strong></div>
+        <div><span>Strike</span><strong data-live="strikes" th:text="${scoreboard.strikes ?: 0}">0</strong></div>
+        <div><span>Out</span><strong data-live="outs" th:text="${scoreboard.outs ?: 0}">0</strong></div>
+        <div><span>Frame</span><strong data-live="inningState" th:text="${scoreboard.inningState}">Live</strong></div>
+      </div>
+    </div>
+
+    <!-- Expandable game detail: play by play, both box scores, and the game footer. -->
+    <div th:if="${featuredGame != null and featuredGame.mlbGameId != null}" class="gamecast" id="gamecast">
+      <button type="button" class="gamecast-toggle" id="gamecast-toggle" aria-expanded="false">
+        <span class="gamecast-plus" id="gamecast-plus">+</span>
+        <span class="gamecast-toggle-label">Play by play</span>
+        <span class="gamecast-hint" id="gamecast-hint"></span>
+      </button>
+      <div class="gamecast-body" id="gamecast-body" hidden>
+        <div class="gamecast-tabs" role="tablist">
+          <button type="button" class="gamecast-tab is-active" data-panel="pbp">Play by Play</button>
+          <button type="button" class="gamecast-tab" data-panel="box">Box Score</button>
+          <button type="button" class="gamecast-tab" data-panel="info">Game Info</button>
+        </div>
+        <div class="gamecast-panel" id="panel-pbp"></div>
+        <div class="gamecast-panel" id="panel-box" hidden></div>
+        <div class="gamecast-panel" id="panel-info" hidden></div>
       </div>
     </div>
 
@@ -581,6 +605,248 @@
         daysPerSecond = parseInt(btn.getAttribute('data-speed'), 10) || 6;
         if (timer) start();   // apply the new rate without losing our place
       });
+    });
+  })();
+</script>
+
+<!-- Live game: poll for the score, the count and the play by play, and write the changes
+     straight into the page. Nothing here reloads the document. -->
+<script>
+  (function () {
+    var gamecast = document.getElementById('gamecast');
+    var board = document.getElementById('live-board');
+    if (!gamecast && !board) return;
+
+    var POLL_MS = 12000;
+    var toggle  = document.getElementById('gamecast-toggle');
+    var plus    = document.getElementById('gamecast-plus');
+    var bodyEl  = document.getElementById('gamecast-body');
+    var hintEl  = document.getElementById('gamecast-hint');
+    var pbpEl   = document.getElementById('panel-pbp');
+    var boxEl   = document.getElementById('panel-box');
+    var infoEl  = document.getElementById('panel-info');
+    var tabs    = Array.prototype.slice.call(document.querySelectorAll('.gamecast-tab'));
+
+    var latest = null;
+    var open = false;
+    var timer = null;
+
+    function esc(s) {
+      return String(s === null || s === undefined ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function setText(el, value) {
+      if (el && value !== null && value !== undefined && el.textContent !== String(value)) {
+        el.textContent = value;
+      }
+    }
+
+    // ---- scoreboard ----------------------------------------------------------------
+    function applyScoreboard(sb) {
+      if (!board || !sb) return;
+
+      // Extra innings add columns the server rendered; reload rather than guess at markup.
+      var rendered = parseInt(board.getAttribute('data-innings'), 10) || 0;
+      if (sb.innings && sb.innings.length > rendered) { window.location.reload(); return; }
+
+      (sb.innings || []).forEach(function (inn) {
+        var a = board.querySelector('[data-away-inning="' + inn.number + '"]');
+        var h = board.querySelector('[data-home-inning="' + inn.number + '"]');
+        if (a) a.textContent = (inn.awayRuns === null || inn.awayRuns === undefined) ? '' : inn.awayRuns;
+        if (h) h.textContent = (inn.homeRuns === null || inn.homeRuns === undefined) ? '' : inn.homeRuns;
+        // Only the frame being played stays lit.
+        if (a) a.classList.toggle('lit', !!sb.live && !!sb.topHalf && inn.number === sb.currentInning);
+        if (h) h.classList.toggle('lit', !!sb.live && !!sb.bottomHalf && inn.number === sb.currentInning);
+      });
+
+      ['awayRuns','awayHits','awayErrors','homeRuns','homeHits','homeErrors'].forEach(function (k) {
+        var cell = board.querySelector('[data-total="' + k + '"]');
+        if (cell) cell.textContent = (sb[k] === null || sb[k] === undefined) ? 0 : sb[k];
+      });
+
+      ['atBat','balls','strikes','outs','inningState'].forEach(function (k) {
+        var el = board.querySelector('[data-live="' + k + '"]');
+        if (el) el.textContent = (sb[k] === null || sb[k] === undefined) ? 0 : sb[k];
+      });
+    }
+
+    function applyHeadline(data) {
+      var away = document.querySelector('.matchup-side.away .matchup-side-score');
+      var home = document.querySelector('.matchup-side.home .matchup-side-score');
+      var scores = document.querySelectorAll('.matchup-side-score');
+      if (away && home) {
+        setText(away, data.awayScore);
+        setText(home, data.homeScore);
+      } else if (scores.length === 2) {
+        setText(scores[0], data.awayScore);
+        setText(scores[1], data.homeScore);
+      }
+      var pill = document.querySelector('.live-pill');
+      if (pill && data.live) { pill.textContent = 'Live'; pill.classList.add('is-live'); }
+    }
+
+    // ---- play by play --------------------------------------------------------------
+    function renderPlays(detail) {
+      if (!detail.halfInnings || !detail.halfInnings.length) {
+        return '<p class="gamecast-empty">No plays yet.</p>';
+      }
+      return detail.halfInnings.map(function (half) {
+        var plays = half.plays.map(function (p) {
+          var pitches = (p.pitches || []).map(function (pi) {
+            return '<li class="pitch">' +
+              '<span class="pitch-count">' + esc(pi.count) + '</span>' +
+              '<span class="pitch-speed">' + esc(pi.speed) + '</span>' +
+              '<span class="pitch-type">' + esc(pi.type) + '</span>' +
+              '<span class="pitch-call' + (pi.inPlay ? ' in-play' : '') + '">' + esc(pi.call) + '</span>' +
+              '</li>';
+          }).join('');
+
+          return '<li class="play' + (p.scoringPlay ? ' is-scoring' : '') + '">' +
+            '<div class="play-head">' +
+              '<span class="play-event">' + esc(p.event) + '</span>' +
+              (p.outs ? '<span class="play-outs">' + esc(p.outs) + '</span>' : '') +
+              (p.scoringPlay ? '<span class="play-score">' + esc(p.scoreline) + '</span>' : '') +
+            '</div>' +
+            '<div class="play-desc">' + esc(p.description) + '</div>' +
+            (pitches ? '<ul class="pitch-list">' + pitches + '</ul>' : '') +
+            '</li>';
+        }).join('');
+        return '<section class="half-inning">' +
+          '<h4 class="half-inning-title">' + esc(half.label) + '</h4>' +
+          '<ul class="play-list">' + plays + '</ul></section>';
+      }).join('');
+    }
+
+    // ---- box score -----------------------------------------------------------------
+    function renderTeamBox(team) {
+      if (!team) return '';
+      var batRows = (team.batters || []).map(function (b) {
+        return '<tr' + (b.substitute ? ' class="is-sub"' : '') + '>' +
+          '<td class="bx-name">' + esc(b.name) + '<span class="bx-pos">' + esc(b.position) + '</span></td>' +
+          ['ab','r','h','rbi','bb','so','avg','ops'].map(function (k) {
+            return '<td>' + esc(b[k]) + '</td>';
+          }).join('') + '</tr>';
+      }).join('');
+
+      var t = team.batterTotals || {};
+      batRows += '<tr class="bx-totals"><td class="bx-name">Totals</td>' +
+        ['ab','r','h','rbi','bb','so'].map(function (k) { return '<td>' + esc(t[k]) + '</td>'; }).join('') +
+        '<td></td><td></td></tr>';
+
+      var pitRows = (team.pitchers || []).map(function (p) {
+        return '<tr><td class="bx-name">' + esc(p.name) + '</td>' +
+          ['ip','h','r','er','bb','so','hr','era'].map(function (k) {
+            return '<td>' + esc(p[k]) + '</td>';
+          }).join('') + '</tr>';
+      }).join('');
+
+      var pt = team.pitcherTotals || {};
+      pitRows += '<tr class="bx-totals"><td class="bx-name">Totals</td>' +
+        ['ip','h','r','er','bb','so','hr'].map(function (k) { return '<td>' + esc(pt[k]) + '</td>'; }).join('') +
+        '<td></td></tr>';
+
+      var notes = (team.notes || []).map(function (n) {
+        return '<li><strong>' + esc(n.label) + '</strong> ' + esc(n.value) + '</li>';
+      }).join('');
+
+      return '<div class="bx-team">' +
+        '<h4 class="bx-team-name">' + esc(team.teamName) + '</h4>' +
+        '<div class="bx-scroll"><table class="bx-table">' +
+          '<thead><tr><th>Batters</th><th>AB</th><th>R</th><th>H</th><th>RBI</th><th>BB</th><th>SO</th><th>AVG</th><th>OPS</th></tr></thead>' +
+          '<tbody>' + batRows + '</tbody></table></div>' +
+        '<div class="bx-scroll"><table class="bx-table">' +
+          '<thead><tr><th>Pitchers</th><th>IP</th><th>H</th><th>R</th><th>ER</th><th>BB</th><th>SO</th><th>HR</th><th>ERA</th></tr></thead>' +
+          '<tbody>' + pitRows + '</tbody></table></div>' +
+        (notes ? '<ul class="bx-notes">' + notes + '</ul>' : '') +
+        '</div>';
+    }
+
+    function renderInfo(detail) {
+      var lines = (detail.info || []).filter(function (i) { return i.label || i.value; });
+      if (!lines.length) return '<p class="gamecast-empty">No game information yet.</p>';
+      return '<ul class="gi-list">' + lines.map(function (i) {
+        return '<li><span class="gi-label">' + esc(i.label) + '</span>' +
+               '<span class="gi-value">' + esc(i.value) + '</span></li>';
+      }).join('') + '</ul>';
+    }
+
+    function renderPanels() {
+      // A scheduled game has no feed yet, so say so rather than opening onto nothing.
+      if (!latest || !latest.detail) {
+        var msg = '<p class="gamecast-empty">Nothing to show yet. '
+                + 'Play by play appears once the game starts.</p>';
+        [pbpEl, boxEl, infoEl].forEach(function (el) {
+          if (el && !el.hasAttribute('hidden')) el.innerHTML = msg;
+        });
+        return;
+      }
+      var d = latest.detail;
+      if (!pbpEl.hasAttribute('hidden')) pbpEl.innerHTML = renderPlays(d);
+      if (!boxEl.hasAttribute('hidden')) boxEl.innerHTML = renderTeamBox(d.away) + renderTeamBox(d.home);
+      if (!infoEl.hasAttribute('hidden')) infoEl.innerHTML = renderInfo(d);
+    }
+
+    function updateHint(detail) {
+      if (!hintEl || !detail) return;
+      if (detail.live) {
+        hintEl.textContent = detail.inningState + ' · ' + detail.atBat;
+        hintEl.classList.add('is-live');
+      } else {
+        hintEl.textContent = detail.status || '';
+        hintEl.classList.remove('is-live');
+      }
+    }
+
+    function apply(data) {
+      latest = data;
+      if (!data || !data.available) return;
+      applyScoreboard(data.scoreboard);
+      applyHeadline(data);
+      if (data.detail) { updateHint(data.detail); if (open) renderPanels(); }
+    }
+
+    function poll() {
+      return fetch('/api/live-game', { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (!data) return;
+          apply(data);
+          // Stop polling once the game is over; nothing more will change.
+          if (!data.live && timer) { clearInterval(timer); timer = null; }
+        })
+        .catch(function () { /* transient network trouble: try again next tick */ });
+    }
+
+    if (toggle) {
+      toggle.addEventListener('click', function () {
+        open = !open;
+        bodyEl.hidden = !open;
+        plus.textContent = open ? '−' : '+';
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open && !latest) poll().then(renderPanels); else if (open) renderPanels();
+      });
+    }
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        tabs.forEach(function (t) { t.classList.remove('is-active'); });
+        tab.classList.add('is-active');
+        var want = tab.getAttribute('data-panel');
+        pbpEl.hidden = want !== 'pbp';
+        boxEl.hidden = want !== 'box';
+        infoEl.hidden = want !== 'info';
+        renderPanels();
+      });
+    });
+
+    poll().then(function () {
+      if (latest && latest.live) timer = setInterval(poll, POLL_MS);
+    });
+
+    // Catch up immediately when the tab comes back to the foreground.
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && latest && latest.live) poll();
     });
   })();
 </script>
