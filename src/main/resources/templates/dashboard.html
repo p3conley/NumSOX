@@ -285,7 +285,7 @@
       <a class="scrub-arrow" id="tl-prev"
          th:classappend="${standingsPrevDate == null ? ' is-disabled' : ''}"
          th:href="${standingsPrevDate != null
-                     ? '/?standingsDate=' + #temporals.format(standingsPrevDate, 'yyyy-MM-dd') + '#standings'
+                     ? '/?standingsDate=' + #temporals.format(standingsPrevDate, 'yyyy-MM-dd')
                      : '#'}"
          aria-label="Previous day">&#8249;</a>
 
@@ -299,7 +299,7 @@
       <a class="scrub-arrow" id="tl-next"
          th:classappend="${standingsIsLatest ? ' is-disabled' : ''}"
          th:href="${standingsNextDate != null
-                     ? '/?standingsDate=' + #temporals.format(standingsNextDate, 'yyyy-MM-dd') + '#standings'
+                     ? '/?standingsDate=' + #temporals.format(standingsNextDate, 'yyyy-MM-dd')
                      : '#'}"
          aria-label="Next day">&#8250;</a>
     </div>
@@ -515,15 +515,40 @@
     }
 
     // Keep the manual arrows pointed at the day either side of wherever playback stopped.
+    // The href is only a fallback for a browser with no JavaScript; the click handler
+    // below flips the table in place so the page never navigates or moves.
     function updateArrows() {
       if (!frames) return;
       var atStart = index <= 0;
       var atEnd = index >= frames.length - 1;
       prevLink.classList.toggle('is-disabled', atStart);
       nextLink.classList.toggle('is-disabled', atEnd);
-      prevLink.setAttribute('href', atStart ? '#' : '/?standingsDate=' + frames[index - 1].date + '#standings');
-      nextLink.setAttribute('href', atEnd ? '#' : '/?standingsDate=' + frames[index + 1].date + '#standings');
+      prevLink.setAttribute('href', atStart ? '#' : '/?standingsDate=' + frames[index - 1].date);
+      nextLink.setAttribute('href', atEnd ? '#' : '/?standingsDate=' + frames[index + 1].date);
     }
+
+    /**
+     * Step one day without leaving the page. Reloading was scrolling the reader down to
+     * the standings anchor every time; flipping the rows in place keeps the viewport
+     * exactly where it was.
+     */
+    function step(delta) {
+      return loadFrames().then(function () {
+        stop();
+        var target = index + delta;
+        if (target < 0 || target > frames.length - 1) return;
+        index = target;
+        applyFrame(frames[index]);
+        // Keep the address bar honest so the day can still be linked or reloaded,
+        // without pushing history entries or triggering a jump.
+        try {
+          window.history.replaceState({}, '', '/?standingsDate=' + frames[index].date);
+        } catch (e) { /* file:// and the like: not worth failing the flip over */ }
+      }).catch(function () {});
+    }
+
+    prevLink.addEventListener('click', function (e) { e.preventDefault(); step(-1); });
+    nextLink.addEventListener('click', function (e) { e.preventDefault(); step(1); });
 
     function showPlaying(playing) {
       playIcon.innerHTML = playing ? '&#10074;&#10074;' : '&#9654;';
@@ -551,11 +576,12 @@
       showPlaying(true);
     }
 
-    function loadFrames() {
+    // `quiet` is used by the idle warm-up, which should not narrate itself in the note.
+    function loadFrames(quiet) {
       if (frames) return Promise.resolve(frames);
       if (loading) return Promise.reject(new Error('already loading'));
       loading = true;
-      setNote('Loading the season...');
+      if (!quiet) setNote('Loading the season...');
       return fetch('/api/standings-series')
         .then(function (res) {
           if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -606,6 +632,15 @@
         if (timer) start();   // apply the new rate without losing our place
       });
     });
+
+    // Warm the season in the background once the page is idle, so the very first arrow
+    // click flips instantly instead of waiting on a fetch.
+    function preload() { loadFrames(true).catch(function () {}); }
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(preload, { timeout: 4000 });
+    } else {
+      window.setTimeout(preload, 2500);
+    }
   })();
 </script>
 
