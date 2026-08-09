@@ -9,24 +9,31 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
-/** Ranks the Red Sox against all 30 MLB teams for the headline "Season at a Glance" stats. */
+/** Ranks the Red Sox against all 30 clubs and, separately, against the AL. */
 @Service
 public class TeamRankingService {
 
+    private static final String BOS = "BOS";
+
     private final TeamStatsService teamStatsService;
     private final TeamRecordService teamRecordService;
+    private final SeriesRecordService seriesRecordService;
 
-    public TeamRankingService(TeamStatsService teamStatsService, TeamRecordService teamRecordService) {
+    public TeamRankingService(TeamStatsService teamStatsService,
+                              TeamRecordService teamRecordService,
+                              SeriesRecordService seriesRecordService) {
         this.teamStatsService = teamStatsService;
         this.teamRecordService = teamRecordService;
+        this.seriesRecordService = seriesRecordService;
     }
 
     public TeamRankSummary rankBos() {
-        Optional<TeamStatSnapshot> bosSnapOpt = teamStatsService.getLatestStats("BOS");
+        Optional<TeamStatSnapshot> bosSnapOpt = teamStatsService.getLatestStats(BOS);
         if (bosSnapOpt.isEmpty()) return emptySummary();
         TeamStatSnapshot bosSnap = bosSnapOpt.get();
 
@@ -39,6 +46,11 @@ public class TeamRankingService {
         // so a game the feed hasn't posted yet still moves the Red Sox in the standings order.
         TeamRecord bosRecord = teamRecordService.bosRecord(bosSnap);
 
+        Map<Integer, SeriesRecordService.SeriesRecord> series = seriesRecordService.recordsByTeam();
+        Integer bosId = bosSnap.getTeam().getMlbTeamId();
+        SeriesRecordService.SeriesRecord bosSeries =
+                series.getOrDefault(bosId, SeriesRecordService.SeriesRecord.EMPTY);
+
         return new TeamRankSummary(
                 rank(allSnaps, pct(bosRecord.getWins(), bosRecord.getLosses()), TeamRankingService::winPct, true),
                 rank(allSnaps, bosSnap, s -> toDouble(s.getRunDifferential()), true),
@@ -47,8 +59,17 @@ public class TeamRankingService {
                 rank(allSnaps, bosSnap, TeamStatSnapshot::getBullpenEra, false),
                 rank(allSnaps, bosSnap, TeamStatSnapshot::getTeamWrcPlus, true),
                 rank(allSnaps, recordPct(bosRecord.getLast10()), TeamRankingService::last10Pct, true),
-                rank(allSnaps, parseStreak(bosRecord.getStreak()), TeamRankingService::streakValue, true)
+                rank(allSnaps, parseStreak(bosRecord.getStreak()), TeamRankingService::streakValue, true),
+                rankSeries(allSnaps, series, SeriesRecordService.SeriesRecord::won, bosSeries),
+                rankSeries(allSnaps, series, SeriesRecordService.SeriesRecord::sweeps, bosSeries)
         );
+    }
+
+    /** The Red Sox series line, for the card itself rather than its rank. */
+    public SeriesRecordService.SeriesRecord bosSeriesRecord() {
+        return teamStatsService.getLatestStats(BOS)
+                .map(s -> seriesRecordService.forTeam(s.getTeam().getMlbTeamId()))
+                .orElse(SeriesRecordService.SeriesRecord.EMPTY);
     }
 
     private TeamRank rank(List<TeamStatSnapshot> all, TeamStatSnapshot bosSnap,
@@ -56,20 +77,62 @@ public class TeamRankingService {
         return rank(all, extractor.apply(bosSnap), extractor, higherIsBetter);
     }
 
+    /**
+     * Standard competition ranking against every club, then against the AL only.
+     * Higher is better unless told otherwise, which is how ERA is handled.
+     */
     private TeamRank rank(List<TeamStatSnapshot> all, Double bosValue,
                           Function<TeamStatSnapshot, Double> extractor, boolean higherIsBetter) {
-        if (bosValue == null) return new TeamRank(0, false);
+        if (bosValue == null) return new TeamRank(0, false, 0, false);
 
-        int better = 0;
-        boolean tied = false;
+        int better = 0, leagueBetter = 0;
+        boolean tied = false, leagueTied = false;
         for (TeamStatSnapshot s : all) {
-            if ("BOS".equals(s.getTeam().getTeamCode())) continue;
+            if (BOS.equals(s.getTeam().getTeamCode())) continue;
             Double v = extractor.apply(s);
             if (v == null) continue;
-            if (higherIsBetter ? v > bosValue : v < bosValue) better++;
-            else if (Objects.equals(v, bosValue)) tied = true;
+            boolean isAl = "AL".equals(s.getTeam().getLeague());
+            boolean beats = higherIsBetter ? v > bosValue : v < bosValue;
+            if (beats) {
+                better++;
+                if (isAl) leagueBetter++;
+            } else if (Objects.equals(v, bosValue)) {
+                tied = true;
+                if (isAl) leagueTied = true;
+            }
         }
-        return new TeamRank(better + 1, tied);
+        return new TeamRank(better + 1, tied, leagueBetter + 1, leagueTied);
+    }
+
+    /**
+     * Series counts live outside the stat snapshot, so they are looked up by team id.
+     * More is always better for both series wins and sweeps.
+     */
+    private TeamRank rankSeries(List<TeamStatSnapshot> all,
+                                Map<Integer, SeriesRecordService.SeriesRecord> series,
+                                Function<SeriesRecordService.SeriesRecord, Integer> extractor,
+                                SeriesRecordService.SeriesRecord bosSeries) {
+        if (series.isEmpty()) return new TeamRank(0, false, 0, false);
+        int bosValue = extractor.apply(bosSeries);
+
+        int better = 0, leagueBetter = 0;
+        boolean tied = false, leagueTied = false;
+        for (TeamStatSnapshot s : all) {
+            Team team = s.getTeam();
+            if (BOS.equals(team.getTeamCode()) || team.getMlbTeamId() == null) continue;
+            SeriesRecordService.SeriesRecord r = series.get(team.getMlbTeamId());
+            if (r == null) continue;
+            int v = extractor.apply(r);
+            boolean isAl = "AL".equals(team.getLeague());
+            if (v > bosValue) {
+                better++;
+                if (isAl) leagueBetter++;
+            } else if (v == bosValue) {
+                tied = true;
+                if (isAl) leagueTied = true;
+            }
+        }
+        return new TeamRank(better + 1, tied, leagueBetter + 1, leagueTied);
     }
 
     private static Double winPct(TeamStatSnapshot s) {
@@ -84,7 +147,7 @@ public class TeamRankingService {
         return total > 0 ? (double) s.getLast10Wins() / total : null;
     }
 
-    /** Turns a streak like "W7"/"L3" into a signed magnitude so streaks can be ranked league-wide. */
+    /** Turns a streak like "W7"/"L3" into a signed magnitude so streaks can be ranked. */
     private static Double streakValue(TeamStatSnapshot s) {
         return parseStreak(s.getCurrentStreak());
     }
@@ -95,7 +158,7 @@ public class TeamRankingService {
             char type = Character.toUpperCase(streak.charAt(0));
             int count = Integer.parseInt(streak.substring(1).trim());
             return type == 'W' ? (double) count : -(double) count;
-        } catch (Exception e) {
+        } catch (NumberFormatException | IndexOutOfBoundsException e) {
             return null;
         }
     }
@@ -123,7 +186,7 @@ public class TeamRankingService {
     }
 
     private TeamRankSummary emptySummary() {
-        TeamRank none = new TeamRank(0, false);
-        return new TeamRankSummary(none, none, none, none, none, none, none, none);
+        TeamRank none = new TeamRank(0, false, 0, false);
+        return new TeamRankSummary(none, none, none, none, none, none, none, none, none, none);
     }
 }

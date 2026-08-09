@@ -95,7 +95,9 @@
              th:attr="data-away-inning=${i.number}"
              th:classappend="${scoreboard.live and scoreboard.topHalf and i.number == scoreboard.currentInning ? ' lit' : ''}"
              th:text="${i.awayRuns != null ? i.awayRuns : ''}">0</div>
-        <div class="monster-cell total-cell" data-total="awayRuns" th:text="${scoreboard.awayRuns ?: 0}">0</div>
+        <div class="monster-cell total-cell" data-total="awayRuns"
+             th:classappend="${scoreboard.finalGame and scoreboard.awayRuns != null and scoreboard.homeRuns != null and scoreboard.awayRuns > scoreboard.homeRuns ? ' is-winner' : ''}"
+             th:text="${scoreboard.awayRuns ?: 0}">0</div>
         <div class="monster-cell total-cell" data-total="awayHits" th:text="${scoreboard.awayHits ?: 0}">0</div>
         <div class="monster-cell total-cell" data-total="awayErrors" th:text="${scoreboard.awayErrors ?: 0}">0</div>
 
@@ -105,7 +107,9 @@
              th:attr="data-home-inning=${i.number}"
              th:classappend="${scoreboard.live and scoreboard.bottomHalf and i.number == scoreboard.currentInning ? ' lit' : ''}"
              th:text="${i.homeRuns != null ? i.homeRuns : ''}">0</div>
-        <div class="monster-cell total-cell" data-total="homeRuns" th:text="${scoreboard.homeRuns ?: 0}">9</div>
+        <div class="monster-cell total-cell" data-total="homeRuns"
+             th:classappend="${scoreboard.finalGame and scoreboard.awayRuns != null and scoreboard.homeRuns != null and scoreboard.homeRuns > scoreboard.awayRuns ? ' is-winner' : ''}"
+             th:text="${scoreboard.homeRuns ?: 0}">9</div>
         <div class="monster-cell total-cell" data-total="homeHits" th:text="${scoreboard.homeHits ?: 0}">13</div>
         <div class="monster-cell total-cell" data-total="homeErrors" th:text="${scoreboard.homeErrors ?: 0}">0</div>
       </div>
@@ -260,16 +264,40 @@
       <div class="monster-cell pitcher-slot"></div>
       <div class="monster-cell team-name" th:classappend="${previousScoreboard.awayName == 'BOSTON' ? ' boston' : ''}" th:text="${previousScoreboard.awayName}">TB</div>
       <div th:each="i : ${previousScoreboard.innings}" class="monster-cell run-cell" th:text="${i.awayRuns != null ? i.awayRuns : ''}">0</div>
-      <div class="monster-cell total-cell" th:text="${previousScoreboard.awayRuns ?: 0}">0</div>
+      <div class="monster-cell total-cell"
+           th:classappend="${previousScoreboard.awayRuns != null and previousScoreboard.homeRuns != null and previousScoreboard.awayRuns > previousScoreboard.homeRuns ? ' is-winner' : ''}"
+           th:text="${previousScoreboard.awayRuns ?: 0}">0</div>
       <div class="monster-cell total-cell" th:text="${previousScoreboard.awayHits ?: 0}">0</div>
       <div class="monster-cell total-cell" th:text="${previousScoreboard.awayErrors ?: 0}">0</div>
 
       <div class="monster-cell pitcher-slot"></div>
       <div class="monster-cell team-name" th:classappend="${previousScoreboard.homeName == 'BOSTON' ? ' boston' : ''}" th:text="${previousScoreboard.homeName}">BOSTON</div>
       <div th:each="i : ${previousScoreboard.innings}" class="monster-cell run-cell" th:text="${i.homeRuns != null ? i.homeRuns : ''}">0</div>
-      <div class="monster-cell total-cell" th:text="${previousScoreboard.homeRuns ?: 0}">9</div>
+      <div class="monster-cell total-cell"
+           th:classappend="${previousScoreboard.awayRuns != null and previousScoreboard.homeRuns != null and previousScoreboard.homeRuns > previousScoreboard.awayRuns ? ' is-winner' : ''}"
+           th:text="${previousScoreboard.homeRuns ?: 0}">9</div>
       <div class="monster-cell total-cell" th:text="${previousScoreboard.homeHits ?: 0}">13</div>
       <div class="monster-cell total-cell" th:text="${previousScoreboard.homeErrors ?: 0}">0</div>
+    </div>
+
+    <!-- How last night actually went, inside the same border as its linescore. -->
+    <div th:if="${previousGame.mlbGameId != null}" class="gamecast is-prev" id="prev-gamecast"
+         th:attr="data-game-id=${previousGame.mlbGameId}">
+      <button type="button" class="gamecast-toggle" id="prev-gamecast-toggle" aria-expanded="false">
+        <span class="gamecast-plus" id="prev-gamecast-plus">+</span>
+        <span class="gamecast-toggle-label">Play by play</span>
+        <span class="gamecast-hint" id="prev-gamecast-hint">Final</span>
+      </button>
+      <div class="gamecast-body" id="prev-gamecast-body" hidden>
+        <div class="gamecast-tabs" role="tablist">
+          <button type="button" class="gamecast-tab is-active" data-panel="pbp">Play by Play</button>
+          <button type="button" class="gamecast-tab" data-panel="box">Box Score</button>
+          <button type="button" class="gamecast-tab" data-panel="info">Game Info</button>
+        </div>
+        <div class="gamecast-panel" id="prev-panel-pbp"></div>
+        <div class="gamecast-panel" id="prev-panel-box" hidden></div>
+        <div class="gamecast-panel" id="prev-panel-info" hidden></div>
+      </div>
     </div>
   </div>
 
@@ -280,43 +308,79 @@
       <div class="stat-label">Record</div>
       <div class="stat-value" th:text="${bosRecord != null ? bosRecord.record : bosStats.record}">28-24</div>
       <div class="stat-sub" th:if="${rankSummary.record.label != null}" th:text="${rankSummary.record.label}">1st in MLB</div>
+      <div class="stat-sub stat-sub-league" th:if="${rankSummary.record.leagueLabel != null}"
+           th:text="${rankSummary.record.leagueLabel}">2nd in AL</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Run Differential</div>
       <div class="stat-value"
            th:text="${bosStats.runDifferential != null ? (bosStats.runDifferential > 0 ? '+' : '') + bosStats.runDifferential : 'N/A'}">+22</div>
       <div class="stat-sub" th:if="${rankSummary.runDifferential.label != null}" th:text="${rankSummary.runDifferential.label}">1st in MLB</div>
+      <div class="stat-sub stat-sub-league" th:if="${rankSummary.runDifferential.leagueLabel != null}"
+           th:text="${rankSummary.runDifferential.leagueLabel}">2nd in AL</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Team OPS</div>
       <div class="stat-value" th:text="${bosStats.teamOps != null ? #numbers.formatDecimal(bosStats.teamOps, 1, 3) : 'N/A'}">.751</div>
       <div class="stat-sub" th:if="${rankSummary.ops.label != null}" th:text="${rankSummary.ops.label}">1st in MLB</div>
+      <div class="stat-sub stat-sub-league" th:if="${rankSummary.ops.leagueLabel != null}"
+           th:text="${rankSummary.ops.leagueLabel}">2nd in AL</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Team ERA</div>
       <div class="stat-value" th:text="${bosStats.teamEra != null ? #numbers.formatDecimal(bosStats.teamEra, 1, 2) : 'N/A'}">3.89</div>
       <div class="stat-sub" th:if="${rankSummary.era.label != null}" th:text="${rankSummary.era.label}">1st in MLB</div>
+      <div class="stat-sub stat-sub-league" th:if="${rankSummary.era.leagueLabel != null}"
+           th:text="${rankSummary.era.leagueLabel}">2nd in AL</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Bullpen ERA</div>
       <div class="stat-value" th:text="${bosStats.bullpenEra != null ? #numbers.formatDecimal(bosStats.bullpenEra, 1, 2) : 'N/A'}">3.55</div>
       <div class="stat-sub" th:if="${rankSummary.bullpenEra.label != null}" th:text="${rankSummary.bullpenEra.label}">1st in MLB</div>
+      <div class="stat-sub stat-sub-league" th:if="${rankSummary.bullpenEra.leagueLabel != null}"
+           th:text="${rankSummary.bullpenEra.leagueLabel}">2nd in AL</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">wRC+</div>
       <div class="stat-value" th:text="${bosStats.teamWrcPlus != null ? #numbers.formatDecimal(bosStats.teamWrcPlus, 1, 0) : 'N/A'}">108</div>
       <div class="stat-sub">100 = league avg</div>
       <div class="stat-sub" th:if="${rankSummary.wrcPlus.label != null}" th:text="${rankSummary.wrcPlus.label}">1st in MLB</div>
+      <div class="stat-sub stat-sub-league" th:if="${rankSummary.wrcPlus.leagueLabel != null}"
+           th:text="${rankSummary.wrcPlus.leagueLabel}">2nd in AL</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Last 10</div>
       <div class="stat-value" th:text="${bosRecord != null ? bosRecord.last10 : bosStats.last10Record}">6-4</div>
       <div class="stat-sub" th:if="${rankSummary.last10.label != null}" th:text="${rankSummary.last10.label}">1st in MLB</div>
+      <div class="stat-sub stat-sub-league" th:if="${rankSummary.last10.leagueLabel != null}"
+           th:text="${rankSummary.last10.leagueLabel}">2nd in AL</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Series Wins</div>
+      <div class="stat-value" th:text="${bosSeries != null ? bosSeries.won : 0}">24</div>
+      <div class="stat-sub" th:if="${bosSeries != null}">Series record
+        <span class="nowrap" th:text="${bosSeries.record}">24-13</span></div>
+      <div class="stat-sub" th:if="${rankSummary.seriesWins.label != null}"
+           th:text="${rankSummary.seriesWins.label}">1st in MLB</div>
+      <div class="stat-sub stat-sub-league" th:if="${rankSummary.seriesWins.leagueLabel != null}"
+           th:text="${rankSummary.seriesWins.leagueLabel}">2nd in AL</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Series Sweeps</div>
+      <div class="stat-value" th:text="${bosSeries != null ? bosSeries.sweeps : 0}">6</div>
+      <div class="stat-sub" th:if="${bosSeries != null}">Swept in
+        <span class="nowrap" th:text="${bosSeries.sweptBy}">3</span></div>
+      <div class="stat-sub" th:if="${rankSummary.seriesSweeps.label != null}"
+           th:text="${rankSummary.seriesSweeps.label}">1st in MLB</div>
+      <div class="stat-sub stat-sub-league" th:if="${rankSummary.seriesSweeps.leagueLabel != null}"
+           th:text="${rankSummary.seriesSweeps.leagueLabel}">2nd in AL</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Streak</div>
       <div class="stat-value" th:text="${bosRecord != null ? bosRecord.streak : (bosStats.currentStreak != null ? bosStats.currentStreak : 'N/A')}">W2</div>
       <div class="stat-sub" th:if="${rankSummary.streak.label != null}" th:text="${rankSummary.streak.label}">1st in MLB</div>
+      <div class="stat-sub stat-sub-league" th:if="${rankSummary.streak.leagueLabel != null}"
+           th:text="${rankSummary.streak.leagueLabel}">2nd in AL</div>
     </div>
   </div>
 
@@ -689,6 +753,179 @@
   })();
 </script>
 
+<!-- Shared renderer for the two play-by-play panels: the live game up top and last
+     night's game inside the Previous Game box. One implementation, two mounts. -->
+<script>
+  window.NumSoxGamecast = (function () {
+    function esc(s) {
+      return String(s === null || s === undefined ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // ---- play by play --------------------------------------------------------------
+    function renderPlays(detail) {
+      if (!detail.halfInnings || !detail.halfInnings.length) {
+        return '<p class="gamecast-empty">No plays yet.</p>';
+      }
+      return detail.halfInnings.map(function (half) {
+        var plays = half.plays.map(function (p) {
+          var pitches = (p.pitches || []).map(function (pi) {
+            return '<li class="pitch">' +
+              '<span class="pitch-count">' + esc(pi.count) + '</span>' +
+              '<span class="pitch-speed">' + esc(pi.speed) + '</span>' +
+              '<span class="pitch-type">' + esc(pi.type) + '</span>' +
+              '<span class="pitch-call' + (pi.inPlay ? ' in-play' : '') + '">' + esc(pi.call) + '</span>' +
+              '</li>';
+          }).join('');
+
+          return '<li class="play' + (p.scoringPlay ? ' is-scoring' : '') + '">' +
+            '<div class="play-head">' +
+              '<span class="play-event">' + esc(p.event) + '</span>' +
+              (p.outs ? '<span class="play-outs">' + esc(p.outs) + '</span>' : '') +
+              (p.scoringPlay ? '<span class="play-score">' + esc(p.scoreline) + '</span>' : '') +
+            '</div>' +
+            '<div class="play-desc">' + esc(p.description) + '</div>' +
+            (pitches ? '<ul class="pitch-list">' + pitches + '</ul>' : '') +
+            '</li>';
+        }).join('');
+        // The frame being played is red; everything already in the books stays green.
+        return '<section class="half-inning">' +
+          '<h4 class="half-inning-title' + (half.live ? ' is-live' : '') + '">' +
+            esc(half.label) + (half.live ? '<span class="half-inning-now">Live</span>' : '') +
+          '</h4>' +
+          '<ul class="play-list">' + plays + '</ul></section>';
+      }).join('');
+    }
+
+    // ---- box score -----------------------------------------------------------------
+    function renderTeamBox(team) {
+      if (!team) return '';
+      var batRows = (team.batters || []).map(function (b) {
+        return '<tr' + (b.substitute ? ' class="is-sub"' : '') + '>' +
+          '<td class="bx-name">' + esc(b.name) + '<span class="bx-pos">' + esc(b.position) + '</span></td>' +
+          ['ab','r','h','rbi','bb','so','avg','ops'].map(function (k) {
+            return '<td>' + esc(b[k]) + '</td>';
+          }).join('') + '</tr>';
+      }).join('');
+
+      var t = team.batterTotals || {};
+      batRows += '<tr class="bx-totals"><td class="bx-name">Totals</td>' +
+        ['ab','r','h','rbi','bb','so'].map(function (k) { return '<td>' + esc(t[k]) + '</td>'; }).join('') +
+        '<td></td><td></td></tr>';
+
+      var pitRows = (team.pitchers || []).map(function (p) {
+        return '<tr><td class="bx-name">' + esc(p.name) + '</td>' +
+          ['ip','h','r','er','bb','so','hr','era'].map(function (k) {
+            return '<td>' + esc(p[k]) + '</td>';
+          }).join('') + '</tr>';
+      }).join('');
+
+      var pt = team.pitcherTotals || {};
+      pitRows += '<tr class="bx-totals"><td class="bx-name">Totals</td>' +
+        ['ip','h','r','er','bb','so','hr'].map(function (k) { return '<td>' + esc(pt[k]) + '</td>'; }).join('') +
+        '<td></td></tr>';
+
+      var notes = (team.notes || []).map(function (n) {
+        return '<li><strong>' + esc(n.label) + '</strong> ' + esc(n.value) + '</li>';
+      }).join('');
+
+      return '<div class="bx-team">' +
+        '<h4 class="bx-team-name">' + esc(team.teamName) + '</h4>' +
+        '<div class="bx-scroll"><table class="bx-table">' +
+          '<thead><tr><th>Batters</th><th>AB</th><th>R</th><th>H</th><th>RBI</th><th>BB</th><th>SO</th><th>AVG</th><th>OPS</th></tr></thead>' +
+          '<tbody>' + batRows + '</tbody></table></div>' +
+        '<div class="bx-scroll"><table class="bx-table">' +
+          '<thead><tr><th>Pitchers</th><th>IP</th><th>H</th><th>R</th><th>ER</th><th>BB</th><th>SO</th><th>HR</th><th>ERA</th></tr></thead>' +
+          '<tbody>' + pitRows + '</tbody></table></div>' +
+        (notes ? '<ul class="bx-notes">' + notes + '</ul>' : '') +
+        '</div>';
+    }
+
+    function renderInfo(detail) {
+      var lines = (detail.info || []).filter(function (i) { return i.label || i.value; });
+      if (!lines.length) return '<p class="gamecast-empty">No game information yet.</p>';
+      return '<ul class="gi-list">' + lines.map(function (i) {
+        return '<li><span class="gi-label">' + esc(i.label) + '</span>' +
+               '<span class="gi-value">' + esc(i.value) + '</span></li>';
+      }).join('') + '</ul>';
+    }
+
+    /**
+     * Wire up one panel. `prefix` namespaces the element ids, and `fetchDetail` returns a
+     * promise for the detail payload, so the live panel and a finished game can share this.
+     */
+    function mount(prefix, fetchDetail) {
+      var root = document.getElementById(prefix);
+      if (!root) return null;
+
+      var toggle = document.getElementById(prefix + '-toggle');
+      var plus   = document.getElementById(prefix + '-plus');
+      var body   = document.getElementById(prefix + '-body');
+      var panels = {
+        pbp:  document.getElementById(prefix.replace('-gamecast', '') + '-panel-pbp'),
+        box:  document.getElementById(prefix.replace('-gamecast', '') + '-panel-box'),
+        info: document.getElementById(prefix.replace('-gamecast', '') + '-panel-info')
+      };
+      var tabs = Array.prototype.slice.call(root.querySelectorAll('.gamecast-tab'));
+      var open = false;
+      var detail = null;
+
+      function paint() {
+        if (!detail) {
+          var msg = '<p class="gamecast-empty">Nothing to show for this game.</p>';
+          Object.keys(panels).forEach(function (k) {
+            if (panels[k] && !panels[k].hasAttribute('hidden')) panels[k].innerHTML = msg;
+          });
+          return;
+        }
+        if (panels.pbp && !panels.pbp.hasAttribute('hidden')) {
+          panels.pbp.innerHTML = renderPlays(detail);
+        }
+        if (panels.box && !panels.box.hasAttribute('hidden')) {
+          panels.box.innerHTML = renderTeamBox(detail.away) + renderTeamBox(detail.home);
+        }
+        if (panels.info && !panels.info.hasAttribute('hidden')) {
+          panels.info.innerHTML = renderInfo(detail);
+        }
+      }
+
+      if (toggle) {
+        toggle.addEventListener('click', function () {
+          open = !open;
+          body.hidden = !open;
+          if (plus) plus.textContent = open ? '−' : '+';
+          toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+          if (!open) return;
+          if (detail) { paint(); return; }
+          fetchDetail().then(function (d) { detail = d; paint(); })
+                       .catch(function () { detail = null; paint(); });
+        });
+      }
+
+      tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          tabs.forEach(function (t) { t.classList.remove('is-active'); });
+          tab.classList.add('is-active');
+          var want = tab.getAttribute('data-panel');
+          Object.keys(panels).forEach(function (k) {
+            if (panels[k]) panels[k].hidden = k !== want;
+          });
+          paint();
+        });
+      });
+
+      return {
+        set: function (d) { detail = d; if (open) paint(); },
+        repaint: paint,
+        isOpen: function () { return open; }
+      };
+    }
+
+    return {esc: esc, renderPlays: renderPlays, renderTeamBox: renderTeamBox,
+            renderInfo: renderInfo, mount: mount};
+  })();
+</script>
+
 <!-- Live game: poll for the score, the count and the play by play, and write the changes
      straight into the page. Nothing here reloads the document. -->
 <script>
@@ -705,16 +942,13 @@
     var pbpEl   = document.getElementById('panel-pbp');
     var boxEl   = document.getElementById('panel-box');
     var infoEl  = document.getElementById('panel-info');
-    var tabs    = Array.prototype.slice.call(document.querySelectorAll('.gamecast-tab'));
+    // Scoped to this panel: the Previous Game box has its own set of tabs.
+    var tabs    = Array.prototype.slice.call(
+                    document.querySelectorAll('#gamecast .gamecast-tab'));
 
     var latest = null;
     var open = false;
     var timer = null;
-
-    function esc(s) {
-      return String(s === null || s === undefined ? '' : s)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
 
     function setText(el, value) {
       if (el && value !== null && value !== undefined && el.textContent !== String(value)) {
@@ -854,95 +1088,8 @@
       if (pill && data.live) { pill.textContent = 'Live'; pill.classList.add('is-live'); }
     }
 
-    // ---- play by play --------------------------------------------------------------
-    function renderPlays(detail) {
-      if (!detail.halfInnings || !detail.halfInnings.length) {
-        return '<p class="gamecast-empty">No plays yet.</p>';
-      }
-      return detail.halfInnings.map(function (half) {
-        var plays = half.plays.map(function (p) {
-          var pitches = (p.pitches || []).map(function (pi) {
-            return '<li class="pitch">' +
-              '<span class="pitch-count">' + esc(pi.count) + '</span>' +
-              '<span class="pitch-speed">' + esc(pi.speed) + '</span>' +
-              '<span class="pitch-type">' + esc(pi.type) + '</span>' +
-              '<span class="pitch-call' + (pi.inPlay ? ' in-play' : '') + '">' + esc(pi.call) + '</span>' +
-              '</li>';
-          }).join('');
-
-          return '<li class="play' + (p.scoringPlay ? ' is-scoring' : '') + '">' +
-            '<div class="play-head">' +
-              '<span class="play-event">' + esc(p.event) + '</span>' +
-              (p.outs ? '<span class="play-outs">' + esc(p.outs) + '</span>' : '') +
-              (p.scoringPlay ? '<span class="play-score">' + esc(p.scoreline) + '</span>' : '') +
-            '</div>' +
-            '<div class="play-desc">' + esc(p.description) + '</div>' +
-            (pitches ? '<ul class="pitch-list">' + pitches + '</ul>' : '') +
-            '</li>';
-        }).join('');
-        // The frame being played is red; everything already in the books stays green.
-        return '<section class="half-inning">' +
-          '<h4 class="half-inning-title' + (half.live ? ' is-live' : '') + '">' +
-            esc(half.label) + (half.live ? '<span class="half-inning-now">Live</span>' : '') +
-          '</h4>' +
-          '<ul class="play-list">' + plays + '</ul></section>';
-      }).join('');
-    }
-
-    // ---- box score -----------------------------------------------------------------
-    function renderTeamBox(team) {
-      if (!team) return '';
-      var batRows = (team.batters || []).map(function (b) {
-        return '<tr' + (b.substitute ? ' class="is-sub"' : '') + '>' +
-          '<td class="bx-name">' + esc(b.name) + '<span class="bx-pos">' + esc(b.position) + '</span></td>' +
-          ['ab','r','h','rbi','bb','so','avg','ops'].map(function (k) {
-            return '<td>' + esc(b[k]) + '</td>';
-          }).join('') + '</tr>';
-      }).join('');
-
-      var t = team.batterTotals || {};
-      batRows += '<tr class="bx-totals"><td class="bx-name">Totals</td>' +
-        ['ab','r','h','rbi','bb','so'].map(function (k) { return '<td>' + esc(t[k]) + '</td>'; }).join('') +
-        '<td></td><td></td></tr>';
-
-      var pitRows = (team.pitchers || []).map(function (p) {
-        return '<tr><td class="bx-name">' + esc(p.name) + '</td>' +
-          ['ip','h','r','er','bb','so','hr','era'].map(function (k) {
-            return '<td>' + esc(p[k]) + '</td>';
-          }).join('') + '</tr>';
-      }).join('');
-
-      var pt = team.pitcherTotals || {};
-      pitRows += '<tr class="bx-totals"><td class="bx-name">Totals</td>' +
-        ['ip','h','r','er','bb','so','hr'].map(function (k) { return '<td>' + esc(pt[k]) + '</td>'; }).join('') +
-        '<td></td></tr>';
-
-      var notes = (team.notes || []).map(function (n) {
-        return '<li><strong>' + esc(n.label) + '</strong> ' + esc(n.value) + '</li>';
-      }).join('');
-
-      return '<div class="bx-team">' +
-        '<h4 class="bx-team-name">' + esc(team.teamName) + '</h4>' +
-        '<div class="bx-scroll"><table class="bx-table">' +
-          '<thead><tr><th>Batters</th><th>AB</th><th>R</th><th>H</th><th>RBI</th><th>BB</th><th>SO</th><th>AVG</th><th>OPS</th></tr></thead>' +
-          '<tbody>' + batRows + '</tbody></table></div>' +
-        '<div class="bx-scroll"><table class="bx-table">' +
-          '<thead><tr><th>Pitchers</th><th>IP</th><th>H</th><th>R</th><th>ER</th><th>BB</th><th>SO</th><th>HR</th><th>ERA</th></tr></thead>' +
-          '<tbody>' + pitRows + '</tbody></table></div>' +
-        (notes ? '<ul class="bx-notes">' + notes + '</ul>' : '') +
-        '</div>';
-    }
-
-    function renderInfo(detail) {
-      var lines = (detail.info || []).filter(function (i) { return i.label || i.value; });
-      if (!lines.length) return '<p class="gamecast-empty">No game information yet.</p>';
-      return '<ul class="gi-list">' + lines.map(function (i) {
-        return '<li><span class="gi-label">' + esc(i.label) + '</span>' +
-               '<span class="gi-value">' + esc(i.value) + '</span></li>';
-      }).join('') + '</ul>';
-    }
-
     function renderPanels() {
+      var G = window.NumSoxGamecast;
       // A scheduled game has no feed yet, so say so rather than opening onto nothing.
       if (!latest || !latest.detail) {
         var msg = '<p class="gamecast-empty">Nothing to show yet. '
@@ -953,9 +1100,9 @@
         return;
       }
       var d = latest.detail;
-      if (!pbpEl.hasAttribute('hidden')) pbpEl.innerHTML = renderPlays(d);
-      if (!boxEl.hasAttribute('hidden')) boxEl.innerHTML = renderTeamBox(d.away) + renderTeamBox(d.home);
-      if (!infoEl.hasAttribute('hidden')) infoEl.innerHTML = renderInfo(d);
+      if (!pbpEl.hasAttribute('hidden')) pbpEl.innerHTML = G.renderPlays(d);
+      if (!boxEl.hasAttribute('hidden')) boxEl.innerHTML = G.renderTeamBox(d.away) + G.renderTeamBox(d.home);
+      if (!infoEl.hasAttribute('hidden')) infoEl.innerHTML = G.renderInfo(d);
     }
 
     function updateHint(detail) {
@@ -1018,6 +1165,21 @@
     // Catch up immediately when the tab comes back to the foreground.
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden && latest && latest.live) poll();
+    });
+  })();
+</script>
+
+<!-- Last night's play by play, fetched only when someone opens it. -->
+<script>
+  (function () {
+    var root = document.getElementById('prev-gamecast');
+    if (!root || !window.NumSoxGamecast) return;
+    var gameId = root.getAttribute('data-game-id');
+
+    window.NumSoxGamecast.mount('prev-gamecast', function () {
+      return fetch('/api/game-detail?gameId=' + encodeURIComponent(gameId))
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function (data) { return data && data.detail ? data.detail : null; });
     });
   })();
 </script>

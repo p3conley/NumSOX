@@ -107,6 +107,7 @@ public class DashboardController {
         model.addAttribute("bosRecord",
                 teamRecordService.bosRecord(teamStatsService.getLatestStats("BOS").orElse(null)));
         model.addAttribute("rankSummary", teamRankingService.rankBos());
+        model.addAttribute("bosSeries", teamRankingService.bosSeriesRecord());
 
         addStandings(model, standingsDate);
 

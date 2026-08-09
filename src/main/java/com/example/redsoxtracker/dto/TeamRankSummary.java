@@ -9,9 +9,12 @@ public class TeamRankSummary {
     private final TeamRank wrcPlus;
     private final TeamRank last10;
     private final TeamRank streak;
+    private final TeamRank seriesWins;
+    private final TeamRank seriesSweeps;
 
     public TeamRankSummary(TeamRank record, TeamRank runDifferential, TeamRank ops, TeamRank era,
-                           TeamRank bullpenEra, TeamRank wrcPlus, TeamRank last10, TeamRank streak) {
+                           TeamRank bullpenEra, TeamRank wrcPlus, TeamRank last10, TeamRank streak,
+                           TeamRank seriesWins, TeamRank seriesSweeps) {
         this.record = record;
         this.runDifferential = runDifferential;
         this.ops = ops;
@@ -20,6 +23,8 @@ public class TeamRankSummary {
         this.wrcPlus = wrcPlus;
         this.last10 = last10;
         this.streak = streak;
+        this.seriesWins = seriesWins;
+        this.seriesSweeps = seriesSweeps;
     }
 
     public TeamRank getRecord() { return record; }
@@ -30,4 +35,6 @@ public class TeamRankSummary {
     public TeamRank getWrcPlus() { return wrcPlus; }
     public TeamRank getLast10() { return last10; }
     public TeamRank getStreak() { return streak; }
+    public TeamRank getSeriesWins() { return seriesWins; }
+    public TeamRank getSeriesSweeps() { return seriesSweeps; }
 }

@@ -3,12 +3,14 @@ package com.example.redsoxtracker.controller;
 import com.example.redsoxtracker.domain.Game;
 import com.example.redsoxtracker.dto.LiveGameDetail;
 import com.example.redsoxtracker.dto.ScoreboardView;
+import com.example.redsoxtracker.repository.GameRepository;
 import com.example.redsoxtracker.service.LiveGameDetailService;
 import com.example.redsoxtracker.service.LiveGameSyncService;
 import com.example.redsoxtracker.service.LiveScoreboardService;
 import com.example.redsoxtracker.service.MatchupService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.LinkedHashMap;
@@ -26,15 +28,41 @@ public class LiveGameApiController {
     private final LiveScoreboardService liveScoreboardService;
     private final LiveGameDetailService liveGameDetailService;
     private final LiveGameSyncService liveGameSyncService;
+    private final GameRepository gameRepository;
 
     public LiveGameApiController(MatchupService matchupService,
                                  LiveScoreboardService liveScoreboardService,
                                  LiveGameDetailService liveGameDetailService,
-                                 LiveGameSyncService liveGameSyncService) {
+                                 LiveGameSyncService liveGameSyncService,
+                                 GameRepository gameRepository) {
         this.matchupService = matchupService;
         this.liveScoreboardService = liveScoreboardService;
         this.liveGameDetailService = liveGameDetailService;
         this.liveGameSyncService = liveGameSyncService;
+        this.gameRepository = gameRepository;
+    }
+
+    /**
+     * Detail for one specific game rather than whatever is featured, so the Previous Game
+     * box can show its own play by play. Finished games never change, so this one caches.
+     */
+    @GetMapping("/api/game-detail")
+    public ResponseEntity<Map<String, Object>> gameDetail(@RequestParam("gameId") Integer gameId) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        Optional<Game> game = gameRepository.findByMlbGameId(gameId);
+        if (game.isEmpty()) {
+            body.put("available", false);
+            return ResponseEntity.ok(body);
+        }
+
+        Optional<LiveGameDetail> detail = liveGameDetailService.buildForGame(game.get());
+        body.put("available", detail.isPresent());
+        detail.ifPresent(dd -> body.put("detail", dd));
+
+        boolean settled = "Final".equals(game.get().getStatus());
+        return ResponseEntity.ok()
+                .header("Cache-Control", settled ? "public, max-age=600" : "no-store")
+                .body(body);
     }
 
     @GetMapping("/api/live-game")
