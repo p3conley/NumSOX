@@ -33,6 +33,10 @@ public class ScoreboardView {
     /** atBatIndex of that play, so the page can tell a new one from a repeat poll. */
     private Integer lastPlayIndex;
     private boolean finalGame;
+    /** Occupied bases, for the diamond under the count. */
+    private boolean onFirst;
+    private boolean onSecond;
+    private boolean onThird;
     private boolean live;
     private List<InningLine> innings = new ArrayList<>();
 
@@ -74,6 +78,12 @@ public class ScoreboardView {
     public void setLastPlayIndex(Integer lastPlayIndex) { this.lastPlayIndex = lastPlayIndex; }
     public boolean isFinalGame() { return finalGame; }
     public void setFinalGame(boolean finalGame) { this.finalGame = finalGame; }
+    public boolean isOnFirst() { return onFirst; }
+    public void setOnFirst(boolean onFirst) { this.onFirst = onFirst; }
+    public boolean isOnSecond() { return onSecond; }
+    public void setOnSecond(boolean onSecond) { this.onSecond = onSecond; }
+    public boolean isOnThird() { return onThird; }
+    public void setOnThird(boolean onThird) { this.onThird = onThird; }
 
     /** Between halves the board shows MID/END rather than a live count. */
     public boolean isBetweenInnings() {

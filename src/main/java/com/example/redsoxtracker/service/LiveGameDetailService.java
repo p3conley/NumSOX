@@ -42,7 +42,7 @@ public class LiveGameDetailService {
                 live ? intOrNull(linescore, "balls") : null,
                 live ? intOrNull(linescore, "strikes") : null,
                 live ? intOrNull(linescore, "outs") : null,
-                buildPlays(liveData.path("plays").path("allPlays")),
+                buildPlays(liveData.path("plays").path("allPlays"), live),
                 buildTeamBox(boxscore.path("teams").path("away")),
                 buildTeamBox(boxscore.path("teams").path("home")),
                 buildInfo(boxscore.path("info"))
@@ -60,7 +60,7 @@ public class LiveGameDetailService {
      * Newest first, grouped under a half-inning heading the way a game log reads.
      * The at-bat in progress keeps its pitches so you can follow the count live.
      */
-    private List<LiveGameDetail.HalfInning> buildPlays(JsonNode allPlays) {
+    private List<LiveGameDetail.HalfInning> buildPlays(JsonNode allPlays, boolean live) {
         List<LiveGameDetail.HalfInning> groups = new ArrayList<>();
         if (!allPlays.isArray()) return groups;
 
@@ -78,7 +78,10 @@ public class LiveGameDetailService {
             if (!label.equals(currentLabel)) {
                 currentLabel = label;
                 current = new ArrayList<>();
-                groups.add(new LiveGameDetail.HalfInning(label, current));
+                // Plays are walked newest first, so the first group is the frame in
+                // progress whenever the game is still going.
+                boolean isLiveFrame = live && groups.isEmpty();
+                groups.add(new LiveGameDetail.HalfInning(label, isLiveFrame, current));
             }
 
             String event = result.path("event").asText("");

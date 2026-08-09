@@ -23,8 +23,11 @@ public record LiveGameDetail(
         List<InfoLine> info
 ) {
 
-    /** Plays are grouped under their half-inning heading, newest first. */
-    public record HalfInning(String label, List<Play> plays) {}
+    /**
+     * Plays grouped under their half-inning heading, newest first.
+     * {@code live} marks the frame being played, which the page colours differently.
+     */
+    public record HalfInning(String label, boolean live, List<Play> plays) {}
 
     public record Play(
             String batter,

@@ -278,8 +278,8 @@ public class MatchupService {
 
     public String buildMatchupTitle(Game game) {
         return "Away".equalsIgnoreCase(game.getHomeAway())
-                ? "Boston Red Sox @ " + game.getOpponent()
-                : game.getOpponent() + " @ Boston Red Sox";
+                ? "Red Sox @ " + game.getOpponent()
+                : game.getOpponent() + " @ Red Sox";
     }
 
     public String buildScoreline(Game game) {

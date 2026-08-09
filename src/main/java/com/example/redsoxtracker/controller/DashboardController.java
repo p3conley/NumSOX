@@ -25,6 +25,9 @@ import java.util.Optional;
 @Controller
 public class DashboardController {
 
+    /** Short form for display. "Boston" is understood on a Red Sox site. */
+    private static final String RED_SOX = "Red Sox";
+
     private final GameRepository gameRepository;
     private final GameService gameService;
     private final LiveScoreboardService liveScoreboardService;
@@ -71,8 +74,8 @@ public class DashboardController {
             model.addAttribute("featuredIsToday", isLive || game.getGameDate().isEqual(LocalDate.now()));
             model.addAttribute("featuredIsLive", isLive);
             boolean redSoxAreAway = "Away".equalsIgnoreCase(game.getHomeAway());
-            model.addAttribute("featuredAwayTeam", redSoxAreAway ? "Boston Red Sox" : game.getOpponent());
-            model.addAttribute("featuredHomeTeam", redSoxAreAway ? game.getOpponent() : "Boston Red Sox");
+            model.addAttribute("featuredAwayTeam", redSoxAreAway ? RED_SOX : game.getOpponent());
+            model.addAttribute("featuredHomeTeam", redSoxAreAway ? game.getOpponent() : RED_SOX);
             model.addAttribute("featuredAwayRecord", redSoxAreAway ? game.getRedSoxRecord() : game.getOpponentRecord());
             model.addAttribute("featuredHomeRecord", redSoxAreAway ? game.getOpponentRecord() : game.getRedSoxRecord());
             model.addAttribute("featuredAwayScore", redSoxAreAway ? game.getRedSoxScore() : game.getOpponentScore());
@@ -93,8 +96,8 @@ public class DashboardController {
             Game prev = previousGame.get();
             model.addAttribute("previousGame", prev);
             boolean prevRedSoxAreAway = "Away".equalsIgnoreCase(prev.getHomeAway());
-            model.addAttribute("previousAwayTeam", prevRedSoxAreAway ? "Boston Red Sox" : prev.getOpponent());
-            model.addAttribute("previousHomeTeam", prevRedSoxAreAway ? prev.getOpponent() : "Boston Red Sox");
+            model.addAttribute("previousAwayTeam", prevRedSoxAreAway ? RED_SOX : prev.getOpponent());
+            model.addAttribute("previousHomeTeam", prevRedSoxAreAway ? prev.getOpponent() : RED_SOX);
             liveScoreboardService.buildForGame(prev).ifPresent(s -> model.addAttribute("previousScoreboard", s));
         }
 

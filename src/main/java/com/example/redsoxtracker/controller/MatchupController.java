@@ -66,8 +66,8 @@ public class MatchupController {
         model.addAttribute("redSoxAreAway", redSoxAreAway);
 
         // Away team info
-        String awayTeamName = redSoxAreAway ? "Boston Red Sox" : game.getOpponent();
-        String homeTeamName = redSoxAreAway ? game.getOpponent() : "Boston Red Sox";
+        String awayTeamName = redSoxAreAway ? "Red Sox" : game.getOpponent();
+        String homeTeamName = redSoxAreAway ? game.getOpponent() : "Red Sox";
         model.addAttribute("awayTeamName", awayTeamName);
         model.addAttribute("homeTeamName", homeTeamName);
 

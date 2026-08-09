@@ -70,6 +70,11 @@ public class LiveScoreboardService {
             view.setAtBat(linescore.path("offense").path("batter").path("fullName").asText("Awaiting batter"));
             // defense.pitcher is whoever is on the mound now; offense.pitcher is the other side's starter.
             view.setPitching(linescore.path("defense").path("pitcher").path("fullName").asText("Awaiting pitcher"));
+            // A base only appears under offense while someone is standing on it.
+            JsonNode offense = linescore.path("offense");
+            view.setOnFirst(offense.has("first"));
+            view.setOnSecond(offense.has("second"));
+            view.setOnThird(offense.has("third"));
             String half = linescore.path("inningHalf").asText("");
             int inning = linescore.path("currentInning").asInt(0);
             view.setInningState((half.isBlank() || inning == 0) ? status : half + " " + inning);

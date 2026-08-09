@@ -26,13 +26,13 @@
         <div class="matchup-side-label">Away</div>
         <div class="logo-crown">
           <img class="featured-team-logo" th:src="${@teamLogoService.logoForName(featuredAwayTeam)}" th:alt="${featuredAwayTeam + ' logo'}"/>
-          <svg th:if="${featuredAwayTeam == 'Boston Red Sox'}" class="crown-icon halo-icon" viewBox="0 0 120 50" aria-hidden="true">
+          <svg th:if="${featuredAwayTeam == 'Red Sox'}" class="crown-icon halo-icon" viewBox="0 0 120 50" aria-hidden="true">
             <ellipse cx="60" cy="27" rx="46" ry="15" fill="none" stroke="url(#haloGradAway)" stroke-width="7"/>
             <defs><linearGradient id="haloGradAway" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stop-color="#fff6c8"/><stop offset="55%" stop-color="#ffd700"/><stop offset="100%" stop-color="#d4a900"/>
             </linearGradient></defs>
           </svg>
-          <svg th:unless="${featuredAwayTeam == 'Boston Red Sox'}" class="crown-icon horns-icon" viewBox="0 0 120 50" aria-hidden="true">
+          <svg th:unless="${featuredAwayTeam == 'Red Sox'}" class="crown-icon horns-icon" viewBox="0 0 120 50" aria-hidden="true">
             <path d="M8,50 C2,32 0,14 10,2 C16,16 20,34 24,50 Z" fill="url(#hornGradAway)"/>
             <path d="M112,50 C118,32 120,14 110,2 C104,16 100,34 96,50 Z" fill="url(#hornGradAway)"/>
             <defs><linearGradient id="hornGradAway" x1="0" y1="0" x2="0" y2="1">
@@ -45,9 +45,10 @@
         <!-- Always present so a score can appear at first pitch without a reload. -->
         <div class="matchup-side-score" th:text="${featuredAwayScore != null ? featuredAwayScore : ''}">9</div>
       </div>
+      <!-- Date first, then the @ sitting between the two clubs, then time and venue. -->
       <div class="matchup-center">
-        <div class="matchup-at-symbol">@</div>
         <div class="matchup-meta" th:text="${#temporals.format(featuredGame.gameDate, 'EEE, MMM d')}">Sun, May 31</div>
+        <div class="matchup-at-symbol">@</div>
         <div class="matchup-meta" th:if="${featuredGame.status == 'Scheduled'}"
              th:text="${featuredGame.startTime == null or featuredGame.startTimeTbd == true ? 'Time TBD' : #temporals.format(featuredGame.startTime, 'h:mm a')}">7:10 PM</div>
         <div class="matchup-meta" th:text="${featuredGame.venue ?: 'TBD'}">Progressive Field</div>
@@ -56,13 +57,13 @@
         <div class="matchup-side-label">Home</div>
         <div class="logo-crown">
           <img class="featured-team-logo" th:src="${@teamLogoService.logoForName(featuredHomeTeam)}" th:alt="${featuredHomeTeam + ' logo'}"/>
-          <svg th:if="${featuredHomeTeam == 'Boston Red Sox'}" class="crown-icon halo-icon" viewBox="0 0 120 50" aria-hidden="true">
+          <svg th:if="${featuredHomeTeam == 'Red Sox'}" class="crown-icon halo-icon" viewBox="0 0 120 50" aria-hidden="true">
             <ellipse cx="60" cy="27" rx="46" ry="15" fill="none" stroke="url(#haloGradHome)" stroke-width="7"/>
             <defs><linearGradient id="haloGradHome" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stop-color="#fff6c8"/><stop offset="55%" stop-color="#ffd700"/><stop offset="100%" stop-color="#d4a900"/>
             </linearGradient></defs>
           </svg>
-          <svg th:unless="${featuredHomeTeam == 'Boston Red Sox'}" class="crown-icon horns-icon" viewBox="0 0 120 50" aria-hidden="true">
+          <svg th:unless="${featuredHomeTeam == 'Red Sox'}" class="crown-icon horns-icon" viewBox="0 0 120 50" aria-hidden="true">
             <path d="M8,50 C2,32 0,14 10,2 C16,16 20,34 24,50 Z" fill="url(#hornGradHome)"/>
             <path d="M112,50 C118,32 120,14 110,2 C104,16 100,34 96,50 Z" fill="url(#hornGradHome)"/>
             <defs><linearGradient id="hornGradHome" x1="0" y1="0" x2="0" y2="1">
@@ -146,6 +147,16 @@
           <div class="count-flash is-red" data-flash="out"
                th:text="${scoreboard.breakCaption ?: 'Mid'}">Mid 5th</div>
         </div>
+      </div>
+
+      <!-- Bases, read from home plate: second at the top, third left, first right. -->
+      <div class="bases" id="bases" aria-label="Runners on base">
+        <span class="base base-second" data-base="second"
+              th:classappend="${scoreboard.onSecond ? ' is-on' : ''}" title="Second base"></span>
+        <span class="base base-third" data-base="third"
+              th:classappend="${scoreboard.onThird ? ' is-on' : ''}" title="Third base"></span>
+        <span class="base base-first" data-base="first"
+              th:classappend="${scoreboard.onFirst ? ' is-on' : ''}" title="First base"></span>
       </div>
     </div>
 
@@ -231,7 +242,7 @@
        th:class="${'monster-board prev-game-board ' + (previousGame.result == 'W' ? 'prev-game-win' : 'prev-game-loss')}">
     <div class="prev-game-header">
       <span class="prev-game-matchup"
-            th:text="${previousGame.homeAway == 'Away' ? 'Boston Red Sox @ ' + previousGame.opponent : previousGame.opponent + ' @ Boston Red Sox'}">Red Sox @ Yankees</span>
+            th:text="${previousGame.homeAway == 'Away' ? 'Red Sox @ ' + previousGame.opponent : previousGame.opponent + ' @ Red Sox'}">Red Sox @ Yankees</span>
       <span class="prev-game-date" th:text="${#temporals.format(previousGame.gameDate, 'EEE, MMM d')}">Wed, Jul 29</span>
       <span th:class="${'prev-result-pill ' + (previousGame.result == 'W' ? 'is-win' : 'is-loss')}"
             th:text="${(previousGame.result == 'W' ? 'Win' : 'Loss') + ' · Final'}">Win &middot; Final</span>
@@ -739,6 +750,19 @@
       });
 
       applyCount(sb);
+      applyBases(sb);
+    }
+
+    // ---- bases ---------------------------------------------------------------------
+    var basesEl = document.getElementById('bases');
+
+    function applyBases(sb) {
+      if (!basesEl) return;
+      // Nobody is on base between innings or once the game is over.
+      var occupied = { first: !!sb.onFirst, second: !!sb.onSecond, third: !!sb.onThird };
+      basesEl.querySelectorAll('[data-base]').forEach(function (b) {
+        b.classList.toggle('is-on', !!occupied[b.getAttribute('data-base')]);
+      });
     }
 
     // ---- ball / strike / out lamps -------------------------------------------------
@@ -855,8 +879,11 @@
             (pitches ? '<ul class="pitch-list">' + pitches + '</ul>' : '') +
             '</li>';
         }).join('');
+        // The frame being played is red; everything already in the books stays green.
         return '<section class="half-inning">' +
-          '<h4 class="half-inning-title">' + esc(half.label) + '</h4>' +
+          '<h4 class="half-inning-title' + (half.live ? ' is-live' : '') + '">' +
+            esc(half.label) + (half.live ? '<span class="half-inning-now">Live</span>' : '') +
+          '</h4>' +
           '<ul class="play-list">' + plays + '</ul></section>';
       }).join('');
     }
