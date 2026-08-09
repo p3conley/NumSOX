@@ -2675,3 +2675,297 @@ textarea { min-height: 100px; resize: vertical; }
 .tag-wc-1 { background: #b8860b; color: #fff3d6; }
 .tag-wc-2 { background: #a3a3a8; color: #26262a; }
 .tag-wc-3 { background: #a5672a; color: #ffe9d1; }
+
+/* ============================================================================
+   MOBILE
+   ----------------------------------------------------------------------------
+   Everything below is either touch-only or inside a width media query, so the
+   desktop rendering is untouched. Two breakpoints are used:
+
+     <= 768px   phones and small tablets
+     <= 520px   phones proper, where three columns of text stop fitting
+
+   The pages are readable at 320px and scroll horizontally nowhere except inside
+   containers that opt into it (wide stat tables and the calendar), which carry a
+   fade on the right edge so it is obvious there is more to see.
+   ============================================================================ */
+
+/* Touch-only, no effect on a mouse: kills the 300ms tap delay and stops iOS
+   inflating text in landscape. */
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+a, button, input, select, summary, [role="button"] {
+    touch-action: manipulation;
+}
+
+/* A horizontally scrollable region. Inert until the mobile query turns it on, so
+   desktop layout is unaffected by the wrapper existing. */
+.table-scroll { position: relative; }
+
+@media (max-width: 768px) {
+
+    /* ---- page shell ---- */
+    body { overflow-x: hidden; }
+
+    /* Respect the notch on phones that have one. */
+    .page-content {
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+
+    /* ---- navigation ---- */
+    /* Wrap to two rows rather than scroll: every destination stays visible, and
+       each one gets a real 44px touch target. */
+    .topbar {
+        flex-direction: column;
+        gap: 6px;
+        padding: 10px 12px;
+        min-height: 0;
+    }
+
+    .topbar-brand { min-height: 44px; align-items: center; }
+    .brand-logo { width: 118px; height: 32px; }
+
+    .topbar-links {
+        justify-content: center;
+        gap: 4px 2px;
+        width: 100%;
+    }
+
+    .topbar-links a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 0 13px;
+        font-size: 13.5px;
+    }
+
+    /* ---- wide tables ---- */
+    /* Stat tables keep every column; the container scrolls instead of the page,
+       and the fade tells you there is more to the right. */
+    .table-scroll,
+    .standings-table-wrap,
+    .bx-scroll,
+    .calendar-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+    }
+
+    .table-scroll::after,
+    .standings-table-wrap::after,
+    .calendar-scroll::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 26px;
+        height: 100%;
+        pointer-events: none;
+        background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.92));
+    }
+
+    .standings-table-wrap,
+    .calendar-scroll { position: relative; }
+
+    .table-scroll table { min-width: 560px; }
+
+    /* Roomier rows: a fingertip is not a cursor. */
+    th, td { padding: 11px 10px; }
+
+    /* ---- forms ---- */
+    /* iOS zooms the page when a focused field is under 16px, which then leaves the
+       layout scrolled sideways. Keeping fields at 16px avoids it entirely. */
+    input, select, textarea {
+        font-size: 16px;
+        min-height: 44px;
+    }
+
+    .filters { flex-direction: column; align-items: stretch; gap: 12px; }
+    .filters label { width: 100%; }
+    .filters input, .filters select { width: 100%; }
+
+    button, .button {
+        min-height: 44px;
+        padding: 11px 18px;
+    }
+
+    .sync-actions { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .sync-actions form { width: 100%; }
+    .sync-actions button { width: 100%; }
+
+    /* ---- scoreboard ---- */
+    /* Shrinking the board to fit a phone drove the digits to 8px. It scrolls
+       sideways instead, at a size that can actually be read. */
+    .monster-board {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+    }
+
+    .monster-grid {
+        grid-template-columns:
+            minmax(22px, .3fr) minmax(58px, 1.1fr)
+            repeat(var(--innings, 10), minmax(22px, .42fr))
+            repeat(3, minmax(24px, .34fr));
+        grid-auto-rows: 26px;
+        gap: 2px;
+    }
+
+    .monster-cell { min-height: 26px; font-size: 13px; }
+    .monster-label, .inning-num { font-size: 11px; }
+    .monster-cell.team-name.boston { font-size: 13px; }
+    .monster-title { font-size: 13px; letter-spacing: 0.3em; }
+
+    /* ---- gamecast ---- */
+    .gamecast-panel { max-height: 60vh; }
+    .gamecast-tabs { flex-wrap: wrap; }
+    .gamecast-tab { min-height: 40px; }
+    .bx-table { min-width: 430px; }
+    .play-desc { font-size: 12.5px; }
+
+    /* ---- standings console ---- */
+    .scrub-arrow { width: 44px; height: 44px; }
+    .tl-btn { min-height: 44px; }
+    .tl-speed { min-height: 34px; min-width: 34px; }
+    .tl-progress { height: 12px; }
+    .tl-progress::-webkit-slider-thumb { width: 24px; height: 24px; }
+    .tl-progress::-moz-range-thumb { width: 24px; height: 24px; }
+
+    /* ---- matchup center ---- */
+    .calendar-grid { min-width: 640px; }
+    .calendar-weekdays { min-width: 640px; }
+    .calendar-day { min-height: 92px; }
+    .calendar-game { min-height: 40px; }
+    .calendar-nav a, .calendar-nav button { min-height: 44px; }
+
+    .matchup-header { grid-template-columns: 1fr; }
+    .away-team, .home-team { border: none; text-align: left; }
+    .home-team { border-top: 1px solid rgba(255,255,255,0.14); }
+    .matchup-center-info { border-block: 1px solid rgba(255,255,255,0.14); padding: 18px; }
+
+    /* Small badges were sitting at 10px, below the point they read cleanly. */
+    .starter-source, .predicted-box, .badge { font-size: 11px; }
+
+    /* Links inside table rows were 26px tall, so the tap target was the text
+       rather than the row. They now fill the cell. */
+    .team-link {
+        display: flex;
+        min-height: 40px;
+        align-items: center;
+    }
+
+    /* Team chips on Team Stats, and the timelapse speed buttons. */
+    .selector-links a { min-height: 40px; padding: 6px 13px; }
+    .tl-speed { min-height: 40px; min-width: 40px; }
+    .tab-link { min-height: 44px; display: inline-flex; align-items: center; }
+
+    /* Four tabs do not fit across a 320px screen, so the row scrolls rather than
+       pushing the page sideways. */
+    .tab-row {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+        flex-wrap: nowrap;
+    }
+
+    .tab-link { flex: 0 0 auto; white-space: nowrap; }
+    .gamecast-toggle { min-height: 48px; }
+
+    /* The smallest labels on the board and the standings ribbons. The ribbons are
+       three capitals inside a 42px bookmark, so 10px is as large as they go
+       without redrawing the tag itself. */
+    .count-label { font-size: 11.5px; }
+    .standings-tag { font-size: 10px; }
+
+    /* An inline link in a sentence still needs a tappable box around it. */
+    .data-freshness a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 0 8px;
+    }
+}
+
+@media (max-width: 520px) {
+
+    /* Three names across stops fitting on a phone, so batter, frame and pitcher
+       stack. Above this width they stay on one line, as on desktop. */
+    .monster-status {
+        grid-template-columns: 1fr;
+        gap: 3px;
+    }
+
+    .monster-status .status-mid,
+    .monster-status .status-right { justify-content: flex-start; }
+    .monster-status > div span { font-size: 10.5px; }
+    .monster-status strong { font-size: 12.5px; }
+
+    /* The club name was breaking mid-word ("Athletic / s") in a column this
+       narrow, so it comes down a size and is allowed to sit on two lines. */
+    .matchup-side-name {
+        font-size: clamp(15px, 5vw, 21px);
+        overflow-wrap: normal;
+        hyphens: none;
+    }
+
+    .matchup-side-record { font-size: 11.5px; }
+    .matchup-side-score { font-size: clamp(26px, 9vw, 38px); }
+    .matchup-strip { padding: 14px 10px; gap: 8px; }
+    .matchup-at-symbol { font-size: 26px; }
+    .matchup-meta { font-size: 10.5px; max-width: none; }
+
+    .featured-team-logo { width: 62px; height: 62px; }
+
+    /* Stat cards two-up rather than four-up. */
+    .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
+    .hero-intel-grid { grid-template-columns: 1fr; }
+    .park-factors-quick, .calibration-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .today-hero { padding: 16px 12px; }
+    .panel { padding: 16px 14px; }
+
+    .section-header { letter-spacing: 0.06em; }
+
+    /* Roster and player cards go single file. */
+    .roster-grid, .two-col-stats, .sw-grid { grid-template-columns: 1fr; }
+
+    /* The games list on the dashboard gets more of the screen. */
+    .games-scroll { max-height: 62vh; }
+
+    /* The board has to scroll sideways on a phone once you allow for extra innings,
+       so the club name is pinned to the left edge: you can reach R/H/E without
+       losing track of whose row you are reading. The pitcher-number column is
+       decorative, so it gives up its space to make the rest fit. */
+    .monster-grid {
+        grid-template-columns:
+            minmax(56px, 1fr)
+            repeat(var(--innings, 10), minmax(21px, .42fr))
+            repeat(3, minmax(23px, .34fr));
+    }
+
+    .monster-label,
+    .pitcher-slot { display: none; }
+
+    .monster-cell.team-name,
+    .team-head {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+    }
+
+    /* Sticky over a translucent slot would show the cells sliding underneath. */
+    .monster-cell.team-name {
+        background: linear-gradient(180deg, #5d8376 0%, #4e7064 100%);
+        box-shadow: 3px 0 6px rgba(0,0,0,0.28);
+    }
+
+    .team-head {
+        background: var(--green);
+        box-shadow: 3px 0 6px rgba(0,0,0,0.28);
+    }
+}

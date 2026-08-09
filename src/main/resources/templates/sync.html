@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>Sync / Data Updates - NumSOX</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}"/>
 </head>
@@ -24,6 +25,7 @@
   <!-- Sync Status Table -->
   <div class="panel">
     <div class="panel-title">Data Source Status</div>
+    <div class="table-scroll">
     <table class="sync-table">
       <thead>
         <tr>
@@ -50,6 +52,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
   </div>
 
   <!-- Sync Actions -->
@@ -90,6 +93,7 @@
   <!-- Data Source Guide -->
   <div class="panel">
     <div class="panel-title">Data Source Guide</div>
+    <div class="table-scroll">
     <table class="sync-table">
       <thead><tr><th>Stat</th><th>Source</th><th>Update Frequency</th></tr></thead>
       <tbody>
@@ -100,6 +104,7 @@
         <tr><td>DRS, UZR</td><td>No free public source</td><td>N/A</td></tr>
       </tbody>
     </table>
+    </div>
     <p class="sync-note">
       <strong>Note:</strong> Statcast metrics are pulled from Baseball Savant's own public CSV leaderboard
       export (the same endpoint behind their site's "Download CSV" button), a first-party MLB data source,

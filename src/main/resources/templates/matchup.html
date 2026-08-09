@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>Matchup Center - NumSOX</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}"/>
 </head>
@@ -30,34 +31,37 @@
         </div>
       </div>
 
-      <div class="calendar-weekdays" aria-hidden="true">
-        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-      </div>
+      <!-- Wraps the weekday row and the grid so both scroll together on a phone. -->
+      <div class="calendar-scroll">
+        <div class="calendar-weekdays" aria-hidden="true">
+          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+        </div>
 
-      <div class="calendar-grid">
-        <th:block th:each="week : ${calendarWeeks}">
-          <div th:each="day : ${week}"
-               class="calendar-day"
-               th:classappend="${(!day.currentMonth ? ' is-muted' : '') + (day.today ? ' is-today' : '') + (day.selected ? ' is-selected' : '')}">
-            <div class="calendar-date">
-              <span th:text="${day.dayNumber}">1</span>
+        <div class="calendar-grid">
+          <th:block th:each="week : ${calendarWeeks}">
+            <div th:each="day : ${week}"
+                 class="calendar-day"
+                 th:classappend="${(!day.currentMonth ? ' is-muted' : '') + (day.today ? ' is-today' : '') + (day.selected ? ' is-selected' : '')}">
+              <div class="calendar-date">
+                <span th:text="${day.dayNumber}">1</span>
+              </div>
+              <div class="calendar-games" th:if="${!day.games.isEmpty()}">
+                <a th:each="g : ${day.games}"
+                   class="calendar-game"
+                   th:href="@{/matchup(gameId=${g.id},month=${calendarMonth})}"
+                   th:classappend="${g.id == game.id ? ' active' : ''}">
+                  <img class="calendar-team-logo" th:src="${@teamLogoService.logoForName(g.opponent)}" th:alt="${g.opponent + ' logo'}"/>
+                  <span class="calendar-opponent">
+                    <span th:text="${g.homeAway == 'Home' ? 'vs' : '@'}">vs</span>
+                    <strong th:text="${g.opponent}">Yankees</strong>
+                  </span>
+                  <span class="calendar-status"
+                        th:text="${g.redSoxScore != null ? 'BOS ' + g.redSoxScore + ', ' + g.opponent + ' ' + g.opponentScore : g.status}">Scheduled</span>
+                </a>
+              </div>
             </div>
-            <div class="calendar-games" th:if="${!day.games.isEmpty()}">
-              <a th:each="g : ${day.games}"
-                 class="calendar-game"
-                 th:href="@{/matchup(gameId=${g.id},month=${calendarMonth})}"
-                 th:classappend="${g.id == game.id ? ' active' : ''}">
-                <img class="calendar-team-logo" th:src="${@teamLogoService.logoForName(g.opponent)}" th:alt="${g.opponent + ' logo'}"/>
-                <span class="calendar-opponent">
-                  <span th:text="${g.homeAway == 'Home' ? 'vs' : '@'}">vs</span>
-                  <strong th:text="${g.opponent}">Yankees</strong>
-                </span>
-                <span class="calendar-status"
-                      th:text="${g.redSoxScore != null ? 'BOS ' + g.redSoxScore + ', ' + g.opponent + ' ' + g.opponentScore : g.status}">Scheduled</span>
-              </a>
-            </div>
-          </div>
-        </th:block>
+          </th:block>
+        </div>
       </div>
     </section>
 
