@@ -1071,6 +1071,80 @@ body {
         0 0 7px rgba(247,201,72,0.7);
 }
 
+/* The middle column keeps narrowing as the window does, but the count labels stopped
+   shrinking, so STRIKE and its dashes outgrew their group and ran into the others.
+   Everything in the scorebug scales down through this band instead. */
+@media (max-width: 1000px) {
+    .matchup-center.scorebug .count-label {
+        font-size: clamp(8.5px, 1.15vw, 13px);
+        gap: 4px;
+        letter-spacing: 0.03em;
+    }
+
+    .matchup-center.scorebug .count-label::before,
+    .matchup-center.scorebug .count-label::after {
+        width: clamp(4px, 0.6vw, 9px);
+        height: 2px;
+    }
+
+    .matchup-center.scorebug .count-lamps { gap: clamp(3px, 0.45vw, 7px); }
+
+    .matchup-center.scorebug .lamp {
+        width: clamp(10px, 1.3vw, 17px);
+        height: clamp(10px, 1.3vw, 17px);
+    }
+
+    .matchup-center.scorebug .count-flash {
+        font-size: clamp(10px, 1.3vw, 17px);
+        line-height: clamp(10px, 1.3vw, 17px);
+    }
+
+    .matchup-center.scorebug .bases {
+        width: clamp(44px, 5vw, 62px);
+        height: clamp(32px, 3.6vw, 45px);
+    }
+
+    .matchup-center.scorebug .base {
+        width: clamp(17px, 2vw, 26px);
+        height: clamp(17px, 2vw, 26px);
+    }
+
+    .matchup-center.scorebug .base-second { margin-left: calc(clamp(17px, 2vw, 26px) / -2); }
+}
+
+/* Below this there is genuinely no room between the clubs, so the scorebug takes its
+   own full-width row underneath them. */
+@media (max-width: 620px) {
+    .board-matchup .matchup-strip {
+        grid-template-columns: 1fr 1fr;
+        row-gap: 4px;
+    }
+
+    .board-matchup .matchup-side.away { grid-column: 1; grid-row: 1; }
+    .board-matchup .matchup-side.home { grid-column: 2; grid-row: 1; }
+
+    .matchup-center.scorebug {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        padding: 0;
+        margin-top: 6px;
+    }
+
+    /* Equal columns keep STRIKE exactly on the centre line, which is where the base
+       diamond sits. Sizing them to their own labels left it a few pixels off. */
+    .matchup-center.scorebug .count-board {
+        gap: clamp(10px, 4vw, 26px);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        justify-content: center;
+        width: 100%;
+        max-width: 360px;
+        margin-inline: auto;
+    }
+
+    .matchup-center.scorebug .count-label { font-size: clamp(9px, 2.4vw, 13px); }
+    .matchup-center.scorebug .lamp { width: clamp(11px, 3vw, 16px); height: clamp(11px, 3vw, 16px); }
+}
+
 /* ===== BASES ===== */
 /* Read from behind home plate: second at the top, third to the left, first to the right.
    Squares turned 45 degrees, sunk into the wall like the count lamps. */
@@ -3232,30 +3306,6 @@ a, button, input, select, summary, [role="button"] {
         font-size: clamp(15px, 5vw, 21px);
         overflow-wrap: normal;
         hyphens: none;
-    }
-
-    /* Three count groups will not fit a middle column this narrow, so the scorebug
-       drops to its own full-width row under the two clubs. */
-    .board-matchup .matchup-strip {
-        grid-template-columns: 1fr 1fr;
-        row-gap: 4px;
-    }
-
-    .board-matchup .matchup-side.away { grid-column: 1; grid-row: 1; }
-    .board-matchup .matchup-side.home { grid-column: 2; grid-row: 1; }
-
-    .matchup-center.scorebug {
-        grid-column: 1 / -1;
-        grid-row: 2;
-        padding: 0;
-        margin-top: 6px;
-    }
-
-    .matchup-center.scorebug .count-board {
-        gap: clamp(10px, 4vw, 26px);
-        grid-template-columns: repeat(3, auto);
-        justify-content: center;
-        width: auto;
     }
 
     .matchup-side.away .matchup-side-score { right: 6%; }
