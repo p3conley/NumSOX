@@ -43,6 +43,8 @@ public class ScoreboardView {
     private Integer awayChallengesLost;
     private Integer homeChallengesLeft;
     private Integer homeChallengesLost;
+    private String status;
+    private boolean delayed;
     private boolean live;
     private List<InningLine> innings = new ArrayList<>();
 
@@ -94,6 +96,10 @@ public class ScoreboardView {
     public void setHomeChallengesLeft(Integer v) { this.homeChallengesLeft = v; }
     public Integer getHomeChallengesLost() { return homeChallengesLost; }
     public void setHomeChallengesLost(Integer v) { this.homeChallengesLost = v; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public boolean isDelayed() { return delayed; }
+    public void setDelayed(boolean delayed) { this.delayed = delayed; }
 
     /** Lamps to draw for a side: the standard pair, or more if a club still holds extra. */
     public int challengeSlots() {

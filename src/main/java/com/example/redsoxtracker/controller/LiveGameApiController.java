@@ -93,8 +93,14 @@ public class LiveGameApiController {
 
         body.put("available", true);
         body.put("gameId", game.getMlbGameId());
-        body.put("status", game.getStatus());
-        body.put("live", "In Progress".equals(game.getStatus()));
+        boolean live = scoreboard.map(ScoreboardView::isLive).orElse("In Progress".equals(game.getStatus()));
+        boolean delayed = scoreboard.map(ScoreboardView::isDelayed)
+                .orElse(game.getStatus() != null && game.getStatus().toLowerCase().contains("delay"));
+        String status = scoreboard.map(ScoreboardView::getStatus).filter(s -> s != null && !s.isBlank()).orElse(game.getStatus());
+        body.put("status", status);
+        body.put("live", live);
+        body.put("delayed", delayed);
+        body.put("finalGame", scoreboard.map(ScoreboardView::isFinalGame).orElse("Final".equals(game.getStatus())));
         body.put("awayScore", awayScore);
         body.put("homeScore", homeScore);
 

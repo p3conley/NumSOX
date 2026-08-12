@@ -47,11 +47,18 @@ public class LiveScoreboardService {
         }
 
         String status = root.path("gameData").path("status").path("detailedState").asText(game.getStatus());
+        String abstractState = root.path("gameData").path("status").path("abstractGameState").asText("");
         boolean finalGame = "Final".equalsIgnoreCase(status) || "Game Over".equalsIgnoreCase(status);
+        boolean delayed = status != null && status.toLowerCase().contains("delay");
+        boolean live = !delayed && ("Live".equalsIgnoreCase(abstractState)
+                || "In Progress".equalsIgnoreCase(status));
 
         // Drives the bulb panel: Middle/End mean the side was retired, and the last
         // completed at-bat tells the page whether to flash WALK or STRIKE.
+        view.setStatus(status);
+        view.setDelayed(delayed);
         view.setFinalGame(finalGame);
+        view.setLive(live);
         view.setInningPhase(linescore.path("inningState").asText(null));
         view.setInningOrdinal(linescore.path("currentInningOrdinal").asText(null));
         applyLastPlay(view, root.path("liveData").path("plays").path("allPlays"));
@@ -64,6 +71,13 @@ public class LiveScoreboardService {
             view.setAtBat("Final");
             view.setPitching("Final");
             view.setInningState("Final");
+        } else if (!live) {
+            view.setBalls(0);
+            view.setStrikes(0);
+            view.setOuts(0);
+            view.setAtBat(delayed ? "Delayed" : "Awaiting batter");
+            view.setPitching(delayed ? "Delayed" : "Awaiting pitcher");
+            view.setInningState(delayed ? "DELAY" : status);
         } else {
             view.setBalls(intOrNull(linescore, "balls"));
             view.setStrikes(intOrNull(linescore, "strikes"));
@@ -83,7 +97,6 @@ public class LiveScoreboardService {
             if (inning > 0) {
                 view.setCurrentInning(inning);
                 view.setInningHalf(half);
-                view.setLive("In Progress".equalsIgnoreCase(status) || !half.isBlank());
             }
         }
         return Optional.of(view);
@@ -135,6 +148,9 @@ public class LiveScoreboardService {
         view.setAtBat("Awaiting live feed");
         view.setPitching("Awaiting live feed");
         view.setInningState(game.getStatus());
+        view.setStatus(game.getStatus());
+        view.setLive("In Progress".equalsIgnoreCase(game.getStatus()));
+        view.setDelayed(game.getStatus() != null && game.getStatus().toLowerCase().contains("delay"));
         return view;
     }
 

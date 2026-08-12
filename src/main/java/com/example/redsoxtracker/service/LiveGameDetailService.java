@@ -32,7 +32,10 @@ public class LiveGameDetailService {
         JsonNode linescore = liveData.path("linescore");
         JsonNode boxscore  = liveData.path("boxscore");
         String status = root.path("gameData").path("status").path("detailedState").asText(game.getStatus());
-        boolean live = "In Progress".equalsIgnoreCase(status);
+        String abstractState = root.path("gameData").path("status").path("abstractGameState").asText("");
+        boolean delayed = status != null && status.toLowerCase().contains("delay");
+        boolean live = !delayed && ("Live".equalsIgnoreCase(abstractState)
+                || "In Progress".equalsIgnoreCase(status));
 
         return Optional.of(new LiveGameDetail(
                 live,

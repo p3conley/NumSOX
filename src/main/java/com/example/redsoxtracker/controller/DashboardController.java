@@ -2,6 +2,7 @@ package com.example.redsoxtracker.controller;
 
 import com.example.redsoxtracker.domain.Game;
 import com.example.redsoxtracker.domain.BallparkFactorSnapshot;
+import com.example.redsoxtracker.dto.ScoreboardView;
 import com.example.redsoxtracker.dto.WinProbabilityResult;
 import com.example.redsoxtracker.repository.GameRepository;
 import com.example.redsoxtracker.service.GameService;
@@ -70,9 +71,18 @@ public class DashboardController {
             model.addAttribute("featuredGame", game);
             model.addAttribute("featuredTitle", matchupService.buildMatchupTitle(game));
             model.addAttribute("featuredScoreline", matchupService.buildScoreline(game));
-            boolean isLive = "In Progress".equals(game.getStatus());
+            Optional<ScoreboardView> scoreboard = liveScoreboardService.buildForGame(game);
+            scoreboard.ifPresent(s -> model.addAttribute("scoreboard", s));
+            boolean isLive = scoreboard.map(ScoreboardView::isLive).orElse("In Progress".equals(game.getStatus()));
+            boolean isDelayed = scoreboard.map(ScoreboardView::isDelayed)
+                    .orElse(game.getStatus() != null && game.getStatus().toLowerCase().contains("delay"));
+            String statusText = scoreboard.map(ScoreboardView::getStatus)
+                    .filter(s -> s != null && !s.isBlank())
+                    .orElse(game.getStatus());
             model.addAttribute("featuredIsToday", isLive || game.getGameDate().isEqual(LocalDate.now()));
             model.addAttribute("featuredIsLive", isLive);
+            model.addAttribute("featuredIsDelayed", isDelayed);
+            model.addAttribute("featuredStatusText", isDelayed ? "DELAY" : (isLive ? "Live" : statusText));
             // Live means it is on now; the hold window means it finished a moment ago.
             boolean justFinished = matchupService.isWithinPostGameHold(game);
             model.addAttribute("featuredLabel",
@@ -89,7 +99,6 @@ public class DashboardController {
             model.addAttribute("featuredWinProb", winProb);
             Optional<BallparkFactorSnapshot> park = matchupService.getParkForGame(game);
             park.ifPresent(p -> model.addAttribute("featuredPark", p));
-            liveScoreboardService.buildForGame(game).ifPresent(s -> model.addAttribute("scoreboard", s));
         }
 
         // Previous completed game box score (skip if it's the same game already shown above)
