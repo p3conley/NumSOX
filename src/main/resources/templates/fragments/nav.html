@@ -16,6 +16,41 @@
     <a th:href="@{/ballpark}" th:classappend="${active == 'ballpark'} ? ' active'">Ballpark Factors</a>
     <a th:href="@{/sync}" th:classappend="${active == 'sync'} ? ' active'">Sync</a>
   </div>
+
+  <!-- Tucks the bar away as you read down the page and brings it straight back the moment
+       you scroll up. Phones only: the desktop bar has room to stay put. The class is only
+       ever added, never any inline style, so the CSS media query stays in charge. -->
+  <script>
+    (function () {
+      var bar = document.querySelector('.topbar');
+      if (!bar) return;
+      if (!window.matchMedia('(max-width: 768px)').matches) return;
+
+      var lastY = window.scrollY;
+      var ticking = false;
+      var REVEAL_AT = 6;   // px of upward movement before it comes back
+      var HIDE_PAST = 90;  // never hide while still near the top of the page
+
+      function update() {
+        var y = window.scrollY;
+        var goingDown = y > lastY;
+        if (goingDown && y > HIDE_PAST) {
+          bar.classList.add('is-tucked');
+        } else if (!goingDown && lastY - y > REVEAL_AT) {
+          bar.classList.remove('is-tucked');
+        }
+        // Always visible at the very top, and never stuck hidden by momentum overscroll.
+        if (y <= HIDE_PAST) bar.classList.remove('is-tucked');
+        lastY = y < 0 ? 0 : y;
+        ticking = false;
+      }
+
+      window.addEventListener('scroll', function () {
+        if (!ticking) { window.requestAnimationFrame(update); ticking = true; }
+      }, {passive: true});
+    })();
+  </script>
 </nav>
+
 </body>
 </html>

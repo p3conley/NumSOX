@@ -821,6 +821,111 @@ body {
     background: rgba(9, 18, 15, 0.34);
 }
 
+/* ===== BOARD FOOTER: MATCHUP IDENTITY ===== */
+/* The clubs, the date and the score now sit at the foot of the board rather than in a
+   separate panel above it, so the whole thing reads as one extended Green Monster with
+   the count scorebug as its centrepiece. */
+.board-matchup {
+    margin-top: clamp(12px, 1.4vw, 20px);
+    padding-top: clamp(10px, 1.2vw, 16px);
+    border-top: 2px solid rgba(255,255,255,0.28);
+}
+
+/* Inside the board it no longer needs its own frame. */
+.board-matchup .matchup-strip {
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    border-radius: 0;
+}
+
+.board-matchup .today-hero-top { margin-bottom: 10px; }
+
+/* Final score treatment on the board footer. */
+.matchup-side-score.is-sox-win {
+    color: #6df08a;
+    text-shadow:
+        0 0 10px rgba(80,230,120,0.85),
+        0 0 26px rgba(80,230,120,0.45),
+        0 2px 4px rgba(0,0,0,0.55);
+    animation: sox-win-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes sox-win-pulse {
+    0%, 100% { text-shadow: 0 0 10px rgba(80,230,120,0.85), 0 0 24px rgba(80,230,120,0.35), 0 2px 4px rgba(0,0,0,0.55); }
+    50%      { text-shadow: 0 0 16px rgba(80,230,120,1),    0 0 40px rgba(80,230,120,0.6),  0 2px 4px rgba(0,0,0,0.55); }
+}
+
+/* An opponent that beat them gets a flat, deeper red rather than a celebration. */
+.matchup-side-score.is-opponent-win {
+    color: #b03a34;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Whoever lost simply recedes. */
+.matchup-side-score.is-beaten {
+    color: rgba(255,255,255,0.5);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .matchup-side-score.is-sox-win { animation: none; }
+}
+
+/* ===== PREVIOUS GAME: WINNER AND RESULT LINE ===== */
+/* The winning club's whole row is picked out in gold. */
+.prev-game-board .monster-cell.won {
+    box-shadow:
+        inset 0 3px 4px rgba(0,0,0,0.55),
+        inset 0 0 0 1.5px rgba(255,206,84,0.85);
+}
+
+.prev-game-board .monster-cell.team-name.won {
+    background: linear-gradient(180deg, rgba(255,206,84,0.22) 0%, rgba(255,206,84,0.10) 100%);
+    color: #ffe8a8;
+    box-shadow: inset 0 0 0 1.5px rgba(255,206,84,0.85);
+}
+
+/* The result in words, between the linescore and the recap. */
+.prev-result-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 12px;
+    padding: 9px 12px;
+    border-radius: 7px;
+    background: rgba(0,0,0,0.24);
+    border: 1px solid rgba(255,255,255,0.12);
+    font-family: "Arial Narrow", Arial, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.prev-result-team {
+    font-size: clamp(15px, 1.5vw, 23px);
+    font-weight: 900;
+    color: #ffffff;
+}
+
+.prev-result-line.is-sox .prev-result-team { color: #7ef0a0; text-shadow: 0 0 10px rgba(80,230,120,0.5); }
+.prev-result-line.is-opponent .prev-result-team { color: #ef8a84; }
+
+.prev-result-verb {
+    font-size: clamp(12px, 1.1vw, 17px);
+    font-weight: 800;
+    color: rgba(255,255,255,0.62);
+}
+
+.prev-result-score {
+    font-size: clamp(15px, 1.5vw, 23px);
+    font-weight: 900;
+    color: #ffe8a8;
+    letter-spacing: 0.02em;
+}
+
 /* ===== BASES ===== */
 /* Read from behind home plate: second at the top, third to the left, first to the right.
    Squares turned 45 degrees, sunk into the wall like the count lamps. */
@@ -2763,29 +2868,57 @@ a, button, input, select, summary, [role="button"] {
     /* ---- navigation ---- */
     /* Wrap to two rows rather than scroll: every destination stays visible, and
        each one gets a real 44px touch target. */
+    /* One row rather than three: the logo sits on the left and the destinations
+       scroll beside it. That cuts the bar from about 103px to roughly 50 while
+       leaving every link a 40px target. It also slides out of the way going down
+       the page and returns the moment you scroll up. */
     .topbar {
-        flex-direction: column;
-        gap: 6px;
-        padding: 10px 12px;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 8px;
         min-height: 0;
+        transition: transform 0.26s ease;
+        will-change: transform;
     }
 
-    .topbar-brand { min-height: 44px; align-items: center; }
-    .brand-logo { width: 118px; height: 32px; }
+    .topbar.is-tucked { transform: translateY(-100%); }
+
+    .topbar-brand {
+        flex: 0 0 auto;
+        min-height: 40px;
+        align-items: center;
+    }
+
+    .brand-logo { width: 78px; height: 22px; }
 
     .topbar-links {
-        justify-content: center;
-        gap: 4px 2px;
-        width: 100%;
+        flex: 1 1 auto;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 0 1px;
+        min-width: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
     }
+
+    .topbar-links::-webkit-scrollbar { display: none; }
 
     .topbar-links a {
         display: inline-flex;
         align-items: center;
-        min-height: 44px;
-        padding: 0 13px;
-        font-size: 13.5px;
+        flex: 0 0 auto;
+        min-height: 40px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+        border-radius: 999px;
     }
+
+    .topbar-links a.active { box-shadow: 0 2px 7px rgba(215,39,45,0.4); }
 
     /* ---- wide tables ---- */
     /* Stat tables keep every column; the container scrolls instead of the page,
