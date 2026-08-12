@@ -6,7 +6,7 @@
   <title>NumSOX</title>
   <!-- No meta refresh: the scoreboard and game detail poll and update in place instead,
        so a live game moves without the page reloading under you. -->
-  <link rel="stylesheet" th:href="@{/css/styles.css(v='20260812')}"/>
+  <link rel="stylesheet" th:href="@{/css/styles.css(v='20260812-team-abs-lamps')}"/>
 </head>
 <body>
 <nav th:replace="~{fragments/nav :: topbar('dashboard')}"></nav>
@@ -17,10 +17,12 @@
   <div th:if="${featuredGame}" class="today-hero">
 
     <div class="today-hero-top">
-      <div class="hero-label" th:text="${featuredLabel}">NEXT MATCHUP</div>
-      <div class="live-pill"
-           th:classappend="${featuredIsLive ? ' is-live' : (featuredGame.result == 'W' ? ' is-win' : (featuredGame.result == 'L' ? ' is-loss' : ''))}"
-           th:text="${featuredIsLive ? 'Live' : featuredGame.status}">Scheduled</div>
+      <div class="hero-status-group">
+        <div class="hero-label" th:text="${featuredLabel}">NEXT MATCHUP</div>
+        <div class="live-pill"
+             th:classappend="${featuredIsLive ? ' is-live' : (featuredGame.result == 'W' ? ' is-win' : (featuredGame.result == 'L' ? ' is-loss' : ''))}"
+             th:text="${featuredIsLive ? 'Live' : featuredGame.status}">Scheduled</div>
+      </div>
       <!-- Where and when, beside the status rather than buried between the clubs. -->
       <div class="hero-when">
         <span th:text="${#temporals.format(featuredGame.gameDate, 'EEE, MMM d')}">Tue, Aug 11</span>
@@ -91,25 +93,14 @@
           </div>
           <div class="matchup-side-name" th:text="${featuredAwayTeam}">Boston Red Sox</div>
           <div class="matchup-side-record" th:text="${featuredAwayRecord != null ? '(' + featuredAwayRecord + ')' : '(record unavailable)'}">(24 - 33)</div>
-          <!-- ABS challenges left, lit while the club still holds one. -->
-          <div class="abs-row"
-               th:classappend="${scoreboard != null and scoreboard.hasChallenges ? '' : ' is-hidden'}"
-               th:attr="data-abs=away">
+          <div class="abs-row abs-side" data-abs="away">
             <span class="abs-label">ABS</span>
-            <span class="abs-lamps">
+            <span class="abs-lamps" aria-label="Away ABS challenges remaining">
               <span th:each="n : ${#numbers.sequence(1, scoreboard != null ? scoreboard.challengeSlots() : 2)}"
-                    class="abs-lamp" th:attr="data-abs-slot=${n}"
-                    th:classappend="${n <= (scoreboard.awayChallengesLeft ?: 0) ? ' is-on' : ''}"></span>
+                    class="lamp lamp-green" th:attr="data-abs-slot=${n}"
+                    th:classappend="${n <= (scoreboard != null and scoreboard.hasChallenges ? (scoreboard.awayChallengesLeft ?: 0) : 2) ? ' is-on' : ''}"></span>
             </span>
           </div>
-          <!-- Always present so a score can appear at first pitch without a reload. -->
-          <div class="matchup-side-score"
-               th:classappend="${featuredGame.status == 'Final' and featuredAwayScore != null and featuredHomeScore != null
-                   ? (featuredAwayScore > featuredHomeScore
-                        ? (featuredAwayTeam == 'Red Sox' ? ' is-sox-win' : ' is-opponent-win')
-                        : ' is-beaten')
-                   : ''}"
-               th:text="${featuredAwayScore != null ? featuredAwayScore : ''}">9</div>
         </div>
         <!-- The scorebug is the centrepiece: count lamps over the base diamond. -->
         <div class="matchup-center scorebug">
@@ -145,6 +136,25 @@
             <div class="count-flash is-red" data-flash="out"
                  th:text="${scoreboard.breakCaption ?: 'Mid'}">Mid 5th</div>
           </div>
+
+        </div>
+        <!-- Game score belongs inside the scorebug: count above, bases below. -->
+        <div class="center-score-row" aria-label="Current score">
+          <div class="center-score"
+               th:classappend="${featuredGame.status == 'Final' and featuredAwayScore != null and featuredHomeScore != null
+                   ? (featuredAwayScore > featuredHomeScore
+                        ? (featuredAwayTeam == 'Red Sox' ? ' is-sox-win' : ' is-opponent-win')
+                        : ' is-beaten')
+                   : ''}"
+               th:text="${featuredAwayScore != null ? featuredAwayScore : 0}">0</div>
+          <div class="center-score-divider">-</div>
+          <div class="center-score"
+               th:classappend="${featuredGame.status == 'Final' and featuredAwayScore != null and featuredHomeScore != null
+                   ? (featuredHomeScore > featuredAwayScore
+                        ? (featuredHomeTeam == 'Red Sox' ? ' is-sox-win' : ' is-opponent-win')
+                        : ' is-beaten')
+                   : ''}"
+               th:text="${featuredHomeScore != null ? featuredHomeScore : 0}">0</div>
         </div>
         <!-- Bases, read from home plate: second at the top, third left, first right. -->
         <div class="bases" id="bases" aria-label="Runners on base">
@@ -176,24 +186,14 @@
           </div>
           <div class="matchup-side-name" th:text="${featuredHomeTeam}">Guardians</div>
           <div class="matchup-side-record" th:text="${featuredHomeRecord != null ? '(' + featuredHomeRecord + ')' : '(record unavailable)'}">(30 - 24)</div>
-          <!-- ABS challenges left, lit while the club still holds one. -->
-          <div class="abs-row"
-               th:classappend="${scoreboard != null and scoreboard.hasChallenges ? '' : ' is-hidden'}"
-               th:attr="data-abs=home">
+          <div class="abs-row abs-side" data-abs="home">
             <span class="abs-label">ABS</span>
-            <span class="abs-lamps">
+            <span class="abs-lamps" aria-label="Home ABS challenges remaining">
               <span th:each="n : ${#numbers.sequence(1, scoreboard != null ? scoreboard.challengeSlots() : 2)}"
-                    class="abs-lamp" th:attr="data-abs-slot=${n}"
-                    th:classappend="${n <= (scoreboard.homeChallengesLeft ?: 0) ? ' is-on' : ''}"></span>
+                    class="lamp lamp-green" th:attr="data-abs-slot=${n}"
+                    th:classappend="${n <= (scoreboard != null and scoreboard.hasChallenges ? (scoreboard.homeChallengesLeft ?: 0) : 2) ? ' is-on' : ''}"></span>
             </span>
           </div>
-          <div class="matchup-side-score"
-               th:classappend="${featuredGame.status == 'Final' and featuredAwayScore != null and featuredHomeScore != null
-                   ? (featuredHomeScore > featuredAwayScore
-                        ? (featuredHomeTeam == 'Red Sox' ? ' is-sox-win' : ' is-opponent-win')
-                        : ' is-beaten')
-                   : ''}"
-               th:text="${featuredHomeScore != null ? featuredHomeScore : ''}">4</div>
         </div>
       </div>
       </div>
@@ -1063,13 +1063,11 @@
 
     // ---- ABS challenges ------------------------------------------------------------
     function applyChallenges(sb) {
-      document.querySelectorAll('.abs-row').forEach(function (row) {
+      document.querySelectorAll('.abs-side').forEach(function (row) {
         var side = row.getAttribute('data-abs');
-        var left = side === 'away' ? sb.awayChallengesLeft : sb.homeChallengesLeft;
-        // The row is rendered hidden before a game starts, then revealed once the feed
-        // begins reporting challenges.
-        row.classList.toggle('is-hidden', !sb.hasChallenges);
-        if (!sb.hasChallenges) return;
+        var left = sb.hasChallenges
+          ? (side === 'away' ? sb.awayChallengesLeft : sb.homeChallengesLeft)
+          : 2;
         row.querySelectorAll('[data-abs-slot]').forEach(function (lamp) {
           var n = parseInt(lamp.getAttribute('data-abs-slot'), 10);
           lamp.classList.toggle('is-on', n <= (left || 0));
@@ -1163,15 +1161,12 @@
     }
 
     function applyHeadline(data) {
-      var away = document.querySelector('.matchup-side.away .matchup-side-score');
-      var home = document.querySelector('.matchup-side.home .matchup-side-score');
-      var scores = document.querySelectorAll('.matchup-side-score');
+      var scores = document.querySelectorAll('.center-score-row .center-score');
+      var away = scores.length >= 2 ? scores[0] : null;
+      var home = scores.length >= 2 ? scores[1] : null;
       if (away && home) {
         setText(away, data.awayScore);
         setText(home, data.homeScore);
-      } else if (scores.length === 2) {
-        setText(scores[0], data.awayScore);
-        setText(scores[1], data.homeScore);
       }
       var pill = document.querySelector('.live-pill');
       if (pill && data.live) { pill.textContent = 'Live'; pill.classList.add('is-live'); }
