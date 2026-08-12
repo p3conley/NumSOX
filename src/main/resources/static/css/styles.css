@@ -5,6 +5,12 @@
     --navy-light: #1a3a5e;
     --red: #d7272d;
     --red-dark: #ad141b;
+    /* The scoreboard's painted frame. Defined here rather than on .monster-board so the
+       Play by play panel, which is its sibling, can match it exactly and butt onto it.
+       5 and 4 divide cleanly, so the inner rules stay exactly a fifth thinner. */
+    --board-frame: clamp(3.75px, 0.34vw, 5px);
+    --board-white: rgba(233, 241, 228, 0.92);
+
     /* Green Monster wall (Fenway Park, Benjamin Moore SC-12) -- the app's primary identity color. */
     --green: #54796d;
     --green-dark: #3b584f;
@@ -239,6 +245,12 @@ body {
 
 .hero-actions { margin-top: 20px; display: flex; gap: 10px; }
 
+/* The buttons close out the card, so their bottom edge is the card's bottom edge and
+   their outer corners pick up its rounding rather than being clipped square by it. */
+.today-hero > .hero-actions { margin-bottom: 0; }
+.today-hero > .hero-actions > :first-child { border-bottom-left-radius: var(--hero-radius); }
+.today-hero > .hero-actions > :last-child { border-bottom-right-radius: var(--hero-radius); }
+
 /* ===== TODAY HERO ===== */
 /* Zero side padding, on purpose, at every width: this black card should never show as
    a visible strip down the left or right edge. Its children (the header row, the green
@@ -248,24 +260,33 @@ body {
    through a layer further in. Only the top and bottom padding remain, which is the
    black that's meant to stay visible. */
 .today-hero {
+    --hero-radius: 18px;
     color: white;
     background:
         linear-gradient(135deg, rgba(8,14,12,0.98), rgba(30,45,40,0.97) 48%, rgba(84,121,109,0.94));
     border: 1px solid rgba(255,255,255,0.16);
-    border-radius: 18px;
-    padding: 30px 0;
+    border-radius: var(--hero-radius);
+    /* No bottom padding: the action buttons finish the card, sitting flush on its
+       bottom edge with their outer corners following its curve. */
+    padding: 30px 0 0;
     margin-bottom: 22px;
     box-shadow: 0 22px 60px rgba(16,24,40,0.24);
     overflow: hidden;
 }
 
-/* 1fr auto 1fr keeps the status pill centred on the card while the
-   TODAY/NEXT MATCHUP label stays pinned left. */
+/* One structure at every width, rather than three different ones.
+   The previous grid pinned the label left, floated the pill dead centre and pushed the
+   date right, which left three disconnected islands with dead space between them, and
+   collapsed into a stack of centred rows once it ran out of room.
+   Now: the label and its status pill sit together as one group on the left, because
+   they describe the same thing, and the date and venue trail as secondary context.
+   Nothing re-centres and nothing changes alignment as the window narrows -- the date
+   simply drops to a second line, still on the same left edge. */
 .today-hero-top {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 20px;
+    gap: 8px 12px;
     margin-bottom: 14px;
 }
 
@@ -280,7 +301,7 @@ body {
 .today-hero .hero-label { color: rgba(255,255,255,0.68); }
 
 .live-pill {
-    justify-self: start;
+    flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -323,14 +344,36 @@ body {
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16);
 }
 
+/* Two columns: the club's identity stack, and the score beside it on the inner edge.
+   The score used to be absolutely positioned to sit level with the venue block, which
+   took it out of flow and let it land on top of the club name at most widths. Keeping
+   it in flow as its own grid column makes that overlap structurally impossible, while
+   spanning every row and centring itself still leaves it level with the middle. */
 .matchup-side {
     min-width: 0;
     position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: clamp(6px, 1.5vw, 22px);
 }
 
+.matchup-side > *:not(.matchup-side-score) { grid-column: 1; }
+
+.matchup-side-score {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    align-self: center;
+}
+
+/* Mirrored, so the score stays on the side nearest the middle of the board. */
 .matchup-side.home {
     text-align: right;
+    grid-template-columns: auto minmax(0, 1fr);
 }
+
+.matchup-side.home > *:not(.matchup-side-score) { grid-column: 2; }
+.matchup-side.home .matchup-side-score { grid-column: 1; }
 
 .featured-team-logo {
     width: 86px;
@@ -401,30 +444,17 @@ body {
     margin-top: 7px;
 }
 
-/* The score sits well inside its half, close to the @ in the middle rather than
-   floating out by the club name. */
+/* The score sits on the inner edge of its half, close to the middle of the board
+   rather than floating out by the club name. Placement is handled by the grid on
+   .matchup-side above, so it stays in flow and can never overlap the name. */
 .matchup-side-score {
     color: white;
     font-size: clamp(30px, 5vw, 58px);
     font-weight: 950;
     line-height: 1;
-    margin-top: 10px;
     text-align: center;
+    padding-inline: clamp(2px, 1vw, 14px);
 }
-
-/* Lifted out of the stack and pinned to the middle of the row, so each score sits
-   level with the date, the @ and the venue rather than below the record. */
-.matchup-side-score {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-top: 0;
-}
-
-/* Parked in the gap between the club and the scorebug. Sitting flush against the
-   inner edge put them underneath the count lamps. */
-.matchup-side.away .matchup-side-score { right: 12%; }
-.matchup-side.home .matchup-side-score { left: 12%; }
 
 .matchup-center {
     display: flex;
@@ -514,11 +544,9 @@ body {
    header row leaves between the top of the board and the AMERICAN title. */
 .monster-board {
     --board-pad: clamp(10px, 1.3vw, 16px);
-    /* 5 and 4 divide cleanly, so the rule stays exactly a fifth thinner than the frame
-       instead of being rounded to the nearest device pixel. */
-    --board-frame: clamp(3.75px, 0.34vw, 5px);
+    /* --board-frame and --board-white come from :root so the Play by play panel can
+       match this frame exactly. */
     --board-rule: calc(var(--board-frame) * 0.8);
-    --board-white: rgba(233, 241, 228, 0.92);
     /* Matches the gap the header row leaves between the frame and the AMERICAN title. */
     --board-gap: calc(var(--board-pad) + 6px);
 
@@ -1019,18 +1047,28 @@ body {
 
 .matchup-center.scorebug .bases { margin: 6px auto 0; }
 
-/* Where and when, beside the status pill at the top. */
+/* Secondary context, so it trails the label/status group rather than competing with
+   it. margin-left:auto pushes it to the far edge while there is room on the line. */
 .hero-when {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 7px;
-    justify-self: end;
+    margin-left: auto;
     color: rgba(255,255,255,0.62);
     font-size: clamp(10.5px, 0.18vw + 9.4px, 12.5px);
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    text-align: right;
+}
+
+/* Once the line is too tight to hold both, the date takes its own row and lines up
+   under the label instead of stranding itself against the right edge. */
+@media (max-width: 700px) {
+    .hero-when {
+        margin-left: 0;
+        flex-basis: 100%;
+    }
 }
 
 .hero-when-sep { opacity: 0.45; }
@@ -1278,12 +1316,25 @@ body {
 /* ===== GAMECAST: PLAY BY PLAY, BOX SCORE, GAME INFO ===== */
 /* Sits directly under the scoreboard and stays shut until asked for, so the dashboard
    still leads with the story and the detail is one click away. */
+/* Butted straight onto the bottom of the scoreboard so the two read as one unit: no
+   gap, square top corners, and it borrows the board's own frame as its top edge
+   instead of drawing a second line right beneath it. */
+/* Squared off at the bottom so the Play by play panel butts straight onto it. */
+.today-hero > .monster-board { border-radius: 3px 3px 0 0; }
+
 .gamecast {
-    margin-top: 10px;
-    border: 2px solid rgba(219, 231, 210, 0.45);
-    border-radius: 8px;
+    margin-top: 0;
+    border: var(--board-frame) solid var(--board-white);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
     background: rgba(18, 30, 27, 0.42);
     overflow: hidden;
+}
+
+/* The Previous Game panel keeps its own detached look. */
+.gamecast.is-prev {
+    border-radius: 8px;
+    border-top: 1px solid rgba(219, 231, 210, 0.32);
 }
 
 .gamecast-toggle {
@@ -2764,8 +2815,9 @@ textarea { min-height: 100px; resize: vertical; }
         align-items: flex-start;
         flex-direction: column;
     }
-    .today-hero { padding: 22px 0; border-radius: 14px; }
-    .today-hero-top { grid-template-columns: 1fr; justify-items: center; gap: 10px; }
+    .today-hero { --hero-radius: 14px; padding: 22px 0 0; }
+    /* The header keeps its single left-aligned structure here; only the gap tightens. */
+    .today-hero-top { gap: 8px 10px; }
     .matchup-strip {
         grid-template-columns: minmax(0, 1fr) minmax(54px, 0.28fr) minmax(0, 1fr);
         gap: 10px;
@@ -3395,8 +3447,9 @@ a, button, input, select, summary, [role="button"] {
         hyphens: none;
     }
 
-    .matchup-side.away .matchup-side-score { right: 6%; }
-    .matchup-side.home .matchup-side-score { left: 6%; }
+    /* The score is a grid column now, so it just needs a tighter gutter here rather
+       than the percentage offsets the old absolute positioning used. */
+    .matchup-side { column-gap: 6px; }
 
     .matchup-side-record { font-size: 11.5px; }
     .matchup-side-score { font-size: clamp(26px, 9vw, 38px); }
@@ -3412,7 +3465,7 @@ a, button, input, select, summary, [role="button"] {
     .hero-intel-grid { grid-template-columns: 1fr; }
     .park-factors-quick, .calibration-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-    .today-hero { padding: 16px 0; }
+    .today-hero { padding: 16px 0 0; }
     .panel { padding: 16px 14px; }
 
     .section-header { letter-spacing: 0.06em; }
@@ -3426,20 +3479,17 @@ a, button, input, select, summary, [role="button"] {
     /* The dark header above the board was taking a third of the first screen. The
        label and the status pill share one line and the padding comes down, so the
        Monster is what you see when the site opens. */
-    .today-hero { padding: 10px 0 12px; }
+    .today-hero { padding: 10px 0 0; }
 
     .today-hero-top {
-        grid-template-columns: auto 1fr;
-        justify-items: start;
-        align-items: center;
-        gap: 8px;
+        gap: 6px 10px;
         margin-bottom: 8px;
     }
 
     .hero-label { font-size: 10.5px; letter-spacing: 0.1em; }
 
+    /* Stays beside its label rather than being pushed to the opposite edge. */
     .live-pill {
-        justify-self: end;
         min-width: 0;
         padding: 5px 14px;
         font-size: 11.5px;
