@@ -17,10 +17,19 @@
   <div th:if="${featuredGame}" class="today-hero">
 
     <div class="today-hero-top">
-      <div class="hero-label" th:text="${featuredIsToday ? 'TODAY' : 'NEXT MATCHUP'}">TODAY</div>
+      <div class="hero-label" th:text="${featuredLabel}">NEXT MATCHUP</div>
       <div class="live-pill"
            th:classappend="${featuredIsLive ? ' is-live' : (featuredGame.result == 'W' ? ' is-win' : (featuredGame.result == 'L' ? ' is-loss' : ''))}"
            th:text="${featuredIsLive ? 'Live' : featuredGame.status}">Scheduled</div>
+      <!-- Where and when, beside the status rather than buried between the clubs. -->
+      <div class="hero-when">
+        <span th:text="${#temporals.format(featuredGame.gameDate, 'EEE, MMM d')}">Tue, Aug 11</span>
+        <span th:if="${featuredGame.status == 'Scheduled'}" class="hero-when-sep">&middot;</span>
+        <span th:if="${featuredGame.status == 'Scheduled'}"
+              th:text="${featuredGame.startTime == null or featuredGame.startTimeTbd == true ? 'Time TBD' : #temporals.format(featuredGame.startTime, 'h:mm a')}">7:10 PM</span>
+        <span class="hero-when-sep">&middot;</span>
+        <span th:text="${featuredGame.venue ?: 'TBD'}">Fenway Park</span>
+      </div>
     </div>
 
     <div th:if="${scoreboard}" class="monster-board" id="live-board"
@@ -82,6 +91,17 @@
           </div>
           <div class="matchup-side-name" th:text="${featuredAwayTeam}">Boston Red Sox</div>
           <div class="matchup-side-record" th:text="${featuredAwayRecord != null ? '(' + featuredAwayRecord + ')' : '(record unavailable)'}">(24 - 33)</div>
+          <!-- ABS challenges left, lit while the club still holds one. -->
+          <div class="abs-row"
+               th:classappend="${scoreboard != null and scoreboard.hasChallenges ? '' : ' is-hidden'}"
+               th:attr="data-abs=away">
+            <span class="abs-label">Challenges</span>
+            <span class="abs-lamps">
+              <span th:each="n : ${#numbers.sequence(1, scoreboard != null ? scoreboard.challengeSlots() : 2)}"
+                    class="abs-lamp" th:attr="data-abs-slot=${n}"
+                    th:classappend="${n <= (scoreboard.awayChallengesLeft ?: 0) ? ' is-on' : ''}"></span>
+            </span>
+          </div>
           <!-- Always present so a score can appear at first pitch without a reload. -->
           <div class="matchup-side-score"
                th:classappend="${featuredGame.status == 'Final' and featuredAwayScore != null and featuredHomeScore != null
@@ -91,13 +111,50 @@
                    : ''}"
                th:text="${featuredAwayScore != null ? featuredAwayScore : ''}">9</div>
         </div>
-        <!-- Date first, then the @ sitting between the two clubs, then time and venue. -->
-        <div class="matchup-center">
-          <div class="matchup-meta" th:text="${#temporals.format(featuredGame.gameDate, 'EEE, MMM d')}">Sun, May 31</div>
-          <div class="matchup-at-symbol">@</div>
-          <div class="matchup-meta" th:if="${featuredGame.status == 'Scheduled'}"
-               th:text="${featuredGame.startTime == null or featuredGame.startTimeTbd == true ? 'Time TBD' : #temporals.format(featuredGame.startTime, 'h:mm a')}">7:10 PM</div>
-          <div class="matchup-meta" th:text="${featuredGame.venue ?: 'TBD'}">Progressive Field</div>
+        <!-- The scorebug is the centrepiece: count lamps over the base diamond. -->
+        <div class="matchup-center scorebug">
+        <!-- Count panel: lamps rather than digits, the way the Monster reads it. -->
+        <div class="count-board" id="count-board"
+             th:attr="data-last-play=${scoreboard.lastPlayIndex}">
+          <div class="count-group" data-group="ball">
+            <div class="count-label">Ball</div>
+            <div class="count-lamps">
+              <span class="lamp lamp-green" data-ball="1" th:classappend="${(scoreboard.balls ?: 0) >= 1 ? ' is-on' : ''}"></span>
+              <span class="lamp lamp-green" data-ball="2" th:classappend="${(scoreboard.balls ?: 0) >= 2 ? ' is-on' : ''}"></span>
+              <span class="lamp lamp-green" data-ball="3" th:classappend="${(scoreboard.balls ?: 0) >= 3 ? ' is-on' : ''}"></span>
+            </div>
+            <div class="count-flash is-green" data-flash="ball">Walk</div>
+          </div>
+  
+          <div class="count-group" data-group="strike">
+            <div class="count-label">Strike</div>
+            <div class="count-lamps">
+              <span class="lamp lamp-red" data-strike="1" th:classappend="${(scoreboard.strikes ?: 0) >= 1 ? ' is-on' : ''}"></span>
+              <span class="lamp lamp-red" data-strike="2" th:classappend="${(scoreboard.strikes ?: 0) >= 2 ? ' is-on' : ''}"></span>
+            </div>
+            <div class="count-flash is-red" data-flash="strike">K</div>
+          </div>
+  
+          <div class="count-group" data-group="out"
+               th:classappend="${scoreboard.breakCaption != null ? ' is-flashing' : ''}">
+            <div class="count-label">Out</div>
+            <div class="count-lamps">
+              <span class="lamp lamp-red" data-out="1" th:classappend="${(scoreboard.outs ?: 0) >= 1 ? ' is-on' : ''}"></span>
+              <span class="lamp lamp-red" data-out="2" th:classappend="${(scoreboard.outs ?: 0) >= 2 ? ' is-on' : ''}"></span>
+            </div>
+            <div class="count-flash is-red" data-flash="out"
+                 th:text="${scoreboard.breakCaption ?: 'Mid'}">Mid 5th</div>
+          </div>
+        </div>
+        <!-- Bases, read from home plate: second at the top, third left, first right. -->
+        <div class="bases" id="bases" aria-label="Runners on base">
+          <span class="base base-second" data-base="second"
+                th:classappend="${scoreboard.onSecond ? ' is-on' : ''}" title="Second base"></span>
+          <span class="base base-third" data-base="third"
+                th:classappend="${scoreboard.onThird ? ' is-on' : ''}" title="Third base"></span>
+          <span class="base base-first" data-base="first"
+                th:classappend="${scoreboard.onFirst ? ' is-on' : ''}" title="First base"></span>
+        </div>
         </div>
         <div class="matchup-side home">
           <div class="matchup-side-label">Home</div>
@@ -119,6 +176,17 @@
           </div>
           <div class="matchup-side-name" th:text="${featuredHomeTeam}">Guardians</div>
           <div class="matchup-side-record" th:text="${featuredHomeRecord != null ? '(' + featuredHomeRecord + ')' : '(record unavailable)'}">(30 - 24)</div>
+          <!-- ABS challenges left, lit while the club still holds one. -->
+          <div class="abs-row"
+               th:classappend="${scoreboard != null and scoreboard.hasChallenges ? '' : ' is-hidden'}"
+               th:attr="data-abs=home">
+            <span class="abs-label">Challenges</span>
+            <span class="abs-lamps">
+              <span th:each="n : ${#numbers.sequence(1, scoreboard != null ? scoreboard.challengeSlots() : 2)}"
+                    class="abs-lamp" th:attr="data-abs-slot=${n}"
+                    th:classappend="${n <= (scoreboard.homeChallengesLeft ?: 0) ? ' is-on' : ''}"></span>
+            </span>
+          </div>
           <div class="matchup-side-score"
                th:classappend="${featuredGame.status == 'Final' and featuredAwayScore != null and featuredHomeScore != null
                    ? (featuredHomeScore > featuredAwayScore
@@ -137,49 +205,7 @@
         <div class="status-right"><span>Pitching:</span><strong data-live="pitching" th:text="${scoreboard.pitching}">Awaiting pitcher</strong></div>
       </div>
 
-      <!-- Count panel: lamps rather than digits, the way the Monster reads it. -->
-      <div class="count-board" id="count-board"
-           th:attr="data-last-play=${scoreboard.lastPlayIndex}">
-        <div class="count-group" data-group="ball">
-          <div class="count-label">Ball</div>
-          <div class="count-lamps">
-            <span class="lamp lamp-green" data-ball="1" th:classappend="${(scoreboard.balls ?: 0) >= 1 ? ' is-on' : ''}"></span>
-            <span class="lamp lamp-green" data-ball="2" th:classappend="${(scoreboard.balls ?: 0) >= 2 ? ' is-on' : ''}"></span>
-            <span class="lamp lamp-green" data-ball="3" th:classappend="${(scoreboard.balls ?: 0) >= 3 ? ' is-on' : ''}"></span>
-          </div>
-          <div class="count-flash is-green" data-flash="ball">Walk</div>
-        </div>
 
-        <div class="count-group" data-group="strike">
-          <div class="count-label">Strike</div>
-          <div class="count-lamps">
-            <span class="lamp lamp-red" data-strike="1" th:classappend="${(scoreboard.strikes ?: 0) >= 1 ? ' is-on' : ''}"></span>
-            <span class="lamp lamp-red" data-strike="2" th:classappend="${(scoreboard.strikes ?: 0) >= 2 ? ' is-on' : ''}"></span>
-          </div>
-          <div class="count-flash is-red" data-flash="strike">K</div>
-        </div>
-
-        <div class="count-group" data-group="out"
-             th:classappend="${scoreboard.breakCaption != null ? ' is-flashing' : ''}">
-          <div class="count-label">Out</div>
-          <div class="count-lamps">
-            <span class="lamp lamp-red" data-out="1" th:classappend="${(scoreboard.outs ?: 0) >= 1 ? ' is-on' : ''}"></span>
-            <span class="lamp lamp-red" data-out="2" th:classappend="${(scoreboard.outs ?: 0) >= 2 ? ' is-on' : ''}"></span>
-          </div>
-          <div class="count-flash is-red" data-flash="out"
-               th:text="${scoreboard.breakCaption ?: 'Mid'}">Mid 5th</div>
-        </div>
-      </div>
-
-      <!-- Bases, read from home plate: second at the top, third left, first right. -->
-      <div class="bases" id="bases" aria-label="Runners on base">
-        <span class="base base-second" data-base="second"
-              th:classappend="${scoreboard.onSecond ? ' is-on' : ''}" title="Second base"></span>
-        <span class="base base-third" data-base="third"
-              th:classappend="${scoreboard.onThird ? ' is-on' : ''}" title="Third base"></span>
-        <span class="base base-first" data-base="first"
-              th:classappend="${scoreboard.onFirst ? ' is-on' : ''}" title="First base"></span>
-      </div>
 
     </div>
 
@@ -1032,6 +1058,23 @@
 
       applyCount(sb);
       applyBases(sb);
+      applyChallenges(sb);
+    }
+
+    // ---- ABS challenges ------------------------------------------------------------
+    function applyChallenges(sb) {
+      document.querySelectorAll('.abs-row').forEach(function (row) {
+        var side = row.getAttribute('data-abs');
+        var left = side === 'away' ? sb.awayChallengesLeft : sb.homeChallengesLeft;
+        // The row is rendered hidden before a game starts, then revealed once the feed
+        // begins reporting challenges.
+        row.classList.toggle('is-hidden', !sb.hasChallenges);
+        if (!sb.hasChallenges) return;
+        row.querySelectorAll('[data-abs-slot]').forEach(function (lamp) {
+          var n = parseInt(lamp.getAttribute('data-abs-slot'), 10);
+          lamp.classList.toggle('is-on', n <= (left || 0));
+        });
+      });
     }
 
     // ---- bases ---------------------------------------------------------------------

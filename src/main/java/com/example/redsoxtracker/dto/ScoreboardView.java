@@ -37,6 +37,12 @@ public class ScoreboardView {
     private boolean onFirst;
     private boolean onSecond;
     private boolean onThird;
+    /** ABS challenges: how many each side has left, and how many they have burned. */
+    private boolean hasChallenges;
+    private Integer awayChallengesLeft;
+    private Integer awayChallengesLost;
+    private Integer homeChallengesLeft;
+    private Integer homeChallengesLost;
     private boolean live;
     private List<InningLine> innings = new ArrayList<>();
 
@@ -78,6 +84,24 @@ public class ScoreboardView {
     public void setLastPlayIndex(Integer lastPlayIndex) { this.lastPlayIndex = lastPlayIndex; }
     public boolean isFinalGame() { return finalGame; }
     public void setFinalGame(boolean finalGame) { this.finalGame = finalGame; }
+    public boolean isHasChallenges() { return hasChallenges; }
+    public void setHasChallenges(boolean hasChallenges) { this.hasChallenges = hasChallenges; }
+    public Integer getAwayChallengesLeft() { return awayChallengesLeft; }
+    public void setAwayChallengesLeft(Integer v) { this.awayChallengesLeft = v; }
+    public Integer getAwayChallengesLost() { return awayChallengesLost; }
+    public void setAwayChallengesLost(Integer v) { this.awayChallengesLost = v; }
+    public Integer getHomeChallengesLeft() { return homeChallengesLeft; }
+    public void setHomeChallengesLeft(Integer v) { this.homeChallengesLeft = v; }
+    public Integer getHomeChallengesLost() { return homeChallengesLost; }
+    public void setHomeChallengesLost(Integer v) { this.homeChallengesLost = v; }
+
+    /** Lamps to draw for a side: the standard pair, or more if a club still holds extra. */
+    public int challengeSlots() {
+        int a = awayChallengesLeft == null ? 0 : awayChallengesLeft;
+        int h = homeChallengesLeft == null ? 0 : homeChallengesLeft;
+        return Math.max(2, Math.max(a, h));
+    }
+
     public boolean isOnFirst() { return onFirst; }
     public void setOnFirst(boolean onFirst) { this.onFirst = onFirst; }
     public boolean isOnSecond() { return onSecond; }

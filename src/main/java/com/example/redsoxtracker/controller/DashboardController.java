@@ -73,6 +73,11 @@ public class DashboardController {
             boolean isLive = "In Progress".equals(game.getStatus());
             model.addAttribute("featuredIsToday", isLive || game.getGameDate().isEqual(LocalDate.now()));
             model.addAttribute("featuredIsLive", isLive);
+            // Live means it is on now; the hold window means it finished a moment ago.
+            boolean justFinished = matchupService.isWithinPostGameHold(game);
+            model.addAttribute("featuredLabel",
+                    isLive ? "CURRENT MATCHUP"
+                           : justFinished ? "TODAY'S MATCHUP" : "NEXT MATCHUP");
             boolean redSoxAreAway = "Away".equalsIgnoreCase(game.getHomeAway());
             model.addAttribute("featuredAwayTeam", redSoxAreAway ? RED_SOX : game.getOpponent());
             model.addAttribute("featuredHomeTeam", redSoxAreAway ? game.getOpponent() : RED_SOX);

@@ -55,6 +55,7 @@ public class LiveScoreboardService {
         view.setInningPhase(linescore.path("inningState").asText(null));
         view.setInningOrdinal(linescore.path("currentInningOrdinal").asText(null));
         applyLastPlay(view, root.path("liveData").path("plays").path("allPlays"));
+        applyChallenges(view, root.path("gameData").path("absChallenges"));
 
         if (finalGame) {
             view.setBalls(0);
@@ -102,6 +103,16 @@ public class LiveScoreboardService {
             view.setLastPlayIndex(play.path("about").path("atBatIndex").asInt());
             return;
         }
+    }
+
+    /** Automated ball-strike challenges, which a club keeps when its challenge succeeds. */
+    private void applyChallenges(ScoreboardView view, JsonNode abs) {
+        if (abs.isMissingNode() || !abs.path("hasChallenges").asBoolean(false)) return;
+        view.setHasChallenges(true);
+        view.setAwayChallengesLeft(intOrNull(abs.path("away"), "remaining"));
+        view.setAwayChallengesLost(intOrNull(abs.path("away"), "usedFailed"));
+        view.setHomeChallengesLeft(intOrNull(abs.path("home"), "remaining"));
+        view.setHomeChallengesLost(intOrNull(abs.path("home"), "usedFailed"));
     }
 
     private ScoreboardView fallbackBoard(Game game) {

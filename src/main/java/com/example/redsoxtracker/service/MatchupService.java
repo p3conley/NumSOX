@@ -89,6 +89,17 @@ public class MatchupService {
                 .reduce((first, second) -> second); // most recent final
     }
 
+    /**
+     * True while a finished game is still being held on the dashboard, which is the
+     * window where it reads as today's game rather than the next one.
+     */
+    public boolean isWithinPostGameHold(Game game) {
+        if (game == null || !"Final".equals(game.getStatus()) || game.getFinalizedAt() == null) {
+            return false;
+        }
+        return game.getFinalizedAt().isAfter(LocalDateTime.now().minusHours(POST_GAME_HOLD_HOURS));
+    }
+
     public WinProbabilityResult calculateForGame(Game game) {
         // Red Sox stats
         Optional<TeamStatSnapshot> bosStats = teamStatsService.getLatestStats("BOS");
