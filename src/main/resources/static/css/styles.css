@@ -240,13 +240,16 @@ body {
 .hero-actions { margin-top: 20px; display: flex; gap: 10px; }
 
 /* ===== TODAY HERO ===== */
+/* Side padding is fluid and stays small: this black card exists to frame the green
+   board and the white cards inside it, not to compete with them for width. Vertical
+   padding stays generous since that's not what made the box feel narrow. */
 .today-hero {
     color: white;
     background:
         linear-gradient(135deg, rgba(8,14,12,0.98), rgba(30,45,40,0.97) 48%, rgba(84,121,109,0.94));
     border: 1px solid rgba(255,255,255,0.16);
     border-radius: 18px;
-    padding: 30px;
+    padding: 30px clamp(10px, 2.4vw, 24px);
     margin-bottom: 22px;
     box-shadow: 0 22px 60px rgba(16,24,40,0.24);
     overflow: hidden;
@@ -871,8 +874,12 @@ body {
     padding-top: var(--board-gap);
 }
 
-/* Inside the board it no longer needs its own frame. */
-.board-matchup .matchup-strip { grid-template-columns: 1fr minmax(0, 42%) 1fr; }
+/* Inside the board it no longer needs its own frame. The centre column sizes to the
+   scorebug's actual (already-clamped-down) width instead of a flat 42%, so it never
+   reserves more room than it needs and never gets shorted at a narrow width either;
+   the two team columns split whatever is left, with a floor so a logo never collapses
+   to nothing. */
+.board-matchup .matchup-strip { grid-template-columns: minmax(60px, 1fr) auto minmax(60px, 1fr); }
 
 .board-matchup .matchup-strip {
     border: none;
@@ -1112,9 +1119,60 @@ body {
     .matchup-center.scorebug .base-second { margin-left: calc(clamp(17px, 2vw, 26px) / -2); }
 }
 
-/* Below this there is genuinely no room between the clubs, so the scorebug takes its
-   own full-width row underneath them. */
+/* Real phones live in this band (roughly 340-620px), and the scorebug now stays on
+   the same row as the clubs the whole way through it instead of dropping underneath
+   them. Everything shrinks further: tighter gaps, smaller lamps, a smaller diamond,
+   and the team columns give up their last bit of headroom around the logo. */
 @media (max-width: 620px) {
+    .board-matchup .matchup-strip { gap: clamp(4px, 1.6vw, 10px); }
+
+    .matchup-center.scorebug {
+        padding: 0 clamp(2px, 1vw, 6px);
+        gap: 2px;
+    }
+
+    .matchup-center.scorebug .count-board {
+        gap: clamp(5px, 2.2vw, 12px);
+    }
+
+    .matchup-center.scorebug .count-label {
+        font-size: clamp(7.5px, 2.1vw, 10px);
+        gap: 2px;
+    }
+
+    .matchup-center.scorebug .count-label::before,
+    .matchup-center.scorebug .count-label::after {
+        width: clamp(3px, 1vw, 5px);
+    }
+
+    .matchup-center.scorebug .count-lamps { gap: clamp(2px, 0.9vw, 4px); }
+
+    .matchup-center.scorebug .lamp {
+        width: clamp(8px, 2.2vw, 11px);
+        height: clamp(8px, 2.2vw, 11px);
+    }
+
+    .matchup-center.scorebug .bases {
+        width: clamp(34px, 8vw, 44px);
+        height: clamp(25px, 6vw, 32px);
+        margin-top: 4px;
+    }
+
+    .matchup-center.scorebug .base {
+        width: clamp(13px, 3vw, 17px);
+        height: clamp(13px, 3vw, 17px);
+    }
+
+    .matchup-center.scorebug .base-second { margin-left: calc(clamp(13px, 3vw, 17px) / -2); }
+
+    .board-matchup .logo-crown { margin-top: 4px; }
+    .board-matchup .matchup-side-record { margin-top: 3px; }
+}
+
+/* A true safety net for devices narrower than any modern phone. Only here does the
+   scorebug drop to its own row, and only because there is no realistic way to keep
+   three legible columns in under 340px. */
+@media (max-width: 340px) {
     .board-matchup .matchup-strip {
         grid-template-columns: 1fr 1fr;
         row-gap: 4px;
@@ -1127,6 +1185,7 @@ body {
         grid-column: 1 / -1;
         grid-row: 2;
         padding: 0;
+        gap: 6px;
         margin-top: 6px;
     }
 
@@ -2677,7 +2736,7 @@ textarea { min-height: 100px; resize: vertical; }
         align-items: flex-start;
         flex-direction: column;
     }
-    .today-hero { padding: 22px 18px; border-radius: 14px; }
+    .today-hero { padding: 22px clamp(8px, 2.2vw, 16px); border-radius: 14px; }
     .today-hero-top { grid-template-columns: 1fr; justify-items: center; gap: 10px; }
     .matchup-strip {
         grid-template-columns: minmax(0, 1fr) minmax(54px, 0.28fr) minmax(0, 1fr);
@@ -3325,7 +3384,7 @@ a, button, input, select, summary, [role="button"] {
     .hero-intel-grid { grid-template-columns: 1fr; }
     .park-factors-quick, .calibration-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-    .today-hero { padding: 16px 12px; }
+    .today-hero { padding: 16px 6px; }
     .panel { padding: 16px 14px; }
 
     .section-header { letter-spacing: 0.06em; }
@@ -3339,7 +3398,7 @@ a, button, input, select, summary, [role="button"] {
     /* The dark header above the board was taking a third of the first screen. The
        label and the status pill share one line and the padding comes down, so the
        Monster is what you see when the site opens. */
-    .today-hero { padding: 10px 10px 12px; }
+    .today-hero { padding: 10px 4px 12px; }
 
     .today-hero-top {
         grid-template-columns: auto 1fr;
