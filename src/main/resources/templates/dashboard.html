@@ -95,7 +95,7 @@
           <div class="abs-row"
                th:classappend="${scoreboard != null and scoreboard.hasChallenges ? '' : ' is-hidden'}"
                th:attr="data-abs=away">
-            <span class="abs-label">Challenges</span>
+            <span class="abs-label">ABS</span>
             <span class="abs-lamps">
               <span th:each="n : ${#numbers.sequence(1, scoreboard != null ? scoreboard.challengeSlots() : 2)}"
                     class="abs-lamp" th:attr="data-abs-slot=${n}"
@@ -180,7 +180,7 @@
           <div class="abs-row"
                th:classappend="${scoreboard != null and scoreboard.hasChallenges ? '' : ' is-hidden'}"
                th:attr="data-abs=home">
-            <span class="abs-label">Challenges</span>
+            <span class="abs-label">ABS</span>
             <span class="abs-lamps">
               <span th:each="n : ${#numbers.sequence(1, scoreboard != null ? scoreboard.challengeSlots() : 2)}"
                     class="abs-lamp" th:attr="data-abs-slot=${n}"

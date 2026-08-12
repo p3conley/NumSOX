@@ -240,16 +240,20 @@ body {
 .hero-actions { margin-top: 20px; display: flex; gap: 10px; }
 
 /* ===== TODAY HERO ===== */
-/* Side padding is fluid and stays small: this black card exists to frame the green
-   board and the white cards inside it, not to compete with them for width. Vertical
-   padding stays generous since that's not what made the box feel narrow. */
+/* Zero side padding, on purpose, at every width: this black card should never show as
+   a visible strip down the left or right edge. Its children (the header row, the green
+   board, the white cards, the buttons) span its full width and touch its rounded
+   corners directly; overflow:hidden clips them cleanly into that curve. None of those
+   children carry their own compensating side padding, or the black would just show
+   through a layer further in. Only the top and bottom padding remain, which is the
+   black that's meant to stay visible. */
 .today-hero {
     color: white;
     background:
         linear-gradient(135deg, rgba(8,14,12,0.98), rgba(30,45,40,0.97) 48%, rgba(84,121,109,0.94));
     border: 1px solid rgba(255,255,255,0.16);
     border-radius: 18px;
-    padding: 30px clamp(10px, 2.4vw, 24px);
+    padding: 30px 0;
     margin-bottom: 22px;
     box-shadow: 0 22px 60px rgba(16,24,40,0.24);
     overflow: hidden;
@@ -1032,12 +1036,15 @@ body {
 .hero-when-sep { opacity: 0.45; }
 
 /* ===== ABS CHALLENGES ===== */
-/* Same lamp language as the count, one bulb per challenge a club still holds. */
+/* Built to read as the same instrument as BALL / STRIKE / OUT: the same stencilled,
+   dash-flanked label, the same lamp. The one difference is the resting state — a club
+   starts a game holding its challenges, so every lamp opens lit. Losing a challenge is
+   what turns one dark, which is the reverse of how a ball or a strike lights up. */
 .abs-row {
     display: flex;
     align-items: center;
     gap: 7px;
-    margin-top: 7px;
+    margin-top: 8px;
 }
 
 /* Hidden until the feed reports challenges, which is only once a game is under way. */
@@ -1046,36 +1053,57 @@ body {
 .matchup-side.home .abs-row { justify-content: flex-end; }
 
 .abs-label {
-    color: rgba(255,255,255,0.55);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #ffffff;
     font-family: "Arial Narrow", Arial, sans-serif;
-    font-size: clamp(9px, 0.16vw + 8px, 11px);
+    font-size: clamp(9px, 0.5vw + 7.5px, 12px);
     font-weight: 900;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
+    line-height: 1;
+    text-shadow: 0 0 10px rgba(255,255,255,0.35), 0 2px 3px rgba(0,0,0,0.7);
 }
 
-.abs-lamps { display: inline-flex; gap: 5px; }
+.abs-label::before,
+.abs-label::after {
+    content: '';
+    width: clamp(6px, 0.6vw, 10px);
+    height: 2px;
+    border-radius: 2px;
+    background: #05100c;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.10);
+}
+
+.abs-lamps { display: inline-flex; gap: clamp(4px, 0.5vw, 7px); }
 
 .abs-lamp {
-    width: clamp(9px, 0.75vw, 13px);
-    height: clamp(9px, 0.75vw, 13px);
+    width: clamp(10px, 1vw, 15px);
+    height: clamp(10px, 1vw, 15px);
     border-radius: 50%;
-    border: 1.5px solid rgba(0,0,0,0.7);
+    border: 2px solid rgba(0,0,0,0.72);
+    /* Off: a spent bulb, same dark socket as an unlit count lamp. */
     background:
-        radial-gradient(circle at 34% 28%, rgba(255,255,255,0.08) 0%, transparent 48%),
+        radial-gradient(circle at 34% 28%, rgba(255,255,255,0.10) 0%, transparent 46%),
         #16241f;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.7);
+    box-shadow:
+        inset 0 2px 4px rgba(0,0,0,0.75),
+        inset 0 -1px 2px rgba(255,255,255,0.07);
     transition: background 0.14s ease, box-shadow 0.2s ease;
 }
 
-/* Held challenges glow the same amber as an occupied base. */
+/* On: the exact green a live ball uses. Every challenge a club still holds glows;
+   only spending one dims its lamp. */
 .abs-lamp.is-on {
     background:
-        radial-gradient(circle at 32% 26%, rgba(255,255,255,0.85) 0%, rgba(255,231,150,0.5) 30%, transparent 58%),
-        linear-gradient(140deg, #ffe07a 0%, #f5c243 55%, #d99a1c 100%);
+        radial-gradient(circle at 34% 28%, rgba(255,255,255,0.85) 0%, rgba(120,240,120,0.5) 26%, transparent 55%),
+        radial-gradient(circle at 50% 55%, #58e558 0%, #22a622 78%);
     box-shadow:
-        inset 0 1px 2px rgba(255,255,255,0.45),
-        0 0 7px rgba(247,201,72,0.7);
+        inset 0 1px 2px rgba(255,255,255,0.4),
+        inset 0 -2px 4px rgba(0,60,0,0.5),
+        0 0 10px rgba(70,225,70,0.85),
+        0 0 22px rgba(70,225,70,0.45);
 }
 
 /* The middle column keeps narrowing as the window does, but the count labels stopped
@@ -2736,7 +2764,7 @@ textarea { min-height: 100px; resize: vertical; }
         align-items: flex-start;
         flex-direction: column;
     }
-    .today-hero { padding: 22px clamp(8px, 2.2vw, 16px); border-radius: 14px; }
+    .today-hero { padding: 22px 0; border-radius: 14px; }
     .today-hero-top { grid-template-columns: 1fr; justify-items: center; gap: 10px; }
     .matchup-strip {
         grid-template-columns: minmax(0, 1fr) minmax(54px, 0.28fr) minmax(0, 1fr);
@@ -3384,7 +3412,7 @@ a, button, input, select, summary, [role="button"] {
     .hero-intel-grid { grid-template-columns: 1fr; }
     .park-factors-quick, .calibration-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-    .today-hero { padding: 16px 6px; }
+    .today-hero { padding: 16px 0; }
     .panel { padding: 16px 14px; }
 
     .section-header { letter-spacing: 0.06em; }
@@ -3398,7 +3426,7 @@ a, button, input, select, summary, [role="button"] {
     /* The dark header above the board was taking a third of the first screen. The
        label and the status pill share one line and the padding comes down, so the
        Monster is what you see when the site opens. */
-    .today-hero { padding: 10px 4px 12px; }
+    .today-hero { padding: 10px 0 12px; }
 
     .today-hero-top {
         grid-template-columns: auto 1fr;
