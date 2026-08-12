@@ -405,8 +405,17 @@ body {
     text-align: center;
 }
 
-.matchup-side.away .matchup-side-score { padding-left: 50%; }
-.matchup-side.home .matchup-side-score { padding-right: 50%; }
+/* Lifted out of the stack and pinned to the middle of the row, so each score sits
+   level with the date, the @ and the venue rather than below the record. */
+.matchup-side-score {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-top: 0;
+}
+
+.matchup-side.away .matchup-side-score { right: 5%; }
+.matchup-side.home .matchup-side-score { left: 5%; }
 
 .matchup-center {
     display: flex;
@@ -828,15 +837,12 @@ body {
 /* The clubs, the date and the score now sit at the foot of the board rather than in a
    separate panel above it, so the whole thing reads as one extended Green Monster with
    the count scorebug as its centrepiece. */
-/* No divider under the diamond, and the clubs ride as high as they can without
-   crowding it. */
+/* The clubs sit directly under the linescore; the count setup follows below them,
+   separated by its own rule. */
 .board-matchup {
-    margin-top: clamp(2px, 0.4vw, 6px);
+    margin-top: clamp(8px, 1vw, 14px);
     padding-top: 0;
 }
-
-/* The label and the status pill sit back at the top of the board. */
-.monster-board > .today-hero-top { margin-bottom: 8px; }
 
 /* Inside the board it no longer needs its own frame. */
 .board-matchup .matchup-strip {
@@ -847,10 +853,13 @@ body {
     border-radius: 0;
 }
 
-/* Tightened so AWAY/HOME, the logos and the records sit higher up the box. */
 .board-matchup .matchup-side-label { margin-bottom: 2px; }
 .board-matchup .logo-crown { margin-bottom: 2px; }
 .board-matchup .matchup-side-name { margin-top: 0; }
+
+/* At bat, the count and the bases now close the box, so the rule above them is what
+   separates the scorebug from the clubs. */
+.monster-status { margin-top: clamp(12px, 1.4vw, 20px); }
 
 /* Final score treatment on the board footer. */
 .matchup-side-score.is-sox-win {
@@ -3100,6 +3109,11 @@ a, button, input, select, summary, [role="button"] {
         overflow-wrap: normal;
         hyphens: none;
     }
+
+    /* Less room either side of the venue block on a phone, so the scores step out a
+       little to keep clear of it while staying level with it. */
+    .matchup-side.away .matchup-side-score { right: 14%; }
+    .matchup-side.home .matchup-side-score { left: 14%; }
 
     .matchup-side-record { font-size: 11.5px; }
     .matchup-side-score { font-size: clamp(26px, 9vw, 38px); }

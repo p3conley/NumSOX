@@ -16,14 +16,15 @@
   <!-- Featured Matchup Preview -->
   <div th:if="${featuredGame}" class="today-hero">
 
+    <div class="today-hero-top">
+      <div class="hero-label" th:text="${featuredIsToday ? 'TODAY' : 'NEXT MATCHUP'}">TODAY</div>
+      <div class="live-pill"
+           th:classappend="${featuredIsLive ? ' is-live' : (featuredGame.result == 'W' ? ' is-win' : (featuredGame.result == 'L' ? ' is-loss' : ''))}"
+           th:text="${featuredIsLive ? 'Live' : featuredGame.status}">Scheduled</div>
+    </div>
+
     <div th:if="${scoreboard}" class="monster-board" id="live-board"
          th:attr="data-innings=${scoreboard.innings.size()}">
-      <div class="today-hero-top">
-        <div class="hero-label" th:text="${featuredIsToday ? 'TODAY' : 'NEXT MATCHUP'}">TODAY</div>
-        <div class="live-pill"
-             th:classappend="${featuredIsLive ? ' is-live' : (featuredGame.result == 'W' ? ' is-win' : (featuredGame.result == 'L' ? ' is-loss' : ''))}"
-             th:text="${featuredIsLive ? 'Live' : featuredGame.status}">Scheduled</div>
-      </div>
       <div class="monster-title">American</div>
       <div class="monster-grid" th:style="'--innings: ' + ${scoreboard.innings.size()}">
         <div class="monster-cell monster-label">P</div>
@@ -57,57 +58,6 @@
         <div class="monster-cell total-cell" data-total="homeHits" th:text="${scoreboard.homeHits ?: 0}">13</div>
         <div class="monster-cell total-cell" data-total="homeErrors" th:text="${scoreboard.homeErrors ?: 0}">0</div>
       </div>
-      <!-- Batter on the left, the frame in the middle, the man on the mound on the right. -->
-      <div class="monster-status">
-        <div class="status-left"><span>At Bat:</span><strong data-live="atBat" th:text="${scoreboard.atBat}">Awaiting batter</strong></div>
-        <div class="status-mid"><span>Frame:</span><strong data-live="inningState" th:text="${scoreboard.inningState}">Live</strong></div>
-        <div class="status-right"><span>Pitching:</span><strong data-live="pitching" th:text="${scoreboard.pitching}">Awaiting pitcher</strong></div>
-      </div>
-
-      <!-- Count panel: lamps rather than digits, the way the Monster reads it. -->
-      <div class="count-board" id="count-board"
-           th:attr="data-last-play=${scoreboard.lastPlayIndex}">
-        <div class="count-group" data-group="ball">
-          <div class="count-label">Ball</div>
-          <div class="count-lamps">
-            <span class="lamp lamp-green" data-ball="1" th:classappend="${(scoreboard.balls ?: 0) >= 1 ? ' is-on' : ''}"></span>
-            <span class="lamp lamp-green" data-ball="2" th:classappend="${(scoreboard.balls ?: 0) >= 2 ? ' is-on' : ''}"></span>
-            <span class="lamp lamp-green" data-ball="3" th:classappend="${(scoreboard.balls ?: 0) >= 3 ? ' is-on' : ''}"></span>
-          </div>
-          <div class="count-flash is-green" data-flash="ball">Walk</div>
-        </div>
-
-        <div class="count-group" data-group="strike">
-          <div class="count-label">Strike</div>
-          <div class="count-lamps">
-            <span class="lamp lamp-red" data-strike="1" th:classappend="${(scoreboard.strikes ?: 0) >= 1 ? ' is-on' : ''}"></span>
-            <span class="lamp lamp-red" data-strike="2" th:classappend="${(scoreboard.strikes ?: 0) >= 2 ? ' is-on' : ''}"></span>
-          </div>
-          <div class="count-flash is-red" data-flash="strike">K</div>
-        </div>
-
-        <div class="count-group" data-group="out"
-             th:classappend="${scoreboard.breakCaption != null ? ' is-flashing' : ''}">
-          <div class="count-label">Out</div>
-          <div class="count-lamps">
-            <span class="lamp lamp-red" data-out="1" th:classappend="${(scoreboard.outs ?: 0) >= 1 ? ' is-on' : ''}"></span>
-            <span class="lamp lamp-red" data-out="2" th:classappend="${(scoreboard.outs ?: 0) >= 2 ? ' is-on' : ''}"></span>
-          </div>
-          <div class="count-flash is-red" data-flash="out"
-               th:text="${scoreboard.breakCaption ?: 'Mid'}">Mid 5th</div>
-        </div>
-      </div>
-
-      <!-- Bases, read from home plate: second at the top, third left, first right. -->
-      <div class="bases" id="bases" aria-label="Runners on base">
-        <span class="base base-second" data-base="second"
-              th:classappend="${scoreboard.onSecond ? ' is-on' : ''}" title="Second base"></span>
-        <span class="base base-third" data-base="third"
-              th:classappend="${scoreboard.onThird ? ' is-on' : ''}" title="Third base"></span>
-        <span class="base base-first" data-base="first"
-              th:classappend="${scoreboard.onFirst ? ' is-on' : ''}" title="First base"></span>
-      </div>
-
       <!-- Matchup identity lives at the foot of the board now, so the linescore
            and the count scorebug lead. One green box rather than two. -->
       <div class="board-matchup">
@@ -179,6 +129,58 @@
         </div>
       </div>
       </div>
+
+      <!-- Batter on the left, the frame in the middle, the man on the mound on the right. -->
+      <div class="monster-status">
+        <div class="status-left"><span>At Bat:</span><strong data-live="atBat" th:text="${scoreboard.atBat}">Awaiting batter</strong></div>
+        <div class="status-mid"><span>Frame:</span><strong data-live="inningState" th:text="${scoreboard.inningState}">Live</strong></div>
+        <div class="status-right"><span>Pitching:</span><strong data-live="pitching" th:text="${scoreboard.pitching}">Awaiting pitcher</strong></div>
+      </div>
+
+      <!-- Count panel: lamps rather than digits, the way the Monster reads it. -->
+      <div class="count-board" id="count-board"
+           th:attr="data-last-play=${scoreboard.lastPlayIndex}">
+        <div class="count-group" data-group="ball">
+          <div class="count-label">Ball</div>
+          <div class="count-lamps">
+            <span class="lamp lamp-green" data-ball="1" th:classappend="${(scoreboard.balls ?: 0) >= 1 ? ' is-on' : ''}"></span>
+            <span class="lamp lamp-green" data-ball="2" th:classappend="${(scoreboard.balls ?: 0) >= 2 ? ' is-on' : ''}"></span>
+            <span class="lamp lamp-green" data-ball="3" th:classappend="${(scoreboard.balls ?: 0) >= 3 ? ' is-on' : ''}"></span>
+          </div>
+          <div class="count-flash is-green" data-flash="ball">Walk</div>
+        </div>
+
+        <div class="count-group" data-group="strike">
+          <div class="count-label">Strike</div>
+          <div class="count-lamps">
+            <span class="lamp lamp-red" data-strike="1" th:classappend="${(scoreboard.strikes ?: 0) >= 1 ? ' is-on' : ''}"></span>
+            <span class="lamp lamp-red" data-strike="2" th:classappend="${(scoreboard.strikes ?: 0) >= 2 ? ' is-on' : ''}"></span>
+          </div>
+          <div class="count-flash is-red" data-flash="strike">K</div>
+        </div>
+
+        <div class="count-group" data-group="out"
+             th:classappend="${scoreboard.breakCaption != null ? ' is-flashing' : ''}">
+          <div class="count-label">Out</div>
+          <div class="count-lamps">
+            <span class="lamp lamp-red" data-out="1" th:classappend="${(scoreboard.outs ?: 0) >= 1 ? ' is-on' : ''}"></span>
+            <span class="lamp lamp-red" data-out="2" th:classappend="${(scoreboard.outs ?: 0) >= 2 ? ' is-on' : ''}"></span>
+          </div>
+          <div class="count-flash is-red" data-flash="out"
+               th:text="${scoreboard.breakCaption ?: 'Mid'}">Mid 5th</div>
+        </div>
+      </div>
+
+      <!-- Bases, read from home plate: second at the top, third left, first right. -->
+      <div class="bases" id="bases" aria-label="Runners on base">
+        <span class="base base-second" data-base="second"
+              th:classappend="${scoreboard.onSecond ? ' is-on' : ''}" title="Second base"></span>
+        <span class="base base-third" data-base="third"
+              th:classappend="${scoreboard.onThird ? ' is-on' : ''}" title="Third base"></span>
+        <span class="base base-first" data-base="first"
+              th:classappend="${scoreboard.onFirst ? ' is-on' : ''}" title="First base"></span>
+      </div>
+
     </div>
 
     <!-- Expandable game detail: play by play, both box scores, and the game footer. -->
