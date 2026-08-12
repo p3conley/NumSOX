@@ -18,6 +18,12 @@
 
     <div th:if="${scoreboard}" class="monster-board" id="live-board"
          th:attr="data-innings=${scoreboard.innings.size()}">
+      <div class="today-hero-top">
+        <div class="hero-label" th:text="${featuredIsToday ? 'TODAY' : 'NEXT MATCHUP'}">TODAY</div>
+        <div class="live-pill"
+             th:classappend="${featuredIsLive ? ' is-live' : (featuredGame.result == 'W' ? ' is-win' : (featuredGame.result == 'L' ? ' is-loss' : ''))}"
+             th:text="${featuredIsLive ? 'Live' : featuredGame.status}">Scheduled</div>
+      </div>
       <div class="monster-title">American</div>
       <div class="monster-grid" th:style="'--innings: ' + ${scoreboard.innings.size()}">
         <div class="monster-cell monster-label">P</div>
@@ -105,13 +111,6 @@
       <!-- Matchup identity lives at the foot of the board now, so the linescore
            and the count scorebug lead. One green box rather than two. -->
       <div class="board-matchup">
-      <div class="today-hero-top">
-        <div class="hero-label" th:text="${featuredIsToday ? 'TODAY' : 'NEXT MATCHUP'}">TODAY</div>
-        <div class="live-pill"
-             th:classappend="${featuredIsLive ? ' is-live' : (featuredGame.result == 'W' ? ' is-win' : (featuredGame.result == 'L' ? ' is-loss' : ''))}"
-             th:text="${featuredIsLive ? 'Live' : featuredGame.status}">Scheduled</div>
-      </div>
-
       <div class="matchup-strip">
         <div class="matchup-side away">
           <div class="matchup-side-label">Away</div>

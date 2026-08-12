@@ -394,8 +394,8 @@ body {
     margin-top: 7px;
 }
 
-/* The score sits centred in its half rather than hard against the outer edge, which
-   puts it roughly midway between the club name and the @ in the middle. */
+/* The score sits well inside its half, close to the @ in the middle rather than
+   floating out by the club name. */
 .matchup-side-score {
     color: white;
     font-size: clamp(30px, 5vw, 58px);
@@ -404,6 +404,9 @@ body {
     margin-top: 10px;
     text-align: center;
 }
+
+.matchup-side.away .matchup-side-score { padding-left: 50%; }
+.matchup-side.home .matchup-side-score { padding-right: 50%; }
 
 .matchup-center {
     display: flex;
@@ -825,11 +828,15 @@ body {
 /* The clubs, the date and the score now sit at the foot of the board rather than in a
    separate panel above it, so the whole thing reads as one extended Green Monster with
    the count scorebug as its centrepiece. */
+/* No divider under the diamond, and the clubs ride as high as they can without
+   crowding it. */
 .board-matchup {
-    margin-top: clamp(12px, 1.4vw, 20px);
-    padding-top: clamp(10px, 1.2vw, 16px);
-    border-top: 2px solid rgba(255,255,255,0.28);
+    margin-top: clamp(2px, 0.4vw, 6px);
+    padding-top: 0;
 }
+
+/* The label and the status pill sit back at the top of the board. */
+.monster-board > .today-hero-top { margin-bottom: 8px; }
 
 /* Inside the board it no longer needs its own frame. */
 .board-matchup .matchup-strip {
@@ -840,7 +847,10 @@ body {
     border-radius: 0;
 }
 
-.board-matchup .today-hero-top { margin-bottom: 10px; }
+/* Tightened so AWAY/HOME, the logos and the records sit higher up the box. */
+.board-matchup .matchup-side-label { margin-bottom: 2px; }
+.board-matchup .logo-crown { margin-bottom: 2px; }
+.board-matchup .matchup-side-name { margin-top: 0; }
 
 /* Final score treatment on the board footer. */
 .matchup-side-score.is-sox-win {
@@ -919,11 +929,13 @@ body {
     color: rgba(255,255,255,0.62);
 }
 
+/* Reads "2 to 1": the line is uppercase, the score is not. */
 .prev-result-score {
     font-size: clamp(15px, 1.5vw, 23px);
     font-weight: 900;
     color: #ffe8a8;
     letter-spacing: 0.02em;
+    text-transform: none;
 }
 
 /* ===== BASES ===== */
