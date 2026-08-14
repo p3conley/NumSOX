@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>Matchup Center - NumSOX</title>
-  <link rel="stylesheet" th:href="@{/css/styles.css(v='20260812')}"/>
+  <link rel="stylesheet" th:href="@{/css/styles.css(v='20260814-calendar')}"/>
 </head>
 <body>
 <nav th:replace="~{fragments/nav :: topbar('matchup')}"></nav>
@@ -18,16 +18,33 @@
   <div th:if="${game}">
 
     <!-- Calendar game selector -->
-    <section class="matchup-calendar panel" aria-label="Matchup calendar">
+    <!--
+      Opens on a single week and expands to the whole month. The month is always rendered,
+      so the calendar is complete without JavaScript and the toggle is purely presentational.
+    -->
+    <section class="matchup-calendar panel" aria-label="Matchup calendar"
+             th:attr="data-focus-week=${focusWeekIndex}"
+             th:data-month-label="${calendarTitle}">
       <div class="calendar-toolbar">
-        <div>
+        <div class="calendar-heading">
           <div class="selector-label">Select Game</div>
-          <h2 th:text="${calendarTitle}">June 2026</h2>
+          <button type="button" class="calendar-scope" id="calendar-scope"
+                  aria-expanded="true" aria-controls="calendar-viewport" hidden>
+            <span class="calendar-scope-label" th:text="${calendarTitle}">June 2026</span>
+            <svg class="calendar-scope-chevron" viewBox="0 0 20 20" width="18" height="18"
+                 aria-hidden="true" focusable="false">
+              <path d="M5 7.5 10 12.5 15 7.5" fill="none" stroke="currentColor"
+                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <h2 class="calendar-static-title" th:text="${calendarTitle}">June 2026</h2>
         </div>
-        <div class="calendar-nav" aria-label="Calendar month navigation">
-          <a th:href="@{/matchup(month=${previousCalendarMonth})}" aria-label="Previous month">&lsaquo;</a>
+        <div class="calendar-nav" aria-label="Calendar navigation">
+          <a th:href="@{/matchup(month=${previousCalendarMonth},focusWeek='last')}"
+             data-cal-step="prev" aria-label="Previous">&lsaquo;</a>
           <a th:href="@{/matchup(month=${currentCalendarMonth})}">Today</a>
-          <a th:href="@{/matchup(month=${nextCalendarMonth})}" aria-label="Next month">&rsaquo;</a>
+          <a th:href="@{/matchup(month=${nextCalendarMonth},focusWeek='first')}"
+             data-cal-step="next" aria-label="Next">&rsaquo;</a>
         </div>
       </div>
 
@@ -37,30 +54,35 @@
           <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
         </div>
 
-        <div class="calendar-grid">
-          <th:block th:each="week : ${calendarWeeks}">
-            <div th:each="day : ${week}"
-                 class="calendar-day"
-                 th:classappend="${(!day.currentMonth ? ' is-muted' : '') + (day.today ? ' is-today' : '') + (day.selected ? ' is-selected' : '')}">
-              <div class="calendar-date">
-                <span th:text="${day.dayNumber}">1</span>
-              </div>
-              <div class="calendar-games" th:if="${!day.games.isEmpty()}">
-                <a th:each="g : ${day.games}"
-                   class="calendar-game"
-                   th:href="@{/matchup(gameId=${g.id},month=${calendarMonth})}"
-                   th:classappend="${g.id == game.id ? ' active' : ''}">
-                  <img class="calendar-team-logo" th:src="${@teamLogoService.logoForName(g.opponent)}" th:alt="${g.opponent + ' logo'}"/>
-                  <span class="calendar-opponent">
-                    <span th:text="${g.homeAway == 'Home' ? 'vs' : '@'}">vs</span>
-                    <strong th:text="${g.opponent}">Yankees</strong>
-                  </span>
-                  <span class="calendar-status"
-                        th:text="${g.redSoxScore != null ? 'BOS ' + g.redSoxScore + ', ' + g.opponent + ' ' + g.opponentScore : g.status}">Scheduled</span>
-                </a>
+        <!-- The viewport clips to one week when collapsed; the track slides to the right row. -->
+        <div class="calendar-viewport" id="calendar-viewport">
+          <div class="calendar-track">
+            <div class="calendar-week" th:each="week, ws : ${calendarWeeks}"
+                 th:attr="data-week-index=${ws.index}"
+                 th:data-week-label="${week.label}">
+              <div th:each="day : ${week.days}"
+                   class="calendar-day"
+                   th:classappend="${(!day.currentMonth ? ' is-muted' : '') + (day.today ? ' is-today' : '') + (day.selected ? ' is-selected' : '')}">
+                <div class="calendar-date">
+                  <span th:text="${day.dayNumber}">1</span>
+                </div>
+                <div class="calendar-games" th:if="${!day.games.isEmpty()}">
+                  <a th:each="g : ${day.games}"
+                     class="calendar-game"
+                     th:href="@{/matchup(gameId=${g.id},month=${calendarMonth})}"
+                     th:classappend="${g.id == game.id ? ' active' : ''}">
+                    <img class="calendar-team-logo" th:src="${@teamLogoService.logoForName(g.opponent)}" th:alt="${g.opponent + ' logo'}"/>
+                    <span class="calendar-opponent">
+                      <span th:text="${g.homeAway == 'Home' ? 'vs' : '@'}">vs</span>
+                      <strong th:text="${g.opponent}">Yankees</strong>
+                    </span>
+                    <span class="calendar-status"
+                          th:text="${g.redSoxScore != null ? 'BOS ' + g.redSoxScore + ', ' + g.opponent + ' ' + g.opponentScore : g.status}">Scheduled</span>
+                  </a>
+                </div>
               </div>
             </div>
-          </th:block>
+          </div>
         </div>
       </div>
     </section>
@@ -107,9 +129,9 @@
       </div>
     </div>
 
-    <!-- NumSOX Estimated Win Probability -->
-    <div th:if="${numsox}" class="win-prob-section">
-      <div class="win-prob-title" th:text="${numsoxTitle}">NumSOX Estimated Win Probability</div>
+    <!-- The same clean probability hierarchy used beneath the dashboard scoreboard. -->
+    <div th:if="${numsox}" class="win-prob-section matchup-probability-card">
+      <div class="win-prob-title" th:text="${numsox.displayTitle}">Win Probability</div>
       <div class="win-prob-numbers">
         <span class="prob-team" th:text="${awayTeamName}">Red Sox</span>
         <span class="prob-pct away-pct" th:text="${numsox.awayPct} + '%'">47%</span>
@@ -120,171 +142,64 @@
         <span class="prob-team right-align" th:text="${homeTeamName}">Yankees</span>
       </div>
 
-      <div class="win-prob-meta">
-        <span class="conf-badge"
-              th:classappend="'conf-' + ${#strings.toLowerCase(numsox.confidence)}"
-              th:text="${numsox.confidence} + ' confidence'">Medium confidence</span>
-        <span class="numsox-live-tag" th:if="${numsox.live}">LIVE</span>
-        <span class="coverage-note"
-              th:text="${numsox.availableCount} + ' of ' + ${numsox.totalCount} + ' categories scored'">
-          9 of 14 categories scored
-        </span>
-      </div>
+      <p class="numsox-reason" th:text="${numsox.mainReason}">
+        Boston has the stronger starting pitching and offense.
+      </p>
 
-      <!-- What changed since first pitch -->
-      <div th:if="${numsox.live and numsox.liveNote != null}" class="live-shift"
-           th:text="${numsox.liveNote}">Pre-game the model had the home club at 54%.</div>
-
-      <!-- The headline explanation, in plain English -->
-      <div class="numsox-reason" th:text="${numsox.mainReason}">
-        The home club has the edge.
-      </div>
-
-      <!-- The three categories that moved the number most -->
-      <div th:if="${!numsox.topFactors.isEmpty()}" class="top-factors">
-        <div class="reasons-title">What moved the number most</div>
-        <div class="factor-row" th:each="f : ${numsox.topFactors}">
-          <div class="factor-head">
-            <span class="factor-name" th:text="${f.label}">Starting Pitcher</span>
-            <span class="factor-edge"
-                  th:classappend="${f.edge > 0.04} ? 'edge-badge-home' : (${f.edge < -0.04} ? 'edge-badge-away' : 'edge-badge-even')"
-                  th:text="${f.strength} + ' to ' + ${f.edgeLabel(awayTeamName, homeTeamName)}">Clear to Red Sox</span>
-            <span class="factor-weight" th:text="${f.effectiveWeightPct} + '% of model'">18% of model</span>
-          </div>
-          <div class="factor-why" th:text="${f.explanation}">Explanation.</div>
-        </div>
-      </div>
-
-      <div class="win-prob-disclaimer" th:text="${numsoxDisclaimer}">
-        This is a custom NumSOX estimate based on baseball statistics.
-      </div>
-    </div>
-
-    <!-- Model breakdown -->
-    <div th:if="${numsox}" class="panel">
-      <div class="panel-title">Model Breakdown</div>
-      <div class="breakdown-intro" th:text="${numsox.confidenceReason}">
-        Nine of fourteen categories could be scored.
-      </div>
-
-      <details class="stat-expander">
-        <summary>+ Show Model Breakdown</summary>
-        <div class="stat-explanation">
-          <table class="comparison-table breakdown-table">
-            <thead>
-              <tr>
-                <th>Category</th>
-                <th th:text="${awayTeamName}">Away</th>
-                <th th:text="${homeTeamName}">Home</th>
-                <th>Edge</th>
-                <th>Weight</th>
-                <th>Confidence</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr th:each="cat : ${numsox.categories}"
-                  th:classappend="${!cat.available} ? 'cat-unavailable' : (${cat.edge > 0.04} ? 'edge-home' : (${cat.edge < -0.04} ? 'edge-away' : 'edge-even'))">
-                <td class="cat-name" th:text="${cat.label}">Offense</td>
-                <td class="cat-away" th:text="${cat.awayDisplay}">106 wRC+</td>
-                <td class="cat-home" th:text="${cat.homeDisplay}">112 wRC+</td>
-                <td class="cat-edge">
-                  <span class="edge-badge"
-                        th:classappend="${!cat.available} ? 'edge-badge-none' : (${cat.edge > 0.04} ? 'edge-badge-home' : (${cat.edge < -0.04} ? 'edge-badge-away' : 'edge-badge-even'))"
-                        th:text="${cat.edgeLabel(awayTeamName, homeTeamName)}">Even</span>
-                </td>
-                <td class="cat-weight">
-                  <span th:text="${cat.weightPct} + '%'">14%</span>
-                  <span class="weight-effective" th:if="${cat.available and cat.effectiveWeightPct != cat.weightPct}"
-                        th:text="'(' + ${cat.effectiveWeightPct} + '% applied)'">(17% applied)</span>
-                  <span class="weight-effective" th:if="${!cat.available}">(not applied)</span>
-                </td>
-                <td class="cat-conf" th:text="${cat.confidence}">High</td>
-              </tr>
-            </tbody>
-          </table>
-          <p class="table-note">
-            Weights are the model's design. When a category cannot be scored its weight is shared
-            across the categories that could be, so the estimate always reflects 100% of what is
-            actually known rather than quietly counting a blank as even.
+      <details class="probability-details matchup-probability-details">
+        <summary><span class="probability-toggle-label">Why <span
+                  th:text="${numsox.favoredPct} + '%'">54%</span>?</span></summary>
+        <div class="probability-detail-body">
+          <p class="probability-detail-intro" th:text="${numsox.confidenceReason}">
+            Nine of fifteen categories could be scored.
           </p>
-        </div>
-      </details>
 
-      <details class="stat-expander">
-        <summary>+ Why each category landed where it did</summary>
-        <div class="stat-explanation">
-          <div class="cat-detail" th:each="cat : ${numsox.categories}">
-            <div class="cat-detail-head">
-              <span class="cat-detail-name" th:text="${cat.label}">Offense</span>
-              <span class="cat-detail-weight" th:text="${cat.weightPct} + '% weight'">14% weight</span>
-              <span class="cat-detail-conf" th:if="${!cat.available}">Unavailable</span>
-            </div>
-            <div class="cat-detail-why" th:text="${cat.explanation}">Explanation.</div>
-            <ul class="stat-provenance" th:if="${!cat.supporting.isEmpty()}">
-              <li th:each="s : ${cat.supporting}">
-                <span class="prov-label" th:text="${s.label}">Team wRC+</span>
-                <span class="prov-value" th:text="${s.display}">112</span>
-                <span class="prov-badge" th:if="${s.badge != null}" th:text="${s.badge}">Unavailable</span>
-                <span class="prov-source" th:if="${s.source != null}"
-                      th:text="${s.source} + (${s.updated != null} ? ', updated ' + ${s.updated} : '')">
-                  MLB Stats API
+          <div class="probability-category-list">
+            <details class="probability-category" th:each="cat : ${numsox.categories}"
+                     th:classappend="${!cat.available} ? ' is-unavailable' : ''">
+              <summary>
+                <span class="probability-category-name" th:text="${cat.label}">Starting Pitcher</span>
+                <span class="probability-category-meta"
+                      th:text="${cat.available ? cat.edgeLabel(awayTeamName, homeTeamName) + ' edge · ' + cat.effectiveWeightPct + '% applied' : 'Unavailable'}">
+                  Red Sox edge · 18% applied
                 </span>
-              </li>
-            </ul>
+              </summary>
+              <div class="probability-category-body">
+                <p th:text="${cat.explanation}">Category explanation.</p>
+                <div class="probability-category-comparison" th:if="${cat.available}">
+                  <span th:text="|${awayTeamName}: ${cat.awayDisplay}|">Red Sox: 3.20 FIP</span>
+                  <span th:text="|${homeTeamName}: ${cat.homeDisplay}|">Yankees: 4.10 FIP</span>
+                </div>
+                <ul class="probability-supporting" th:if="${!cat.supporting.isEmpty()}">
+                  <li th:each="stat : ${cat.supporting}">
+                    <span class="probability-stat-label" th:text="${stat.label}">Starter FIP</span>
+                    <strong th:text="${stat.display}">3.20</strong>
+                    <span class="probability-stat-source" th:if="${stat.source != null}">
+                      <span th:text="${stat.source}">MLB Stats API</span>
+                      <time th:if="${stat.updated != null}" th:text="${stat.updated}">2026-08-14</time>
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </details>
           </div>
-        </div>
-      </details>
 
-      <!-- Everything the model wanted and could not get, stated openly -->
-      <details class="stat-expander" th:if="${numsox.hasMissing()}">
-        <summary>+ What the model could not measure</summary>
-        <div class="stat-explanation">
-          <p class="table-note">
-            These categories are part of the model's design but had no data behind them for this
-            game. Nothing has been estimated to fill the gap.
-          </p>
-          <div class="cat-detail" th:each="cat : ${numsox.missingCategories()}">
-            <div class="cat-detail-head">
-              <span class="cat-detail-name" th:text="${cat.label}">Weather</span>
-              <span class="cat-detail-weight" th:text="${cat.weightPct} + '% weight, not applied'">4% weight</span>
+          <details class="probability-category probability-data-note">
+            <summary>
+              <span class="probability-category-name">Data Sources &amp; Freshness</span>
+              <span class="probability-category-meta">Source dates by statistic</span>
+            </summary>
+            <div class="probability-category-body">
+              <p>Each supporting statistic above carries its source and latest available update date. Missing feeds are marked unavailable and do not receive model weight.</p>
+              <p th:text="${'Estimate generated ' + #temporals.format(numsox.generatedAt, 'MMM d, yyyy h:mm a') + '.'}">
+                Estimate generated Aug 14, 2026 1:00 AM.
+              </p>
             </div>
-            <div class="cat-detail-why" th:text="${cat.explanation}">Why it is missing.</div>
-          </div>
-        </div>
-      </details>
+          </details>
 
-      <details class="stat-expander" th:if="${numsox.live}">
-        <summary>+ Live Inputs</summary>
-        <div class="stat-explanation">
-          <div class="cat-detail" th:each="cat : ${numsox.categories}" th:if="${cat.key == 'live'}">
-            <div class="cat-detail-why" th:text="${cat.explanation}">Live explanation.</div>
-            <ul class="stat-provenance">
-              <li th:each="s : ${cat.supporting}">
-                <span class="prov-label" th:text="${s.label}">Leverage index</span>
-                <span class="prov-value" th:text="${s.display}">1.40</span>
-                <span class="prov-source" th:if="${s.source != null}" th:text="${s.source}">MLB Stats API</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </details>
-
-      <details class="stat-expander">
-        <summary>+ Stat Meanings</summary>
-        <div class="stat-explanation glossary">
-          <p><strong>wRC+</strong> Runs created per plate appearance, adjusted for ballpark and league. 100 is average, 120 is 20% better than average.</p>
-          <p><strong>OPS</strong> On-base percentage plus slugging. A quick read on total offensive production.</p>
-          <p><strong>ISO</strong> Slugging minus batting average. Isolates raw power from the ability to make contact.</p>
-          <p><strong>FIP</strong> What a pitcher's ERA would be if his defence were average. Built from strikeouts, walks and home runs only, so it strips out luck and fielding.</p>
-          <p><strong>K-BB%</strong> Strikeout rate minus walk rate. One of the most stable measures of a pitcher's command of an at-bat.</p>
-          <p><strong>WHIP</strong> Walks and hits allowed per inning. How often a pitcher lets runners on.</p>
-          <p><strong>BABIP</strong> Batting average on balls in play. Far above or below .300 usually signals luck that will not last.</p>
-          <p><strong>Hard-hit %</strong> Share of batted balls hit 95 mph or harder.</p>
-          <p><strong>Barrel %</strong> Share of batted balls hit at the exit velocity and launch angle combination that produces the most damage.</p>
-          <p><strong>Outs Above Average</strong> Fielding runs saved versus an average defender at the same position, from Statcast tracking.</p>
-          <p><strong>Defensive efficiency</strong> Share of balls in play a defence converts into outs.</p>
-          <p><strong>Park factor</strong> How a ballpark changes run or home run scoring versus a neutral park. 100 is neutral, 106 means 6% more.</p>
-          <p><strong>Leverage index</strong> How much the current moment matters to the outcome. 1.0 is an average situation, 2.0 or higher is a genuine turning point.</p>
+          <p class="probability-disclaimer" th:text="${numsoxDisclaimer}">
+            This is a custom NumSOX estimate, not a betting line.
+          </p>
         </div>
       </details>
     </div>
@@ -422,10 +337,8 @@
     <!-- Ballpark Factors -->
     <div th:if="${park}" class="panel ballpark-panel">
       <div class="panel-title">&#9913; Ballpark: <span th:text="${park.venueName}">Yankee Stadium</span></div>
-      <div class="ballpark-summary" th:text="${winProb.ballparkNarrative}">Narrative here.</div>
-      <div th:if="${winProb.parkHighlights != null}" class="park-highlight-list">
-        <div th:each="h : ${winProb.parkHighlights}" th:text="${h}">Park insight</div>
-      </div>
+      <div class="ballpark-summary" th:if="${parkCategory != null}"
+           th:text="${parkCategory.explanation}">Narrative here.</div>
       <div class="park-factors-quick">
         <div class="pf-block">
           <div class="pf-val" th:text="${park.homeRunParkFactor}">112</div>
@@ -474,5 +387,111 @@
 
   </div><!-- end th:if game -->
 </div>
+
+<script>
+/*
+ * Calendar scope toggle.
+ *
+ * The server renders the whole month, so the calendar is complete before this runs and stays
+ * usable if it never does. All this does is clip the viewport to one week and slide the track
+ * to it, which keeps the collapsed and expanded rows pixel-identical and makes the change an
+ * animation rather than a re-layout.
+ */
+(function () {
+  var cal = document.querySelector('.matchup-calendar');
+  if (!cal) return;
+
+  var viewport = cal.querySelector('.calendar-viewport');
+  var track    = cal.querySelector('.calendar-track');
+  var toggle   = cal.querySelector('.calendar-scope');
+  var label    = cal.querySelector('.calendar-scope-label');
+  var weeks    = Array.prototype.slice.call(cal.querySelectorAll('.calendar-week'));
+  if (!viewport || !track || !toggle || !label || !weeks.length) return;
+
+  var monthLabel = cal.getAttribute('data-month-label') || label.textContent;
+  var focus = parseInt(cal.getAttribute('data-focus-week'), 10);
+  if (isNaN(focus)) focus = 0;
+  focus = Math.max(0, Math.min(focus, weeks.length - 1));
+
+  var expanded = false;
+  var animating = false;
+
+  document.documentElement.classList.add('js-calendar');
+  toggle.hidden = false;
+
+  function render(animate) {
+    if (!animate) {
+      viewport.style.transition = 'none';
+      track.style.transition = 'none';
+    }
+
+    if (expanded) {
+      viewport.style.height = track.scrollHeight + 'px';
+      track.style.transform = 'translateY(0)';
+      label.textContent = monthLabel;
+    } else {
+      var week = weeks[focus];
+      viewport.style.height = week.offsetHeight + 'px';
+      track.style.transform = 'translateY(' + (-week.offsetTop) + 'px)';
+      label.textContent = week.getAttribute('data-week-label') || monthLabel;
+    }
+    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+
+    // A link in a clipped week is still in the document, so keyboard focus would scroll the
+    // viewport to something the reader cannot see. Taking those rows out of the tab order
+    // costs nothing visually and keeps the animation intact.
+    weeks.forEach(function (week, i) {
+      var reachable = expanded || i === focus;
+      if (reachable) week.removeAttribute('inert');
+      else week.setAttribute('inert', '');
+      week.setAttribute('aria-hidden', reachable ? 'false' : 'true');
+    });
+
+    if (!animate) {
+      void viewport.offsetHeight;  // flush, so the next change still animates
+      viewport.style.transition = '';
+      track.style.transition = '';
+    }
+  }
+
+  function change(fn) {
+    fn();
+    animating = true;
+    render(true);
+  }
+
+  viewport.addEventListener('transitionend', function (e) {
+    if (e.propertyName === 'height') animating = false;
+  });
+
+  toggle.addEventListener('click', function () {
+    change(function () { expanded = !expanded; });
+  });
+
+  // Collapsed, the arrows step one week within the month already on the page. At either end
+  // they fall through to their href, which loads the neighbouring month on the nearest week
+  // that actually has baseball in it.
+  cal.querySelectorAll('[data-cal-step]').forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      if (expanded) return;
+      var next = focus + (link.getAttribute('data-cal-step') === 'next' ? 1 : -1);
+      if (next < 0 || next >= weeks.length) return;
+      e.preventDefault();
+      change(function () { focus = next; });
+    });
+  });
+
+  // Row heights depend on how the day cells wrap and on logos that may still be loading.
+  if (window.ResizeObserver) {
+    new ResizeObserver(function () {
+      if (!animating) render(false);
+    }).observe(track);
+  } else {
+    window.addEventListener('resize', function () { render(false); });
+  }
+
+  render(false);
+})();
+</script>
 </body>
 </html>

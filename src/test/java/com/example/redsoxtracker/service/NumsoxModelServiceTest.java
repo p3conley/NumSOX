@@ -25,13 +25,24 @@ class NumsoxModelServiceTest {
     private final NumsoxModelService service = new NumsoxModelService(null);
 
     @Test
+    void winProbabilityServiceExposesTheExpandedModel() {
+        WinProbabilityService publicService = new WinProbabilityService(null);
+        NumsoxModel model = publicService.calculate(game(), strong(), weak(), goodStarter(),
+                badStarter(), park(), Optional.empty(), Optional.empty());
+
+        assertEquals(15, model.categories().size());
+        assertEquals(100, model.awayPct() + model.homePct());
+        assertFalse(model.mainReason().contains("normalized"));
+    }
+
+    @Test
     void specifiedWeightsSumToOneHundredPercent() {
         NumsoxModel m = service.evaluate(game(), strong(), weak(), goodStarter(), badStarter(),
                 park(), Optional.empty());
         double total = m.categories().stream().mapToDouble(CategoryScore::weight).sum();
         assertEquals(1.0, total, 0.0001,
-                "The 14 category weights must add to exactly 100%");
-        assertEquals(14, m.categories().size());
+                "The 15 category weights must add to exactly 100%");
+        assertEquals(15, m.categories().size());
     }
 
     @Test

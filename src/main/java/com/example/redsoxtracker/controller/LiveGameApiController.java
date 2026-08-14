@@ -3,6 +3,7 @@ package com.example.redsoxtracker.controller;
 import com.example.redsoxtracker.domain.Game;
 import com.example.redsoxtracker.dto.LiveGameDetail;
 import com.example.redsoxtracker.dto.LiveWinProbability;
+import com.example.redsoxtracker.dto.NumsoxModel;
 import com.example.redsoxtracker.dto.ScoreboardView;
 import com.example.redsoxtracker.repository.GameRepository;
 import com.example.redsoxtracker.service.LiveGameDetailService;
@@ -114,12 +115,16 @@ public class LiveGameApiController {
         Optional<LiveGameDetail> detail = liveGameDetailService.buildForGame(game);
         detail.ifPresent(d -> body.put("detail", d));
 
-        // Win probability from MLB's own per-play model, so the bar keeps moving while
-        // the game is on. Only meaningful once play has started.
+        Optional<LiveWinProbability> liveWinProbability = Optional.empty();
         if (live || delayed) {
-            liveWinProbabilityService.forGame(game)
-                    .ifPresent(wp -> body.put("winProbability", wp));
+            liveWinProbability = liveWinProbabilityService.forGame(game);
         }
+
+        // Return the expanded NumSOX model, not raw MLB percentages. WinProbabilityService
+        // remains the one place that blends pregame strength with live game state.
+        NumsoxModel winProbability = matchupService.calculateForGame(
+                game, liveWinProbability, scoreboard);
+        body.put("winProbability", winProbability);
 
         // Always fresh: a cached response is the one thing this endpoint must never serve.
         return ResponseEntity.ok()

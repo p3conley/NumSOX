@@ -6,7 +6,7 @@
   <title>NumSOX</title>
   <!-- No meta refresh: the scoreboard and game detail poll and update in place instead,
        so a live game moves without the page reloading under you. -->
-  <link rel="stylesheet" th:href="@{/css/styles.css(v='20260812-stacked-meta')}"/>
+  <link rel="stylesheet" th:href="@{/css/styles.css(v='20260814-winprob')}"/>
 </head>
 <body>
 <nav th:replace="~{fragments/nav :: topbar('dashboard')}"></nav>
@@ -236,38 +236,95 @@
     </div>
 
     <div class="hero-intel-grid">
-      <!-- Pre-game this is the NumSOX model. Once the game starts the poll swaps in
-           MLB's own per-play numbers, which is the only thing that can actually move
-           while a game is being played. data-sox-away lets the script map MLB's
-           away/home pair onto the Red Sox/opponent sides of this bar. -->
+      <!-- The expanded NumSOX model is the only probability source. The default card
+           stays intentionally simple; supporting calculations remain inside details. -->
       <div th:if="${featuredWinProb}" class="probability-panel" id="win-prob-panel"
-           th:attr="data-sox-away=${featuredGame.homeAway == 'Away'}">
+           th:attr="data-sox-away=${featuredGame.homeAway == 'Away'},data-away-team=${featuredAwayTeam},data-home-team=${featuredHomeTeam}">
         <div class="panel-kicker">
-          <span id="win-prob-kicker">Win Probability</span>
-          <span class="win-prob-live-tag" id="win-prob-live-tag" hidden>Live</span>
+          <span id="win-prob-kicker" th:text="${featuredWinProb.displayTitle}">Win Probability</span>
         </div>
         <div class="win-prob-bar-wrap">
           <div class="win-prob-label away-label">
             Red Sox
             <strong id="win-prob-sox"
-                    th:text="${featuredGame.homeAway == 'Away' ? featuredWinProb.awayWinPct + '%' : featuredWinProb.homeWinPct + '%'}">47%</strong>
+                    th:text="${featuredGame.homeAway == 'Away' ? featuredWinProb.awayPct + '%' : featuredWinProb.homePct + '%'}">47%</strong>
           </div>
           <div class="win-prob-bar" id="win-prob-bar"
-               th:style="${'--away-pct: ' + (featuredGame.homeAway == 'Away' ? featuredWinProb.awayWinPct : featuredWinProb.homeWinPct) + '%'}"></div>
+               th:style="${'--away-pct: ' + (featuredGame.homeAway == 'Away' ? featuredWinProb.awayPct : featuredWinProb.homePct) + '%'}"></div>
           <div class="win-prob-label home-label">
             <strong id="win-prob-opp"
-                    th:text="${featuredGame.homeAway == 'Away' ? featuredWinProb.homeWinPct + '%' : featuredWinProb.awayWinPct + '%'}">53%</strong>
+                    th:text="${featuredGame.homeAway == 'Away' ? featuredWinProb.homePct + '%' : featuredWinProb.awayPct + '%'}">53%</strong>
             <span th:text="${featuredGame.opponent}">Yankees</span>
           </div>
         </div>
-        <div class="model-summary" id="win-prob-summary"
-             th:text="${featuredWinProb.modelSummary}">Weighted model summary.</div>
+        <p class="probability-explanation" id="win-prob-summary"
+           th:text="${featuredWinProb.mainReason}">Boston has the stronger starting pitching and offense.</p>
+
+        <details class="probability-details" id="win-prob-details">
+          <summary><span class="probability-toggle-label">Why <span id="win-prob-why-pct"
+                    th:text="${featuredWinProb.favoredPct} + '%'">54%</span>?</span></summary>
+          <div class="probability-detail-body">
+            <p class="probability-detail-intro" id="win-prob-detail-intro"
+               th:text="${featuredWinProb.confidence} + ' confidence. ' + ${featuredWinProb.availableCount} + ' of ' + ${featuredWinProb.totalCount} + ' model categories are currently supported by data.'">
+              Medium confidence. Nine of fifteen categories are supported by data.
+            </p>
+
+            <div class="probability-category-list" id="win-prob-category-list">
+              <details class="probability-category" th:each="cat : ${featuredWinProb.categories}"
+                       th:classappend="${!cat.available} ? ' is-unavailable' : ''"
+                       th:attr="data-category-key=${cat.key}">
+                <summary>
+                  <span class="probability-category-name" th:text="${cat.label}">Starting Pitcher</span>
+                  <span class="probability-category-meta"
+                        th:text="${cat.available ? cat.edgeLabel(featuredAwayTeam, featuredHomeTeam) + ' edge · ' + cat.effectiveWeightPct + '% applied' : 'Unavailable'}">
+                    Red Sox edge · 18% applied
+                  </span>
+                </summary>
+                <div class="probability-category-body">
+                  <p th:text="${cat.explanation}">Category explanation.</p>
+                  <div class="probability-category-comparison" th:if="${cat.available}">
+                    <span th:text="|${featuredAwayTeam}: ${cat.awayDisplay}|">Red Sox: 3.20 FIP</span>
+                    <span th:text="|${featuredHomeTeam}: ${cat.homeDisplay}|">Yankees: 4.10 FIP</span>
+                  </div>
+                  <ul class="probability-supporting" th:if="${!cat.supporting.isEmpty()}">
+                    <li th:each="stat : ${cat.supporting}">
+                      <span class="probability-stat-label" th:text="${stat.label}">Starter FIP</span>
+                      <strong th:text="${stat.display}">3.20</strong>
+                      <span class="probability-stat-source" th:if="${stat.source != null}">
+                        <span th:text="${stat.source}">MLB Stats API</span>
+                        <time th:if="${stat.updated != null}" th:text="${stat.updated}">2026-08-14</time>
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+              </details>
+            </div>
+
+            <details class="probability-category probability-data-note">
+              <summary>
+                <span class="probability-category-name">Data Sources &amp; Freshness</span>
+                <span class="probability-category-meta">Source dates by statistic</span>
+              </summary>
+              <div class="probability-category-body">
+                <p>Each supporting statistic above carries its source and latest available update date. Missing feeds are marked unavailable and do not receive model weight.</p>
+                <p id="win-prob-generated" th:text="${'Estimate generated ' + #temporals.format(featuredWinProb.generatedAt, 'MMM d, yyyy h:mm a') + '.'}">
+                  Estimate generated Aug 14, 2026 1:00 AM.
+                </p>
+              </div>
+            </details>
+
+            <p class="probability-disclaimer" th:text="${T(com.example.redsoxtracker.dto.NumsoxModel).DISCLAIMER}">
+              This is a custom NumSOX estimate, not a betting line.
+            </p>
+          </div>
+        </details>
       </div>
 
       <div th:if="${featuredPark}" class="park-intel-panel">
         <div class="panel-kicker">Ballpark Factor</div>
         <div class="park-name" th:text="${featuredPark.venueName}">Fenway Park</div>
-        <div class="ballpark-summary" th:text="${featuredWinProb.ballparkNarrative}">Park narrative.</div>
+        <div class="ballpark-summary" th:if="${featuredParkCategory != null}"
+             th:text="${featuredParkCategory.explanation}">Park narrative.</div>
         <div class="park-factors-quick compact">
           <div class="pf-block">
             <div class="pf-val" th:text="${featuredPark.runParkFactor ?: 'N/A'}">103</div>
@@ -291,10 +348,6 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <div th:if="${featuredWinProb != null and featuredWinProb.parkHighlights != null}" class="insight-row">
-      <span th:each="h : ${featuredWinProb.parkHighlights}" th:text="${h}">Park insight</span>
     </div>
 
     <div class="hero-actions">
@@ -1281,16 +1334,90 @@
     // ---- win probability -----------------------------------------------------------
     var wpPanel = document.getElementById('win-prob-panel');
 
-    /**
-     * Swap the pre-game model out for MLB's live per-play numbers once the game starts.
-     * MLB reports away/home; this bar is Red Sox on the left and the opponent on the
-     * right, so which one is which depends on where the Red Sox are playing.
-     */
+    function probabilityElement(tag, className, text) {
+      var element = document.createElement(tag);
+      if (className) element.className = className;
+      if (text !== undefined && text !== null) element.textContent = text;
+      return element;
+    }
+
+    function probabilityEdgeLabel(category, awayTeam, homeTeam) {
+      if (!category.available) return 'Unavailable';
+      if (Math.abs(category.edge) < 0.04) return 'Even';
+      return (category.edge > 0 ? homeTeam : awayTeam) + ' edge';
+    }
+
+    function renderProbabilityBreakdown(wp) {
+      var list = document.getElementById('win-prob-category-list');
+      if (!list || !Array.isArray(wp.categories)) return;
+
+      var awayTeam = wpPanel.getAttribute('data-away-team') || 'Away';
+      var homeTeam = wpPanel.getAttribute('data-home-team') || 'Home';
+      var openCategories = {};
+      list.querySelectorAll('.probability-category[open][data-category-key]').forEach(function (details) {
+        openCategories[details.getAttribute('data-category-key')] = true;
+      });
+      list.replaceChildren();
+
+      wp.categories.forEach(function (category) {
+        var details = probabilityElement('details', 'probability-category'
+          + (category.available ? '' : ' is-unavailable'));
+        details.setAttribute('data-category-key', category.key);
+        details.open = !!openCategories[category.key];
+        var summary = probabilityElement('summary');
+        summary.appendChild(probabilityElement('span', 'probability-category-name', category.label));
+
+        var meta = probabilityEdgeLabel(category, awayTeam, homeTeam);
+        if (category.available) {
+          meta += ' · ' + Math.round(category.effectiveWeight * 100) + '% applied';
+        }
+        summary.appendChild(probabilityElement('span', 'probability-category-meta', meta));
+        details.appendChild(summary);
+
+        var body = probabilityElement('div', 'probability-category-body');
+        body.appendChild(probabilityElement('p', '', category.explanation));
+
+        if (category.available) {
+          var comparison = probabilityElement('div', 'probability-category-comparison');
+          comparison.appendChild(probabilityElement('span', '', awayTeam + ': ' + category.awayDisplay));
+          comparison.appendChild(probabilityElement('span', '', homeTeam + ': ' + category.homeDisplay));
+          body.appendChild(comparison);
+        }
+
+        if (Array.isArray(category.supporting) && category.supporting.length) {
+          var stats = probabilityElement('ul', 'probability-supporting');
+          category.supporting.forEach(function (stat) {
+            var item = probabilityElement('li');
+            item.appendChild(probabilityElement('span', 'probability-stat-label', stat.label));
+            item.appendChild(probabilityElement('strong', '', stat.display));
+            if (stat.source) {
+              var source = probabilityElement('span', 'probability-stat-source');
+              source.appendChild(probabilityElement('span', '', stat.source));
+              if (stat.updated) source.appendChild(probabilityElement('time', '', stat.updated));
+              item.appendChild(source);
+            }
+            stats.appendChild(item);
+          });
+          body.appendChild(stats);
+        }
+
+        details.appendChild(body);
+        list.appendChild(details);
+      });
+
+      var intro = document.getElementById('win-prob-detail-intro');
+      if (intro) intro.textContent = wp.confidenceReason;
+      var generated = document.getElementById('win-prob-generated');
+      if (generated && wp.generatedAt) {
+        generated.textContent = 'Estimate generated ' + new Date(wp.generatedAt).toLocaleString() + '.';
+      }
+    }
+
+    /** Render the WinProbabilityService result. JavaScript never derives a second number. */
     function applyWinProbability(data) {
       if (!wpPanel) return;
       var wp = data.winProbability;
-      var tag = document.getElementById('win-prob-live-tag');
-      if (!wp) { if (tag) tag.hidden = true; return; }
+      if (!wp) return;
 
       var soxAway = wpPanel.getAttribute('data-sox-away') === 'true';
       var soxPct = soxAway ? wp.awayPct : wp.homePct;
@@ -1303,18 +1430,15 @@
       if (oppEl) oppEl.textContent = oppPct + '%';
       if (bar) bar.style.setProperty('--away-pct', soxPct + '%');
 
-      if (tag) tag.hidden = false;
+      var kicker = document.getElementById('win-prob-kicker');
+      if (kicker) kicker.textContent = wp.live ? 'Live Win Probability' : 'Win Probability';
 
       var summary = document.getElementById('win-prob-summary');
-      if (summary) {
-        var bits = ['Live win probability from MLB, updated after each play.'];
-        if (wp.lastPlay) bits.push('Last play: ' + wp.lastPlay);
-        if (wp.leverageIndex !== null && wp.leverageIndex !== undefined) {
-          bits.push('Leverage index ' + wp.leverageIndex.toFixed(2)
-                    + (wp.leverageIndex >= 2 ? ' (high leverage).' : '.'));
-        }
-        summary.textContent = bits.join(' ');
-      }
+      if (summary) summary.textContent = wp.mainReason;
+
+      var whyPct = document.getElementById('win-prob-why-pct');
+      if (whyPct) whyPct.textContent = (wp.favoredPct || Math.max(wp.awayPct, wp.homePct)) + '%';
+      renderProbabilityBreakdown(wp);
     }
 
     function apply(data) {

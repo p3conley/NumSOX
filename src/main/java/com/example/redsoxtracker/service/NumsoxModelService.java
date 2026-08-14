@@ -8,8 +8,8 @@ import com.example.redsoxtracker.dto.CategoryScore;
 import com.example.redsoxtracker.dto.HistoricalCalibration;
 import com.example.redsoxtracker.dto.LiveWinProbability;
 import com.example.redsoxtracker.dto.NumsoxModel;
+import com.example.redsoxtracker.dto.ScoreboardView;
 import com.example.redsoxtracker.dto.StatValue;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,14 +32,14 @@ import java.util.Optional;
  * unavailable. Second, confidence falls as more categories go missing, so a thinly
  * sourced estimate says so rather than presenting itself like a fully fed one.</p>
  */
-@Service
 public class NumsoxModelService {
 
     // Category weights, exactly as specified. Verified to sum to 1.0 by a unit check below.
     private static final double W_OFFENSE     = 0.14;
     private static final double W_STARTER     = 0.18;
     private static final double W_BULLPEN     = 0.12;
-    private static final double W_LINEUP      = 0.10;
+    private static final double W_LINEUP      = 0.07;
+    private static final double W_PITCH_TYPE  = 0.03;
     private static final double W_DEFENSE     = 0.07;
     private static final double W_BASERUNNING = 0.04;
     private static final double W_RECENT      = 0.08;
@@ -53,7 +53,7 @@ public class NumsoxModelService {
 
     /** The order the categories are specified in, which is the order they are presented in. */
     private static final List<String> DISPLAY_ORDER = List.of(
-            "offense", "starter", "bullpen", "lineup", "defense", "baserunning", "recent",
+            "offense", "starter", "bullpen", "lineup", "pitchType", "defense", "baserunning", "recent",
             "park", "weather", "rest", "injuries", "historical", "regression", "live");
 
     /** Home field, applied outside the categories, as a small constant edge. */
@@ -82,6 +82,15 @@ public class NumsoxModelService {
                                 PitcherStatSnapshot awayStarter, PitcherStatSnapshot homeStarter,
                                 BallparkFactorSnapshot park,
                                 Optional<LiveWinProbability> liveWp) {
+        return evaluate(game, away, home, awayStarter, homeStarter, park, liveWp, Optional.empty());
+    }
+
+    public NumsoxModel evaluate(Game game,
+                                TeamStatSnapshot away, TeamStatSnapshot home,
+                                PitcherStatSnapshot awayStarter, PitcherStatSnapshot homeStarter,
+                                BallparkFactorSnapshot park,
+                                Optional<LiveWinProbability> liveWp,
+                                Optional<ScoreboardView> liveGameState) {
 
         boolean live = liveWp.isPresent();
         List<CategoryScore> cats = new ArrayList<>();
@@ -90,6 +99,9 @@ public class NumsoxModelService {
         cats.add(startingPitcher(awayStarter, homeStarter));
         cats.add(bullpen(away, home));
         cats.add(lineupPlatoon(away, home, awayStarter, homeStarter));
+        cats.add(CategoryScore.unavailable("pitchType", "Pitch-Type Matchup", W_PITCH_TYPE,
+                "Pitch usage and hitter results by pitch type are not in the daily snapshot yet,"
+              + " so this category is not scored."));
         cats.add(defense(away, home));
         cats.add(CategoryScore.unavailable("baserunning", "Baserunning", W_BASERUNNING,
                 "Stolen bases, extra bases taken and BsR are not in the daily snapshot yet, "
@@ -103,7 +115,7 @@ public class NumsoxModelService {
         cats.add(CategoryScore.unavailable("injuries", "Injuries", W_INJURY,
                 "There is no injured-list feed, so missing WAR is not scored."));
         cats.add(regressionRisk(away, home, awayStarter, homeStarter));
-        cats.add(liveGameState(liveWp));
+        cats.add(liveGameState(liveWp, liveGameState));
 
         // Historical calibration judges the number the other categories produced, so it needs
         // a provisional read first. Score everything else, then hand that provisional figure
@@ -165,7 +177,7 @@ public class NumsoxModelService {
 
         return new NumsoxModel(
                 awayPct, homePct, confidence, confidenceReason,
-                mainReason(top, awayTeam, homeTeam, awayPct, homePct),
+                mainReason(top, awayTeam, homeTeam, awayPct, homePct, liveWp, liveGameState),
                 top, finalCats,
                 strengths(finalCats, false, awayTeam), weaknesses(finalCats, false, awayTeam),
                 strengths(finalCats, true, homeTeam), weaknesses(finalCats, true, homeTeam),
@@ -199,7 +211,7 @@ public class NumsoxModelService {
                 stat("Hard-hit % (away)", away.getTeamHardHitRate(), fmt1(away.getTeamHardHitRate()), away),
                 stat("Hard-hit % (home)", home.getTeamHardHitRate(), fmt1(home.getTeamHardHitRate()), home));
 
-        String exp = describe(e, "offence",
+        String exp = describe(e, "offense",
                 fmt0(away.getTeamWrcPlus()) + " vs " + fmt0(home.getTeamWrcPlus()) + " wRC+");
         return new CategoryScore("offense", "Offense", W_OFFENSE, W_OFFENSE, e,
                 fmt0(away.getTeamWrcPlus()) + " wRC+", fmt0(home.getTeamWrcPlus()) + " wRC+",
@@ -323,7 +335,7 @@ public class NumsoxModelService {
                 StatValue.unavailable("Defensive Runs Saved"),
                 StatValue.unavailable("UZR"));
 
-        String exp = describe(e, "defence",
+        String exp = describe(e, "defense",
                 fmt3(away.getDefensiveEfficiency()) + " vs " + fmt3(home.getDefensiveEfficiency())
                 + " defensive efficiency")
                 + " DRS and UZR have no free public source and are left out rather than estimated.";
@@ -383,7 +395,7 @@ public class NumsoxModelService {
         // big helps the club that hits for more of it.
         double isoEdge = norm(home.getTeamIso(), away.getTeamIso(), 0.030);
         double e = isoEdge * ((hrFactor - 1.0) * 2.0 + (dblFactor - 1.0) * 1.0);
-        // A run-friendly park slightly favours whichever offence is better overall.
+        // A run-friendly park slightly favors whichever offense is better overall.
         e += norm(home.getTeamWrcPlus(), away.getTeamWrcPlus(), 25) * (runFactor - 1.0) * 1.5;
         e = clamp(e);
 
@@ -503,7 +515,8 @@ public class NumsoxModelService {
                 true, "Medium", flagged, sup);
     }
 
-    private CategoryScore liveGameState(Optional<LiveWinProbability> liveWp) {
+    private CategoryScore liveGameState(Optional<LiveWinProbability> liveWp,
+                                        Optional<ScoreboardView> liveGameState) {
         if (liveWp.isEmpty()) {
             return CategoryScore.unavailable("live", "Live Game State", W_LIVE,
                     "The game has not started, so score, inning and base state carry no weight yet.");
@@ -511,17 +524,30 @@ public class NumsoxModelService {
         LiveWinProbability wp = liveWp.get();
         // Turn MLB's live probability into the same -1..+1 edge the other categories use.
         double e = clamp((wp.homePct() - 50) / 50.0);
-        List<StatValue> sup = List.of(
-                StatValue.of("Live win probability (home)", (double) wp.homePct(),
-                        wp.homePct() + "%", "MLB Stats API", LocalDate.now()),
-                StatValue.of("Live win probability (away)", (double) wp.awayPct(),
-                        wp.awayPct() + "%", "MLB Stats API", LocalDate.now()),
-                StatValue.of("Leverage index", wp.leverageIndex(),
-                        wp.leverageIndex() == null ? "Unavailable"
-                                : String.format("%.2f", wp.leverageIndex()),
-                        "MLB Stats API", LocalDate.now()),
-                StatValue.of("Plays scored", (double) wp.plays(), String.valueOf(wp.plays()),
-                        "MLB Stats API", LocalDate.now()));
+        List<StatValue> sup = new ArrayList<>();
+        sup.add(StatValue.of("Live win probability (home)", (double) wp.homePct(),
+                wp.homePct() + "%", "MLB Stats API", LocalDate.now()));
+        sup.add(StatValue.of("Live win probability (away)", (double) wp.awayPct(),
+                wp.awayPct() + "%", "MLB Stats API", LocalDate.now()));
+        sup.add(wp.leverageIndex() == null
+                ? StatValue.unavailable("Leverage index")
+                : StatValue.of("Leverage index", wp.leverageIndex(),
+                        String.format("%.2f", wp.leverageIndex()), "MLB Stats API", LocalDate.now()));
+        sup.add(StatValue.of("Plays scored", (double) wp.plays(), String.valueOf(wp.plays()),
+                "MLB Stats API", LocalDate.now()));
+
+        if (liveGameState.isPresent()) {
+            ScoreboardView state = liveGameState.get();
+            sup.add(liveStat("Score", state.getAwayRuns(),
+                    safeDisplay(state.getAwayRuns()) + " - " + safeDisplay(state.getHomeRuns())));
+            sup.add(liveStat("Inning", state.getCurrentInning(), state.getInningState()));
+            sup.add(liveStat("Outs", state.getOuts(), safeDisplay(state.getOuts())));
+            sup.add(liveStat("Runners on base", runnerCount(state), runnersDisplay(state)));
+            sup.add(liveTextStat("Current pitcher", state.getPitching()));
+            sup.add(liveTextStat("At bat", state.getAtBat()));
+        } else {
+            sup.add(StatValue.unavailable("Detailed inning, outs and base state"));
+        }
 
         String exp = "The game is under way, so the score, inning, outs and base state are"
                 + " doing most of the work. MLB's per-play model has the home club at "
@@ -534,16 +560,16 @@ public class NumsoxModelService {
     // ---- narrative ----------------------------------------------------------------
 
     private String mainReason(List<CategoryScore> top, String awayTeam, String homeTeam,
-                              int awayPct, int homePct) {
+                              int awayPct, int homePct,
+                              Optional<LiveWinProbability> liveWp,
+                              Optional<ScoreboardView> liveGameState) {
+        if (liveWp.isPresent()) {
+            return liveMainReason(awayTeam, homeTeam, awayPct, homePct, liveGameState);
+        }
         if (top.isEmpty()) {
             return "There is not enough data on file to separate these two clubs tonight.";
         }
         String leader = homePct >= awayPct ? homeTeam : awayTeam;
-        StringBuilder sb = new StringBuilder();
-        // Every MLB club name is a plural noun, so "have" is always right here.
-        sb.append("The ").append(leader).append(" have the edge at ")
-          .append(Math.max(awayPct, homePct)).append("%. ");
-
         List<String> forLeader = new ArrayList<>();
         List<String> against = new ArrayList<>();
         boolean leaderIsHome = homePct >= awayPct;
@@ -553,18 +579,49 @@ public class NumsoxModelService {
             if (Math.abs(c.edge()) < 0.04) continue;
             if (favoursLeader) forLeader.add(phrase); else against.add(phrase);
         }
+        int margin = Math.abs(homePct - awayPct);
+        String size = margin <= 6 ? "slight" : margin <= 14 ? "clear" : "strong";
+        StringBuilder sb = new StringBuilder("The ").append(leader).append(" have a ")
+                .append(size).append(" edge");
         if (!forLeader.isEmpty()) {
-            sb.append("The biggest reasons are ").append(joinWords(forLeader)).append(". ");
+            sb.append(" because their ").append(joinWords(forLeader))
+              .append(forLeader.size() == 1 ? " is" : " are").append(" stronger overall");
         }
+        sb.append(". ");
         if (!against.isEmpty()) {
             String other = leaderIsHome ? awayTeam : homeTeam;
-            sb.append("The ").append(other).append(" push back on ")
-              .append(joinWords(against)).append(". ");
+            sb.append("The ").append(other).append(" have the advantage in ")
+              .append(joinWords(against))
+              .append(margin <= 14 ? ", which keeps the matchup close." : ", which is their main counterweight.");
         }
         if (forLeader.isEmpty() && against.isEmpty()) {
-            sb.append("The two clubs grade out close to level across the board.");
+            sb.append("The two clubs are closely matched across the board.");
         }
         return sb.toString().trim();
+    }
+
+    private String liveMainReason(String awayTeam, String homeTeam, int awayPct, int homePct,
+                                  Optional<ScoreboardView> liveGameState) {
+        String leader = homePct >= awayPct ? homeTeam : awayTeam;
+        if (liveGameState.isEmpty()) {
+            return "The " + leader + " have the advantage based mainly on the live score and game situation,"
+                    + " with pregame team strength still playing a smaller role.";
+        }
+
+        ScoreboardView state = liveGameState.get();
+        Integer awayRuns = state.getAwayRuns();
+        Integer homeRuns = state.getHomeRuns();
+        String inning = state.getInningState() == null ? "the current inning" : state.getInningState();
+        if (awayRuns != null && homeRuns != null && !awayRuns.equals(homeRuns)) {
+            String scoreLeader = awayRuns > homeRuns ? awayTeam : homeTeam;
+            int high = Math.max(awayRuns, homeRuns);
+            int low = Math.min(awayRuns, homeRuns);
+            return "The " + scoreLeader + " lead " + high + "-" + low + " in " + inning
+                    + ", which gives them the advantage. The inning, outs and runners on base"
+                    + " can still move the number quickly.";
+        }
+        return "The game is tied in " + inning + ", so the estimate leans on the current base-and-out"
+                + " situation and each team's pregame strength.";
     }
 
     private String buildLiveNote(LiveWinProbability wp, int pregameHome, int blendedHome) {
@@ -665,11 +722,12 @@ public class NumsoxModelService {
     /** The category as a noun that reads naturally inside a sentence. */
     private String noun(String key) {
         return switch (key) {
-            case "offense"    -> "offence";
+            case "offense"    -> "offense";
             case "starter"    -> "starting pitching";
             case "bullpen"    -> "the bullpen";
-            case "lineup"     -> "platoon matchups";
-            case "defense"    -> "defence";
+            case "lineup"     -> "lineup and platoon matchups";
+            case "pitchType"  -> "pitch-type matchups";
+            case "defense"    -> "defense";
             case "recent"     -> "recent form";
             case "park"       -> "how this park suits them";
             case "regression" -> "how sustainable their pitching has been";
@@ -707,6 +765,36 @@ public class NumsoxModelService {
         if (v == null) return StatValue.unavailable(label);
         return StatValue.of(label, v, display,
                 s == null ? null : s.getSourceName(), s == null ? null : s.getSourceLastUpdated());
+    }
+
+    private StatValue liveStat(String label, Integer value, String display) {
+        if (value == null) return StatValue.unavailable(label);
+        return StatValue.of(label, value.doubleValue(), display, "MLB Stats API", LocalDate.now());
+    }
+
+    private StatValue liveTextStat(String label, String display) {
+        if (display == null || display.isBlank()) return StatValue.unavailable(label);
+        return StatValue.of(label, 1.0, display, "MLB Stats API", LocalDate.now());
+    }
+
+    private int runnerCount(ScoreboardView state) {
+        int count = 0;
+        if (state.isOnFirst()) count++;
+        if (state.isOnSecond()) count++;
+        if (state.isOnThird()) count++;
+        return count;
+    }
+
+    private String runnersDisplay(ScoreboardView state) {
+        List<String> bases = new ArrayList<>();
+        if (state.isOnFirst()) bases.add("first");
+        if (state.isOnSecond()) bases.add("second");
+        if (state.isOnThird()) bases.add("third");
+        return bases.isEmpty() ? "Bases empty" : "Runners on " + joinWords(bases);
+    }
+
+    private String safeDisplay(Integer value) {
+        return value == null ? "Unavailable" : String.valueOf(value);
     }
 
     private Double dbl(Integer i) { return i == null ? null : i.doubleValue(); }

@@ -1,5 +1,7 @@
 package com.example.redsoxtracker.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -64,5 +66,15 @@ public record NumsoxModel(
 
     public boolean hasMissing() {
         return !missingCategories().isEmpty();
+    }
+
+    @JsonProperty
+    public int favoredPct() {
+        return Math.max(awayPct, homePct);
+    }
+
+    @JsonProperty
+    public String displayTitle() {
+        return live ? "Live Win Probability" : "Win Probability";
     }
 }

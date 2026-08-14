@@ -476,7 +476,10 @@ body {
     grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
     gap: 14px;
     margin-top: 14px;
+    min-width: 0;
 }
+
+.hero-intel-grid > * { min-width: 0; }
 
 .probability-panel, .park-intel-panel {
     background: rgba(255,255,255,0.92);
@@ -489,7 +492,157 @@ body {
 .probability-panel .panel-kicker,
 .park-intel-panel .panel-kicker { color: var(--muted); }
 
-.probability-panel .win-prob-bar-wrap { margin-top: 12px; }
+.probability-panel .win-prob-bar-wrap { margin: 14px 0 0; }
+.probability-panel .win-prob-bar { min-width: 0; }
+.probability-panel .win-prob-label {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+.probability-panel .home-label { justify-content: flex-end; }
+
+.probability-explanation {
+    margin: 15px 0 0;
+    color: #354054;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.probability-details {
+    margin-top: 16px;
+    padding-top: 11px;
+    border-top: 1px solid rgba(16, 31, 48, 0.12);
+}
+
+.probability-details > summary,
+.probability-category > summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+}
+
+.probability-details > summary::-webkit-details-marker,
+.probability-category > summary::-webkit-details-marker { display: none; }
+
+.probability-details > summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.probability-details > summary::before {
+    content: '+';
+    width: 14px;
+    color: var(--red);
+    font-size: 14px;
+    line-height: 1;
+    text-align: center;
+}
+
+.probability-details[open] > summary::before { content: '−'; }
+.probability-details > summary:hover { color: var(--navy); }
+
+.probability-detail-body {
+    margin-top: 12px;
+    padding-top: 13px;
+    border-top: 1px solid rgba(16, 31, 48, 0.08);
+}
+
+.probability-detail-intro,
+.probability-disclaimer {
+    margin: 0;
+    color: var(--muted);
+    font-size: 11.5px;
+    line-height: 1.55;
+}
+
+.probability-category-list { margin-top: 12px; }
+
+.probability-category {
+    border-top: 1px solid rgba(16, 31, 48, 0.09);
+}
+
+.probability-category:last-child { border-bottom: 1px solid rgba(16, 31, 48, 0.09); }
+
+.probability-category > summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    min-height: 40px;
+    padding: 8px 0;
+}
+
+.probability-category-name {
+    color: var(--navy);
+    font-size: 12.5px;
+    font-weight: 800;
+}
+
+.probability-category-meta {
+    color: var(--muted);
+    font-size: 10.5px;
+    font-weight: 650;
+    text-align: right;
+}
+
+.probability-category.is-unavailable .probability-category-name,
+.probability-category.is-unavailable .probability-category-meta { color: #9298a2; }
+
+.probability-category-body {
+    padding: 0 0 13px;
+    color: #465064;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.probability-category-body > p { margin: 0; }
+
+.probability-category-comparison {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 9px;
+}
+
+.probability-category-comparison span {
+    padding: 7px 9px;
+    border-radius: 6px;
+    background: rgba(16, 31, 48, 0.055);
+    color: var(--navy);
+    font-size: 11px;
+    font-weight: 750;
+}
+
+.probability-supporting {
+    list-style: none;
+    margin: 9px 0 0;
+    padding: 0;
+}
+
+.probability-supporting li {
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) auto;
+    gap: 3px 10px;
+    padding: 5px 0;
+    border-top: 1px solid rgba(16, 31, 48, 0.06);
+}
+
+.probability-stat-label { color: #596377; }
+.probability-supporting strong { color: var(--navy); font-size: 11.5px; }
+.probability-stat-source {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 6px;
+    color: #8a92a0;
+    font-size: 9.5px;
+}
+
+.probability-data-note { margin-top: 12px; }
+.probability-disclaimer { margin-top: 12px; font-style: italic; }
 .park-name { font-size: 22px; font-weight: 850; color: var(--navy); margin-top: 2px; }
 .park-factors-quick.compact { gap: 8px; margin-bottom: 0; }
 .park-factors-quick.compact .pf-block { min-width: 58px; padding: 9px 10px; }
@@ -2126,7 +2279,7 @@ button.danger { background: #7a1724; }
 }
 
 .calendar-weekdays,
-.calendar-grid {
+.calendar-week {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
 }
@@ -2148,9 +2301,91 @@ button.danger { background: #7a1724; }
     text-transform: uppercase;
 }
 
-.calendar-grid {
+/*
+ * The month is always in the DOM. Collapsed, the viewport is one week tall and the track is
+ * slid so the focus week sits at the top; expanded, the viewport grows to the full track.
+ * Animating height and transform rather than toggling display keeps the change smooth and
+ * leaves the grid geometry untouched, so a week row looks identical either way.
+ */
+.calendar-viewport {
     border-top: 1px solid var(--border);
     border-left: 1px solid var(--border);
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+}
+
+.calendar-track {
+    will-change: transform;
+}
+
+.js-calendar .calendar-viewport {
+    transition: height 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.js-calendar .calendar-track {
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* A reader who has asked for less motion gets the same states without the travel. */
+@media (prefers-reduced-motion: reduce) {
+    .js-calendar .calendar-viewport,
+    .js-calendar .calendar-track {
+        transition: none;
+    }
+}
+
+/* The month title doubles as the control that opens the month, so only one of them shows. */
+.calendar-heading { min-width: 0; }
+.js-calendar .calendar-static-title { display: none; }
+
+.calendar-scope {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 1px 0 0;
+    padding: 4px 10px 4px 0;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: var(--navy);
+    font-family: inherit;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+}
+
+/*
+ * The global button rule paints a red fill on hover, which is right for an action button and
+ * wrong for a heading that happens to be clickable. Every state is pinned back to transparent
+ * so the title reads as a title.
+ */
+.calendar-scope:hover,
+.calendar-scope:focus,
+.calendar-scope:active,
+.calendar-scope[aria-expanded="true"] {
+    background: none;
+}
+
+.calendar-scope:hover { color: var(--red); }
+
+.calendar-scope:focus-visible {
+    outline: 2px solid var(--red);
+    outline-offset: 3px;
+}
+
+.calendar-scope-chevron {
+    flex-shrink: 0;
+    color: var(--muted);
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), color 0.15s ease;
+}
+
+.calendar-scope:hover .calendar-scope-chevron { color: var(--red); }
+.calendar-scope[aria-expanded="true"] .calendar-scope-chevron { transform: rotate(180deg); }
+
+@media (prefers-reduced-motion: reduce) {
+    .calendar-scope-chevron { transition: none; }
 }
 
 .calendar-day {
@@ -2408,6 +2643,15 @@ button.danger { background: #7a1724; }
     padding: 28px;
     margin-bottom: 20px;
     text-align: center;
+}
+
+.matchup-probability-card .win-prob-title { margin-bottom: 14px; }
+.matchup-probability-card .numsox-reason { max-width: 760px; }
+.matchup-probability-details {
+    max-width: 760px;
+    margin-right: auto;
+    margin-left: auto;
+    text-align: left;
 }
 
 .win-prob-title {
@@ -3056,7 +3300,7 @@ textarea { min-height: 100px; resize: vertical; }
         flex-direction: column;
     }
     .calendar-weekdays,
-    .calendar-grid {
+    .calendar-viewport {
         min-width: 760px;
     }
     .calendar-day {
@@ -3133,6 +3377,28 @@ textarea { min-height: 100px; resize: vertical; }
     .home-team { text-align: left; }
     .sw-grid, .two-col-stats { grid-template-columns: 1fr; }
     .win-prob-numbers { flex-direction: column; }
+    .matchup-probability-card { padding: 22px 18px; }
+    .matchup-probability-card .win-prob-numbers {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-areas:
+            'away-team home-team'
+            'away-pct home-pct'
+            'prob-bar prob-bar';
+        gap: 4px 12px;
+    }
+    .matchup-probability-card .prob-team:not(.right-align) {
+        grid-area: away-team;
+        text-align: left;
+    }
+    .matchup-probability-card .prob-team.right-align {
+        grid-area: home-team;
+        text-align: right;
+    }
+    .matchup-probability-card .away-pct { grid-area: away-pct; text-align: left; }
+    .matchup-probability-card .home-pct { grid-area: home-pct; text-align: right; }
+    .matchup-probability-card .prob-bar-wrap { grid-area: prob-bar; width: 100%; margin-top: 5px; }
+    .matchup-probability-card .prob-pct { width: auto; }
     .stat-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
     .page-content { width: calc(100% - 24px); margin: 16px auto; }
 }
@@ -3648,7 +3914,7 @@ a, button, input, select, summary, [role="button"] {
     .tl-progress::-moz-range-thumb { width: 24px; height: 24px; }
 
     /* ---- matchup center ---- */
-    .calendar-grid { min-width: 640px; }
+    .calendar-viewport { min-width: 640px; }
     .calendar-weekdays { min-width: 640px; }
     .calendar-day { min-height: 92px; }
     .calendar-game { min-height: 40px; }
@@ -3703,6 +3969,37 @@ a, button, input, select, summary, [role="button"] {
 }
 
 @media (max-width: 520px) {
+
+    .probability-panel,
+    .park-intel-panel { padding: 16px 14px; }
+
+    .probability-panel .win-prob-bar-wrap {
+        display: grid;
+        grid-template-columns: auto minmax(54px, 1fr) auto;
+        gap: 8px;
+    }
+
+    .probability-panel .win-prob-label {
+        gap: 3px;
+        font-size: 12px;
+    }
+
+    .probability-explanation { font-size: 13.5px; }
+
+    .probability-category > summary {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 2px;
+    }
+
+    .probability-category-meta { text-align: left; }
+    .probability-category-comparison { grid-template-columns: 1fr; }
+
+    .park-factors-quick.compact {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .park-factors-quick.compact .pf-block { min-width: 0; }
 
     /* Three names across stops fitting on a phone, so batter, frame and pitcher
        stack. Above this width they stay on one line, as on desktop. */
@@ -3861,11 +4158,14 @@ a, button, input, select, summary, [role="button"] {
 
 @media (max-width: 520px) {
     .today-hero > .hero-actions {
+        width: calc(100% - 24px);
         max-width: calc(100% - 24px);
         margin: 18px auto 22px;
     }
 
     .today-hero > .hero-actions > .button {
+        flex: 1 1 50%;
+        min-width: 0;
         height: 48px;
         min-height: 48px;
         padding-inline: clamp(12px, 4vw, 18px);

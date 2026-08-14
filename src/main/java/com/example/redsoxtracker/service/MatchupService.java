@@ -1,8 +1,10 @@
 package com.example.redsoxtracker.service;
 
 import com.example.redsoxtracker.domain.*;
+import com.example.redsoxtracker.dto.LiveWinProbability;
+import com.example.redsoxtracker.dto.NumsoxModel;
+import com.example.redsoxtracker.dto.ScoreboardView;
 import com.example.redsoxtracker.dto.StarterChoice;
-import com.example.redsoxtracker.dto.WinProbabilityResult;
 import com.example.redsoxtracker.repository.GameRepository;
 import org.springframework.stereotype.Service;
 
@@ -25,20 +27,20 @@ public class MatchupService {
     private final PlayerStatsService playerStatsService;
     private final BallparkFactorService ballparkFactorService;
     private final WinProbabilityService winProbabilityService;
-    private final HistoricalCalibrationService historicalCalibrationService;
+    private final LiveWinProbabilityService liveWinProbabilityService;
 
     public MatchupService(GameRepository gameRepository,
                           TeamStatsService teamStatsService,
                           PlayerStatsService playerStatsService,
                           BallparkFactorService ballparkFactorService,
                           WinProbabilityService winProbabilityService,
-                          HistoricalCalibrationService historicalCalibrationService) {
+                          LiveWinProbabilityService liveWinProbabilityService) {
         this.gameRepository = gameRepository;
         this.teamStatsService = teamStatsService;
         this.playerStatsService = playerStatsService;
         this.ballparkFactorService = ballparkFactorService;
         this.winProbabilityService = winProbabilityService;
-        this.historicalCalibrationService = historicalCalibrationService;
+        this.liveWinProbabilityService = liveWinProbabilityService;
     }
 
     public Optional<Game> getFeaturedGame() {
@@ -100,7 +102,21 @@ public class MatchupService {
         return game.getFinalizedAt().isAfter(LocalDateTime.now().minusHours(POST_GAME_HOLD_HOURS));
     }
 
-    public WinProbabilityResult calculateForGame(Game game) {
+    public NumsoxModel calculateForGame(Game game) {
+        return calculateForGame(game, Optional.empty());
+    }
+
+    public NumsoxModel calculateForGame(Game game, Optional<ScoreboardView> liveGameState) {
+        boolean live = liveGameState.map(ScoreboardView::isLive).orElseGet(() -> isUnderWay(game));
+        Optional<LiveWinProbability> liveWinProbability = live
+                ? liveWinProbabilityService.forGame(game)
+                : Optional.empty();
+        return calculateForGame(game, liveWinProbability, liveGameState);
+    }
+
+    public NumsoxModel calculateForGame(Game game,
+                                        Optional<LiveWinProbability> liveWinProbability,
+                                        Optional<ScoreboardView> liveGameState) {
         // Red Sox stats
         Optional<TeamStatSnapshot> bosStats = teamStatsService.getLatestStats("BOS");
 
@@ -119,31 +135,8 @@ public class MatchupService {
 
         BallparkFactorSnapshot park = getParkForGame(game).orElse(null);
 
-        // Fall back if stats are missing
-        if (awayStats == null) awayStats = defaultStats();
-        if (homeStats == null) homeStats = defaultStats();
-
-        WinProbabilityResult result = winProbabilityService.calculate(awayStats, homeStats, awayStarter, homeStarter, park);
-        applyHistoricalCalibration(game, result);
-        return result;
-    }
-
-    private void applyHistoricalCalibration(Game game, WinProbabilityResult result) {
-        boolean redSoxAreAway = "Away".equalsIgnoreCase(game.getHomeAway());
-        int rawRedSoxPct = redSoxAreAway ? result.getAwayWinPct() : result.getHomeWinPct();
-        var calibration = historicalCalibrationService.calibrate(game, rawRedSoxPct);
-        int calibratedRedSoxPct = calibration.getCalibratedRedSoxPct();
-
-        if (redSoxAreAway) {
-            result.setAwayWinPct(calibratedRedSoxPct);
-            result.setHomeWinPct(100 - calibratedRedSoxPct);
-        } else {
-            result.setHomeWinPct(calibratedRedSoxPct);
-            result.setAwayWinPct(100 - calibratedRedSoxPct);
-        }
-        result.setHistoricalCalibration(calibration);
-        result.setModelSummary(result.getModelSummary()
-                + " Historical calibration blends the raw model with 2026 Red Sox results from March 26 through May 31.");
+        return winProbabilityService.calculate(game, awayStats, homeStats, awayStarter, homeStarter,
+                park, liveWinProbability, liveGameState);
     }
 
     public Optional<PitcherStatSnapshot> getAwayStarterForGame(Game game) {
@@ -303,30 +296,9 @@ public class MatchupService {
         return game.getOpponent() + " " + game.getOpponentScore() + ", Red Sox " + game.getRedSoxScore();
     }
 
-    private TeamStatSnapshot defaultStats() {
-        TeamStatSnapshot s = new TeamStatSnapshot();
-        s.setTeamWrcPlus(100.0);
-        s.setTeamOps(0.720);
-        s.setRunsPerGame(4.5);
-        s.setTeamObp(0.315);
-        s.setTeamSlg(0.405);
-        s.setTeamKRate(23.0);
-        s.setTeamBbRate(8.5);
-        s.setBullpenEra(4.00);
-        s.setBullpenFip(4.00);
-        s.setBullpenWhip(1.30);
-        s.setBullpenKRate(24.0);
-        s.setBullpenBbRate(9.0);
-        s.setOutsAboveAverage(0);
-        s.setDefensiveEfficiency(0.695);
-        s.setLast10Wins(5);
-        s.setLast10Losses(5);
-        s.setLast5RunDifferential(0);
-        s.setLast5RunsScored(22);
-        s.setLast5RunsAllowed(22);
-        s.setWins(40);
-        s.setLosses(40);
-        return s;
+    private boolean isUnderWay(Game game) {
+        String status = game.getStatus();
+        return "In Progress".equalsIgnoreCase(status) || "Delayed".equalsIgnoreCase(status);
     }
 
     private record PitcherRef(Integer pitcherId, String name, LocalDate date) {}

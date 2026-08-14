@@ -3,7 +3,7 @@ package com.example.redsoxtracker.controller;
 import com.example.redsoxtracker.domain.Game;
 import com.example.redsoxtracker.domain.BallparkFactorSnapshot;
 import com.example.redsoxtracker.dto.ScoreboardView;
-import com.example.redsoxtracker.dto.WinProbabilityResult;
+import com.example.redsoxtracker.dto.NumsoxModel;
 import com.example.redsoxtracker.repository.GameRepository;
 import com.example.redsoxtracker.service.GameService;
 import com.example.redsoxtracker.service.HistoricalStandingsService;
@@ -95,8 +95,12 @@ public class DashboardController {
             model.addAttribute("featuredHomeRecord", redSoxAreAway ? game.getOpponentRecord() : game.getRedSoxRecord());
             model.addAttribute("featuredAwayScore", redSoxAreAway ? game.getRedSoxScore() : game.getOpponentScore());
             model.addAttribute("featuredHomeScore", redSoxAreAway ? game.getOpponentScore() : game.getRedSoxScore());
-            WinProbabilityResult winProb = matchupService.calculateForGame(game);
+            NumsoxModel winProb = matchupService.calculateForGame(game, scoreboard);
             model.addAttribute("featuredWinProb", winProb);
+            winProb.categories().stream()
+                    .filter(c -> "park".equals(c.key()))
+                    .findFirst()
+                    .ifPresent(c -> model.addAttribute("featuredParkCategory", c));
             Optional<BallparkFactorSnapshot> park = matchupService.getParkForGame(game);
             park.ifPresent(p -> model.addAttribute("featuredPark", p));
         }
