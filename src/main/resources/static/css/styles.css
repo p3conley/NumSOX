@@ -507,14 +507,56 @@ body {
     margin-top: 14px;
 }
 
+/* These read as small cards, not pills, so they take the same 8px corner the buttons
+   and panels use rather than a fully rounded capsule. Padding and type are matched to
+   the buttons too, so a row of insights and a row of actions sit on the same rhythm. */
 .insight-row span {
-    background: rgba(255,255,255,0.13);
-    border: 1px solid rgba(255,255,255,0.16);
-    border-radius: 999px;
-    padding: 7px 10px;
-    color: rgba(255,255,255,0.88);
-    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 7px 14px;
+    color: rgba(255,255,255,0.90);
+    font-size: 12.5px;
     font-weight: 650;
+    line-height: 1.35;
+}
+
+/* Marks the win probability panel as showing MLB's live per-play numbers rather than
+   the pre-game model. */
+.win-prob-live-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--red);
+    color: #ffffff;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+/* A class-level display beats the UA stylesheet's [hidden] rule, which would otherwise
+   leave this badge showing "Live" over a scheduled game. */
+.win-prob-live-tag[hidden] { display: none; }
+
+.win-prob-live-tag::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ffffff;
+    animation: gamecast-pulse 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .win-prob-live-tag::before { animation: none; }
 }
 
 /* ===== GREEN MONSTER SCOREBOARD ===== */

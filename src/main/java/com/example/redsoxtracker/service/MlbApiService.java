@@ -102,6 +102,26 @@ public class MlbApiService {
         return get(url);
     }
 
+    /**
+     * MLB's own win probability, one entry per completed play, carrying the running
+     * home/away percentages plus the leverage index. The live feed does not include any
+     * of this, so it needs its own request.
+     */
+    public JsonNode fetchWinProbability(int gamePk) {
+        String url = BASE + "/game/" + gamePk + "/winProbability";
+        return get(url);
+    }
+
+    /**
+     * Team splits by opposing hand. sitCodes vl/vr are "vs Left" and "vs Right", which is
+     * what a platoon edge is actually built from.
+     */
+    public JsonNode fetchTeamHandednessSplits(int teamId, int season, String group) {
+        String url = BASE + "/teams/" + teamId + "/stats?stats=statSplits&sitCodes=vl,vr"
+                + "&group=" + group + "&season=" + season + "&sportId=1";
+        return get(url);
+    }
+
     /** Team hitting stats for a given team and season. */
     public JsonNode fetchTeamHittingStats(int teamId, int season) {
         String url = BASE + "/teams/" + teamId + "/stats?stats=season&group=hitting&season=" + season + "&sportId=1";

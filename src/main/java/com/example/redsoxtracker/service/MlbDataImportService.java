@@ -350,12 +350,41 @@ public class MlbDataImportService {
         markSynced("team_stats", "MLB Stats API", count + " teams' hitting + pitching stats for season " + season);
     }
 
+    /**
+     * Team hitting by the opposing pitcher's hand. MLB returns one split per sitCode,
+     * "vl" for vs Left and "vr" for vs Right, which is what a platoon edge is built on.
+     */
+    private void applyHandednessSplits(TeamStatSnapshot snap, Team team, int season) {
+        if (team.getMlbTeamId() == null) return;
+        try {
+            JsonNode root = api.fetchTeamHandednessSplits(team.getMlbTeamId(), season, "hitting");
+            for (JsonNode block : root.path("stats")) {
+                for (JsonNode split : block.path("splits")) {
+                    String code = split.path("split").path("code").asText("");
+                    JsonNode stat = split.path("stat");
+                    if ("vl".equals(code)) {
+                        snap.setOpsVsLhp(parseDouble(stat, "ops"));
+                        snap.setAvgVsLhp(parseDouble(stat, "avg"));
+                    } else if ("vr".equals(code)) {
+                        snap.setOpsVsRhp(parseDouble(stat, "ops"));
+                        snap.setAvgVsRhp(parseDouble(stat, "avg"));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // A missing split should not cost us the rest of the team's stats.
+            log.warn("Handedness splits unavailable for {}: {}", team.getTeamCode(), e.getMessage());
+        }
+    }
+
     private void importTeamStats(Team team, int season, LeagueContext league) {
         TeamStatSnapshot snap = teamStatRepo.findTopByTeamOrderBySnapshotDateDesc(team)
                 .orElse(new TeamStatSnapshot());
         snap.setTeam(team);
         snap.setSeason(season);
         snap.setSnapshotDate(LocalDate.now());
+
+        applyHandednessSplits(snap, team, season);
 
         // Hitting stats
         JsonNode hitting = api.fetchTeamHittingStats(team.getMlbTeamId(), season);

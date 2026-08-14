@@ -2,10 +2,12 @@ package com.example.redsoxtracker.controller;
 
 import com.example.redsoxtracker.domain.Game;
 import com.example.redsoxtracker.dto.LiveGameDetail;
+import com.example.redsoxtracker.dto.LiveWinProbability;
 import com.example.redsoxtracker.dto.ScoreboardView;
 import com.example.redsoxtracker.repository.GameRepository;
 import com.example.redsoxtracker.service.LiveGameDetailService;
 import com.example.redsoxtracker.service.LiveGameSyncService;
+import com.example.redsoxtracker.service.LiveWinProbabilityService;
 import com.example.redsoxtracker.service.LiveScoreboardService;
 import com.example.redsoxtracker.service.MatchupService;
 import org.springframework.http.ResponseEntity;
@@ -29,17 +31,20 @@ public class LiveGameApiController {
     private final LiveGameDetailService liveGameDetailService;
     private final LiveGameSyncService liveGameSyncService;
     private final GameRepository gameRepository;
+    private final LiveWinProbabilityService liveWinProbabilityService;
 
     public LiveGameApiController(MatchupService matchupService,
                                  LiveScoreboardService liveScoreboardService,
                                  LiveGameDetailService liveGameDetailService,
                                  LiveGameSyncService liveGameSyncService,
-                                 GameRepository gameRepository) {
+                                 GameRepository gameRepository,
+                                 LiveWinProbabilityService liveWinProbabilityService) {
         this.matchupService = matchupService;
         this.liveScoreboardService = liveScoreboardService;
         this.liveGameDetailService = liveGameDetailService;
         this.liveGameSyncService = liveGameSyncService;
         this.gameRepository = gameRepository;
+        this.liveWinProbabilityService = liveWinProbabilityService;
     }
 
     /**
@@ -108,6 +113,13 @@ public class LiveGameApiController {
 
         Optional<LiveGameDetail> detail = liveGameDetailService.buildForGame(game);
         detail.ifPresent(d -> body.put("detail", d));
+
+        // Win probability from MLB's own per-play model, so the bar keeps moving while
+        // the game is on. Only meaningful once play has started.
+        if (live || delayed) {
+            liveWinProbabilityService.forGame(game)
+                    .ifPresent(wp -> body.put("winProbability", wp));
+        }
 
         // Always fresh: a cached response is the one thing this endpoint must never serve.
         return ResponseEntity.ok()

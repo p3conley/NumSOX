@@ -43,6 +43,14 @@ public class TeamStatSnapshot {
     @Column(name = "team_obp") private Double teamObp;
     @Column(name = "team_slg") private Double teamSlg;
     @Column(name = "team_ops") private Double teamOps;
+
+    /* Platoon splits: how the lineup actually hits by the opposing pitcher's hand.
+       Straight from MLB's statSplits feed (sitCodes vl/vr), so they move with the
+       season rather than being derived. */
+    @Column(name = "ops_vs_lhp") private Double opsVsLhp;
+    @Column(name = "ops_vs_rhp") private Double opsVsRhp;
+    @Column(name = "avg_vs_lhp") private Double avgVsLhp;
+    @Column(name = "avg_vs_rhp") private Double avgVsRhp;
     @Column(name = "team_wrc_plus") private Double teamWrcPlus;
     @Column(name = "team_war") private Double teamWar;
     @Column(name = "team_k_rate") private Double teamKRate;
@@ -141,6 +149,21 @@ public class TeamStatSnapshot {
     public void setTeamObp(Double teamObp) { this.teamObp = teamObp; }
     public Double getTeamSlg() { return teamSlg; }
     public void setTeamSlg(Double teamSlg) { this.teamSlg = teamSlg; }
+    public Double getOpsVsLhp() { return opsVsLhp; }
+    public void setOpsVsLhp(Double opsVsLhp) { this.opsVsLhp = opsVsLhp; }
+    public Double getOpsVsRhp() { return opsVsRhp; }
+    public void setOpsVsRhp(Double opsVsRhp) { this.opsVsRhp = opsVsRhp; }
+    public Double getAvgVsLhp() { return avgVsLhp; }
+    public void setAvgVsLhp(Double avgVsLhp) { this.avgVsLhp = avgVsLhp; }
+    public Double getAvgVsRhp() { return avgVsRhp; }
+    public void setAvgVsRhp(Double avgVsRhp) { this.avgVsRhp = avgVsRhp; }
+
+    /** Positive means the lineup hits lefties better; negative favours righties. */
+    public Double getPlatoonSplit() {
+        if (opsVsLhp == null || opsVsRhp == null) return null;
+        return opsVsLhp - opsVsRhp;
+    }
+
     public Double getTeamOps() { return teamOps; }
     public void setTeamOps(Double teamOps) { this.teamOps = teamOps; }
     public Double getTeamWrcPlus() { return teamWrcPlus; }
