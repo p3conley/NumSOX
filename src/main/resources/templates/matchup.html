@@ -107,117 +107,210 @@
       </div>
     </div>
 
-    <!-- Win Probability -->
-    <div th:if="${winProb}" class="win-prob-section">
-      <div class="win-prob-title">NumSOX Estimated Win Probability</div>
+    <!-- NumSOX Estimated Win Probability -->
+    <div th:if="${numsox}" class="win-prob-section">
+      <div class="win-prob-title" th:text="${numsoxTitle}">NumSOX Estimated Win Probability</div>
       <div class="win-prob-numbers">
         <span class="prob-team" th:text="${awayTeamName}">Red Sox</span>
-        <span class="prob-pct away-pct" th:text="${winProb.awayWinPct + '%'}">47%</span>
+        <span class="prob-pct away-pct" th:text="${numsox.awayPct} + '%'">47%</span>
         <div class="prob-bar-wrap">
-          <div class="prob-bar" th:style="${'--away-pct: ' + winProb.awayWinPct + '%'}"></div>
+          <div class="prob-bar" th:style="'--away-pct: ' + ${numsox.awayPct} + '%'"></div>
         </div>
-        <span class="prob-pct home-pct" th:text="${winProb.homeWinPct + '%'}">53%</span>
+        <span class="prob-pct home-pct" th:text="${numsox.homePct} + '%'">53%</span>
         <span class="prob-team right-align" th:text="${homeTeamName}">Yankees</span>
       </div>
-      <div class="win-prob-confidence">
-        Confidence: <span th:text="${winProb.confidenceLevel}">Medium</span>
+
+      <div class="win-prob-meta">
+        <span class="conf-badge"
+              th:classappend="'conf-' + ${#strings.toLowerCase(numsox.confidence)}"
+              th:text="${numsox.confidence} + ' confidence'">Medium confidence</span>
+        <span class="numsox-live-tag" th:if="${numsox.live}">LIVE</span>
+        <span class="coverage-note"
+              th:text="${numsox.availableCount} + ' of ' + ${numsox.totalCount} + ' categories scored'">
+          9 of 14 categories scored
+        </span>
       </div>
-      <div th:if="${winProb.mainReasons != null and !winProb.mainReasons.isEmpty()}" class="main-reasons">
-        <div class="reasons-title">What moved the number</div>
-        <ol>
-          <li th:each="r : ${winProb.mainReasons}" th:text="${r}">Offense leans away.</li>
-        </ol>
+
+      <!-- What changed since first pitch -->
+      <div th:if="${numsox.live and numsox.liveNote != null}" class="live-shift"
+           th:text="${numsox.liveNote}">Pre-game the model had the home club at 54%.</div>
+
+      <!-- The headline explanation, in plain English -->
+      <div class="numsox-reason" th:text="${numsox.mainReason}">
+        The home club has the edge.
       </div>
-      <div class="win-prob-disclaimer">
-        <span th:text="${winProb.modelSummary}">Weighted model summary.</span>
-        It is not gambling advice and is not an official sportsbook line.
+
+      <!-- The three categories that moved the number most -->
+      <div th:if="${!numsox.topFactors.isEmpty()}" class="top-factors">
+        <div class="reasons-title">What moved the number most</div>
+        <div class="factor-row" th:each="f : ${numsox.topFactors}">
+          <div class="factor-head">
+            <span class="factor-name" th:text="${f.label}">Starting Pitcher</span>
+            <span class="factor-edge"
+                  th:classappend="${f.edge > 0.04} ? 'edge-badge-home' : (${f.edge < -0.04} ? 'edge-badge-away' : 'edge-badge-even')"
+                  th:text="${f.strength} + ' to ' + ${f.edgeLabel(awayTeamName, homeTeamName)}">Clear to Red Sox</span>
+            <span class="factor-weight" th:text="${f.effectiveWeightPct} + '% of model'">18% of model</span>
+          </div>
+          <div class="factor-why" th:text="${f.explanation}">Explanation.</div>
+        </div>
+      </div>
+
+      <div class="win-prob-disclaimer" th:text="${numsoxDisclaimer}">
+        This is a custom NumSOX estimate based on baseball statistics.
       </div>
     </div>
 
-    <div th:if="${winProb.historicalCalibration}" class="panel calibration-panel">
-      <div class="panel-title">Model Audit: March 26-May 31 Backtest</div>
-      <div class="calibration-grid">
-        <div>
-          <div class="stat-label">Backtest Accuracy</div>
-          <div class="stat-value small-value">
-            <span th:text="${winProb.historicalCalibration.correctPredictions}">0</span>-<span th:text="${winProb.historicalCalibration.sampleSize - winProb.historicalCalibration.correctPredictions}">0</span>
-          </div>
-          <div class="stat-sub" th:text="${#numbers.formatDecimal(winProb.historicalCalibration.accuracy * 100, 1, 1) + '% directional'}">55.0% directional</div>
-        </div>
-        <div>
-          <div class="stat-label">Brier Score</div>
-          <div class="stat-value small-value" th:text="${#numbers.formatDecimal(winProb.historicalCalibration.brierScore, 1, 3)}">0.250</div>
-          <div class="stat-sub">Lower is better</div>
-        </div>
-        <div>
-          <div class="stat-label">Raw Red Sox</div>
-          <div class="stat-value small-value" th:text="${winProb.historicalCalibration.rawRedSoxPct + '%'}">50%</div>
-          <div class="stat-sub">Before calibration</div>
-        </div>
-        <div>
-          <div class="stat-label">Calibrated Red Sox</div>
-          <div class="stat-value small-value" th:text="${winProb.historicalCalibration.calibratedRedSoxPct + '%'}">50%</div>
-          <div class="stat-sub" th:text="${(winProb.historicalCalibration.adjustmentPoints >= 0 ? '+' : '') + winProb.historicalCalibration.adjustmentPoints + ' pts'}">+0 pts</div>
-        </div>
+    <!-- Model breakdown -->
+    <div th:if="${numsox}" class="panel">
+      <div class="panel-title">Model Breakdown</div>
+      <div class="breakdown-intro" th:text="${numsox.confidenceReason}">
+        Nine of fourteen categories could be scored.
       </div>
+
       <details class="stat-expander">
-        <summary>+ Why the calibration moved</summary>
+        <summary>+ Show Model Breakdown</summary>
         <div class="stat-explanation">
-          <p th:each="note : ${winProb.historicalCalibration.notes}" th:text="${note}">Calibration note.</p>
+          <table class="comparison-table breakdown-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th th:text="${awayTeamName}">Away</th>
+                <th th:text="${homeTeamName}">Home</th>
+                <th>Edge</th>
+                <th>Weight</th>
+                <th>Confidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="cat : ${numsox.categories}"
+                  th:classappend="${!cat.available} ? 'cat-unavailable' : (${cat.edge > 0.04} ? 'edge-home' : (${cat.edge < -0.04} ? 'edge-away' : 'edge-even'))">
+                <td class="cat-name" th:text="${cat.label}">Offense</td>
+                <td class="cat-away" th:text="${cat.awayDisplay}">106 wRC+</td>
+                <td class="cat-home" th:text="${cat.homeDisplay}">112 wRC+</td>
+                <td class="cat-edge">
+                  <span class="edge-badge"
+                        th:classappend="${!cat.available} ? 'edge-badge-none' : (${cat.edge > 0.04} ? 'edge-badge-home' : (${cat.edge < -0.04} ? 'edge-badge-away' : 'edge-badge-even'))"
+                        th:text="${cat.edgeLabel(awayTeamName, homeTeamName)}">Even</span>
+                </td>
+                <td class="cat-weight">
+                  <span th:text="${cat.weightPct} + '%'">14%</span>
+                  <span class="weight-effective" th:if="${cat.available and cat.effectiveWeightPct != cat.weightPct}"
+                        th:text="'(' + ${cat.effectiveWeightPct} + '% applied)'">(17% applied)</span>
+                  <span class="weight-effective" th:if="${!cat.available}">(not applied)</span>
+                </td>
+                <td class="cat-conf" th:text="${cat.confidence}">High</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="table-note">
+            Weights are the model's design. When a category cannot be scored its weight is shared
+            across the categories that could be, so the estimate always reflects 100% of what is
+            actually known rather than quietly counting a blank as even.
+          </p>
+        </div>
+      </details>
+
+      <details class="stat-expander">
+        <summary>+ Why each category landed where it did</summary>
+        <div class="stat-explanation">
+          <div class="cat-detail" th:each="cat : ${numsox.categories}">
+            <div class="cat-detail-head">
+              <span class="cat-detail-name" th:text="${cat.label}">Offense</span>
+              <span class="cat-detail-weight" th:text="${cat.weightPct} + '% weight'">14% weight</span>
+              <span class="cat-detail-conf" th:if="${!cat.available}">Unavailable</span>
+            </div>
+            <div class="cat-detail-why" th:text="${cat.explanation}">Explanation.</div>
+            <ul class="stat-provenance" th:if="${!cat.supporting.isEmpty()}">
+              <li th:each="s : ${cat.supporting}">
+                <span class="prov-label" th:text="${s.label}">Team wRC+</span>
+                <span class="prov-value" th:text="${s.display}">112</span>
+                <span class="prov-badge" th:if="${s.badge != null}" th:text="${s.badge}">Unavailable</span>
+                <span class="prov-source" th:if="${s.source != null}"
+                      th:text="${s.source} + (${s.updated != null} ? ', updated ' + ${s.updated} : '')">
+                  MLB Stats API
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </details>
+
+      <!-- Everything the model wanted and could not get, stated openly -->
+      <details class="stat-expander" th:if="${numsox.hasMissing()}">
+        <summary>+ What the model could not measure</summary>
+        <div class="stat-explanation">
+          <p class="table-note">
+            These categories are part of the model's design but had no data behind them for this
+            game. Nothing has been estimated to fill the gap.
+          </p>
+          <div class="cat-detail" th:each="cat : ${numsox.missingCategories()}">
+            <div class="cat-detail-head">
+              <span class="cat-detail-name" th:text="${cat.label}">Weather</span>
+              <span class="cat-detail-weight" th:text="${cat.weightPct} + '% weight, not applied'">4% weight</span>
+            </div>
+            <div class="cat-detail-why" th:text="${cat.explanation}">Why it is missing.</div>
+          </div>
+        </div>
+      </details>
+
+      <details class="stat-expander" th:if="${numsox.live}">
+        <summary>+ Live Inputs</summary>
+        <div class="stat-explanation">
+          <div class="cat-detail" th:each="cat : ${numsox.categories}" th:if="${cat.key == 'live'}">
+            <div class="cat-detail-why" th:text="${cat.explanation}">Live explanation.</div>
+            <ul class="stat-provenance">
+              <li th:each="s : ${cat.supporting}">
+                <span class="prov-label" th:text="${s.label}">Leverage index</span>
+                <span class="prov-value" th:text="${s.display}">1.40</span>
+                <span class="prov-source" th:if="${s.source != null}" th:text="${s.source}">MLB Stats API</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </details>
+
+      <details class="stat-expander">
+        <summary>+ Stat Meanings</summary>
+        <div class="stat-explanation glossary">
+          <p><strong>wRC+</strong> Runs created per plate appearance, adjusted for ballpark and league. 100 is average, 120 is 20% better than average.</p>
+          <p><strong>OPS</strong> On-base percentage plus slugging. A quick read on total offensive production.</p>
+          <p><strong>ISO</strong> Slugging minus batting average. Isolates raw power from the ability to make contact.</p>
+          <p><strong>FIP</strong> What a pitcher's ERA would be if his defence were average. Built from strikeouts, walks and home runs only, so it strips out luck and fielding.</p>
+          <p><strong>K-BB%</strong> Strikeout rate minus walk rate. One of the most stable measures of a pitcher's command of an at-bat.</p>
+          <p><strong>WHIP</strong> Walks and hits allowed per inning. How often a pitcher lets runners on.</p>
+          <p><strong>BABIP</strong> Batting average on balls in play. Far above or below .300 usually signals luck that will not last.</p>
+          <p><strong>Hard-hit %</strong> Share of batted balls hit 95 mph or harder.</p>
+          <p><strong>Barrel %</strong> Share of batted balls hit at the exit velocity and launch angle combination that produces the most damage.</p>
+          <p><strong>Outs Above Average</strong> Fielding runs saved versus an average defender at the same position, from Statcast tracking.</p>
+          <p><strong>Defensive efficiency</strong> Share of balls in play a defence converts into outs.</p>
+          <p><strong>Park factor</strong> How a ballpark changes run or home run scoring versus a neutral park. 100 is neutral, 106 means 6% more.</p>
+          <p><strong>Leverage index</strong> How much the current moment matters to the outcome. 1.0 is an average situation, 2.0 or higher is a genuine turning point.</p>
         </div>
       </details>
     </div>
 
     <!-- Strengths & Weaknesses -->
-    <div class="sw-grid">
+    <div th:if="${numsox}" class="sw-grid">
       <div class="sw-col">
-        <div class="sw-header away-header" th:text="${awayTeamName + ' Strengths'}">Away Strengths</div>
+        <div class="sw-header away-header" th:text="${awayTeamName} + ' Strengths'">Away Strengths</div>
         <ul class="strength-list">
-          <li th:each="s : ${winProb.awayStrengths}" th:text="${s}">Strength</li>
+          <li th:each="s : ${numsox.awayStrengths}" th:text="${s}">Strength</li>
         </ul>
         <div class="sw-header weakness-header">Weaknesses</div>
         <ul class="weakness-list">
-          <li th:each="w : ${winProb.awayWeaknesses}" th:text="${w}">Weakness</li>
+          <li th:each="w : ${numsox.awayWeaknesses}" th:text="${w}">Weakness</li>
         </ul>
       </div>
       <div class="sw-col">
-        <div class="sw-header home-header" th:text="${homeTeamName + ' Strengths'}">Home Strengths</div>
+        <div class="sw-header home-header" th:text="${homeTeamName} + ' Strengths'">Home Strengths</div>
         <ul class="strength-list">
-          <li th:each="s : ${winProb.homeStrengths}" th:text="${s}">Strength</li>
+          <li th:each="s : ${numsox.homeStrengths}" th:text="${s}">Strength</li>
         </ul>
         <div class="sw-header weakness-header">Weaknesses</div>
         <ul class="weakness-list">
-          <li th:each="w : ${winProb.homeWeaknesses}" th:text="${w}">Weakness</li>
+          <li th:each="w : ${numsox.homeWeaknesses}" th:text="${w}">Weakness</li>
         </ul>
       </div>
-    </div>
-
-    <!-- Category Comparison Table -->
-    <div th:if="${winProb.categories}" class="panel">
-      <div class="panel-title">Category Comparison</div>
-      <table class="comparison-table">
-        <thead>
-          <tr>
-            <th th:text="${awayTeamName}">Away</th>
-            <th>Category</th>
-            <th th:text="${homeTeamName}">Home</th>
-            <th>Edge</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr th:each="cat : ${winProb.categories}"
-              th:classappend="${cat.awayEdge ? 'edge-away' : (cat.homeEdge ? 'edge-home' : 'edge-even')}">
-            <td class="cat-away" th:text="${cat.awayValue}">106 wRC+</td>
-            <td class="cat-name" th:text="${cat.category}">Offense</td>
-            <td class="cat-home" th:text="${cat.homeValue}">112 wRC+</td>
-            <td class="cat-edge">
-              <span th:if="${cat.awayEdge}" class="edge-badge edge-badge-away">Away</span>
-              <span th:if="${cat.homeEdge}" class="edge-badge edge-badge-home">Home</span>
-              <span th:if="${cat.even}" class="edge-badge edge-badge-even">Even</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
     </div>
 
     <!-- Quick Stats Side by Side -->

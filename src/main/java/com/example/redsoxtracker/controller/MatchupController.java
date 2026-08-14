@@ -5,6 +5,8 @@ import com.example.redsoxtracker.domain.Team;
 import com.example.redsoxtracker.domain.TeamStatSnapshot;
 import com.example.redsoxtracker.domain.PitcherStatSnapshot;
 import com.example.redsoxtracker.domain.BallparkFactorSnapshot;
+import com.example.redsoxtracker.dto.LiveWinProbability;
+import com.example.redsoxtracker.dto.NumsoxModel;
 import com.example.redsoxtracker.dto.StarterChoice;
 import com.example.redsoxtracker.dto.WinProbabilityResult;
 import com.example.redsoxtracker.repository.GameRepository;
@@ -31,15 +33,21 @@ public class MatchupController {
     private final TeamStatsService teamStatsService;
     private final PlayerStatsService playerStatsService;
     private final BallparkFactorService ballparkFactorService;
+    private final NumsoxModelService numsoxModelService;
+    private final LiveWinProbabilityService liveWinProbabilityService;
 
     public MatchupController(MatchupService matchupService, GameRepository gameRepository,
                              TeamStatsService teamStatsService, PlayerStatsService playerStatsService,
-                             BallparkFactorService ballparkFactorService) {
+                             BallparkFactorService ballparkFactorService,
+                             NumsoxModelService numsoxModelService,
+                             LiveWinProbabilityService liveWinProbabilityService) {
         this.matchupService = matchupService;
         this.gameRepository = gameRepository;
         this.teamStatsService = teamStatsService;
         this.playerStatsService = playerStatsService;
         this.ballparkFactorService = ballparkFactorService;
+        this.numsoxModelService = numsoxModelService;
+        this.liveWinProbabilityService = liveWinProbabilityService;
     }
 
     @GetMapping("/matchup")
@@ -108,6 +116,18 @@ public class MatchupController {
         WinProbabilityResult winProb = matchupService.calculateForGame(game);
         model.addAttribute("winProb", winProb);
 
+        // The NumSOX estimate. Live inputs only exist once the game is under way, so a
+        // scheduled game gets the pre-game read and the Live Game State category stays
+        // unavailable rather than being filled in with a placeholder.
+        Optional<LiveWinProbability> liveWp = isUnderWay(game)
+                ? liveWinProbabilityService.forGame(game)
+                : Optional.empty();
+        NumsoxModel numsox = numsoxModelService.evaluate(game, awayStats, homeStats,
+                awayStarter, homeStarter, park, liveWp);
+        model.addAttribute("numsox", numsox);
+        model.addAttribute("numsoxTitle", NumsoxModel.TITLE);
+        model.addAttribute("numsoxDisclaimer", NumsoxModel.DISCLAIMER);
+
         // All games for switcher
         List<Game> allGames = gameRepository.findAllByOrderByGameDateAsc();
         YearMonth calendarMonth = resolveCalendarMonth(month);
@@ -164,6 +184,12 @@ public class MatchupController {
             weeks.add(currentWeek);
         }
         return weeks;
+    }
+
+    /** True while there is a live feed worth reading, so a finished game keeps its pre-game read. */
+    private boolean isUnderWay(Game game) {
+        String status = game.getStatus();
+        return "In Progress".equalsIgnoreCase(status) || "Delayed".equalsIgnoreCase(status);
     }
 
     private String recordFromStats(TeamStatSnapshot stats) {

@@ -2469,6 +2469,169 @@ button.danger { background: #7a1724; }
 .main-reasons ol { margin: 0; padding-left: 18px; }
 .main-reasons li { font-size: 14px; color: var(--text); margin-bottom: 4px; }
 
+/* ===== NUMSOX MODEL ===== */
+.win-prob-meta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.conf-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    background: #f3f4f6;
+    color: #4b5563;
+}
+.conf-badge.conf-high { background: #dcfce7; color: #166534; }
+.conf-badge.conf-medium { background: #fef3c7; color: #92400e; }
+.conf-badge.conf-low { background: #fee2e2; color: #991b1b; }
+
+.numsox-live-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    background: var(--red);
+    color: #fff;
+}
+
+.coverage-note { font-size: 12px; color: var(--muted); }
+
+/* What changed once the game started. */
+.live-shift {
+    max-width: 640px;
+    margin: 12px auto 0;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    font-size: 13px;
+    color: #7c2d12;
+    text-align: left;
+}
+
+.numsox-reason {
+    max-width: 640px;
+    margin: 16px auto 0;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--text);
+    text-align: left;
+}
+
+.top-factors {
+    text-align: left;
+    max-width: 640px;
+    margin: 16px auto 0;
+    background: #f8f9fb;
+    border-radius: 8px;
+    padding: 14px 20px;
+}
+
+.factor-row { padding: 8px 0; border-bottom: 1px solid var(--border-light); }
+.factor-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+.factor-head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 3px;
+}
+
+.factor-name { font-weight: 700; font-size: 13px; color: var(--navy); }
+
+.factor-edge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.factor-weight { margin-left: auto; font-size: 11px; color: var(--muted); }
+.factor-why { font-size: 13px; line-height: 1.5; color: var(--text); }
+
+.breakdown-intro {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.55;
+    margin-bottom: 12px;
+}
+
+.breakdown-table { width: 100%; }
+.breakdown-table .cat-name { text-align: left; }
+.breakdown-table .cat-weight { font-size: 12px; white-space: nowrap; }
+.breakdown-table .cat-conf { font-size: 12px; color: var(--muted); }
+.weight-effective { display: block; font-size: 10px; color: var(--muted); }
+
+/* A category with no data behind it is dimmed, never hidden. */
+tr.cat-unavailable td { color: var(--muted); font-style: italic; }
+tr.cat-unavailable .cat-name { color: var(--muted); font-weight: 500; }
+.edge-badge-none { background: #f3f4f6; color: #9ca3af; font-style: normal; }
+
+.cat-detail { padding: 12px 0; border-bottom: 1px solid var(--border-light); }
+.cat-detail:last-child { border-bottom: none; }
+
+.cat-detail-head {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.cat-detail-name { font-weight: 700; font-size: 13px; color: var(--navy); }
+.cat-detail-weight { font-size: 11px; color: var(--muted); }
+.cat-detail-conf { font-size: 11px; font-weight: 700; color: #9ca3af; }
+.cat-detail-why { font-size: 13px; line-height: 1.55; color: var(--text); }
+
+/* Every number carries where it came from, so nothing has to be taken on trust. */
+.stat-provenance { list-style: none; padding: 0; margin: 8px 0 0; }
+.stat-provenance li {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 3px 0;
+    font-size: 12px;
+}
+.prov-label { color: var(--muted); min-width: 190px; }
+.prov-value { font-weight: 700; color: var(--navy); }
+.prov-badge {
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    background: #f3f4f6;
+    color: #9ca3af;
+}
+.prov-source { margin-left: auto; font-size: 10px; color: #9ca3af; }
+
+.table-note {
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--muted);
+    margin: 10px 0 0;
+}
+
+.glossary p { font-size: 13px; line-height: 1.55; margin-bottom: 8px; }
+.glossary strong { color: var(--navy); }
+
+@media (max-width: 700px) {
+    .prov-label { min-width: 0; }
+    .prov-source { margin-left: 0; flex-basis: 100%; }
+    .factor-weight { margin-left: 0; }
+}
+
 /* ===== STRENGTHS & WEAKNESSES ===== */
 .sw-grid {
     display: grid;
