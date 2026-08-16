@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>Matchup Center - NumSOX</title>
-  <link rel="stylesheet" th:href="@{/css/styles.css(v='20260814-calendar')}"/>
+  <link rel="stylesheet" th:href="@{/css/styles.css(v='20260814-calendar-fit')}"/>
 </head>
 <body>
 <nav th:replace="~{fragments/nav :: topbar('matchup')}"></nav>
@@ -48,7 +48,7 @@
         </div>
       </div>
 
-      <!-- Wraps the weekday row and the grid so both scroll together on a phone. -->
+      <!-- The weekday row and grid share one responsive seven-column frame. -->
       <div class="calendar-scroll">
         <div class="calendar-weekdays" aria-hidden="true">
           <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
@@ -76,8 +76,12 @@
                       <span th:text="${g.homeAway == 'Home' ? 'vs' : '@'}">vs</span>
                       <strong th:text="${g.opponent}">Yankees</strong>
                     </span>
-                    <span class="calendar-status"
+                    <span class="calendar-status calendar-status-full"
                           th:text="${g.redSoxScore != null ? 'BOS ' + g.redSoxScore + ', ' + g.opponent + ' ' + g.opponentScore : g.status}">Scheduled</span>
+                    <span class="calendar-status calendar-status-compact"
+                          th:text="${g.redSoxScore != null
+                              ? ((g.result != null ? g.result + ' ' : '') + g.redSoxScore + '-' + g.opponentScore)
+                              : (g.startTime == null or g.startTimeTbd == true ? 'TBD' : #temporals.format(g.startTime, 'h:mm'))}">7:10</span>
                   </a>
                 </div>
               </div>

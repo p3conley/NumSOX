@@ -6,7 +6,7 @@
   <title>NumSOX</title>
   <!-- No meta refresh: the scoreboard and game detail poll and update in place instead,
        so a live game moves without the page reloading under you. -->
-  <link rel="stylesheet" th:href="@{/css/styles.css(v='20260814-winprob')}"/>
+  <link rel="stylesheet" th:href="@{/css/styles.css(v='20260816-base-abs')}"/>
 </head>
 <body>
 <nav th:replace="~{fragments/nav :: topbar('dashboard')}"></nav>
@@ -88,7 +88,7 @@
             <span class="abs-label">ABS</span>
             <span class="abs-lamps" aria-label="Away ABS challenges remaining">
               <span th:each="n : ${#numbers.sequence(1, scoreboard != null ? scoreboard.challengeSlots() : 2)}"
-                    class="lamp lamp-green" th:attr="data-abs-slot=${n}"
+                    class="lamp lamp-abs" th:attr="data-abs-slot=${n}"
                     th:classappend="${n <= (scoreboard != null and scoreboard.hasChallenges ? (scoreboard.awayChallengesLeft ?: 0) : 2) ? ' is-on' : ''}"></span>
             </span>
           </div>
@@ -172,6 +172,16 @@
             <span class="duration-clock" data-duration-clock>0:00:00</span>
           </div>
         </div>
+        <div class="live-play-stage" id="live-play-stage"
+             role="status" aria-live="polite" aria-atomic="true" aria-hidden="true"
+             th:attr="data-baseball-src=@{/images/baseball-play.png},data-glove-src=@{/images/play-glove.webp}">
+          <div class="live-play-motion" aria-hidden="true"></div>
+          <div class="live-play-card">
+            <span class="live-play-kicker">Live Play</span>
+            <strong class="live-play-title"></strong>
+            <span class="live-play-description"></span>
+          </div>
+        </div>
         </div>
         <div class="matchup-side home">
           <div class="matchup-side-label">Home</div>
@@ -197,7 +207,7 @@
             <span class="abs-label">ABS</span>
             <span class="abs-lamps" aria-label="Home ABS challenges remaining">
               <span th:each="n : ${#numbers.sequence(1, scoreboard != null ? scoreboard.challengeSlots() : 2)}"
-                    class="lamp lamp-green" th:attr="data-abs-slot=${n}"
+                    class="lamp lamp-abs" th:attr="data-abs-slot=${n}"
                     th:classappend="${n <= (scoreboard != null and scoreboard.hasChallenges ? (scoreboard.homeChallengesLeft ?: 0) : 2) ? ' is-on' : ''}"></span>
             </span>
           </div>
@@ -1086,6 +1096,8 @@
   })();
 </script>
 
+<script th:src="@{/js/live-play-notifications.js(v='20260815-pitch-feed')}"></script>
+
 <!-- Live game: poll for the score, the count and the play by play, and write the changes
      straight into the page. Nothing here reloads the document. -->
 <script>
@@ -1179,6 +1191,8 @@
     // ---- ball / strike / out lamps -------------------------------------------------
     var countBoard = document.getElementById('count-board');
     var lastPlaySeen = countBoard ? parseInt(countBoard.getAttribute('data-last-play'), 10) : NaN;
+    var pitchFeedInitialized = false;
+    var seenPitchIds = Object.create(null);
     var flashTimers = {};
 
     function group(name) {
@@ -1222,6 +1236,32 @@
       g.classList.remove('is-flashing');
     }
 
+    function applyPitchNotifications(sb, completedPlayArrived, completedAtBatIndex) {
+      var pitches = Array.isArray(sb.recentPitches) ? sb.recentPitches : [];
+      var unseen = [];
+
+      pitches.forEach(function (pitch) {
+        if (!pitch || !pitch.id || seenPitchIds[pitch.id]) return;
+        seenPitchIds[pitch.id] = true;
+        // Suppress only pitches from the at-bat whose result just arrived. If the feed
+        // already contains a pitch to the next hitter, preserve it behind the play card.
+        if (!completedPlayArrived || pitch.atBatIndex > completedAtBatIndex) unseen.push(pitch);
+      });
+
+      // The first response only establishes where the live feed currently is. Replaying
+      // every pitch from an at-bat already under way would look like delayed data.
+      if (!pitchFeedInitialized) {
+        pitchFeedInitialized = true;
+        return;
+      }
+
+      // The notifier gives completed plays priority; a legitimate next-at-bat pitch waits
+      // in its queue until that animation leaves.
+      if (unseen.length && window.NumSoxLivePlays) {
+        window.NumSoxLivePlays.enqueuePitches(unseen);
+      }
+    }
+
     function applyCount(sb) {
       if (!countBoard) return;
 
@@ -1240,13 +1280,17 @@
       // is flashed off the back of the last completed at-bat instead. Only fire when the
       // at-bat is genuinely new, never on a repeat poll or the first page load.
       var idx = sb.lastPlayIndex;
+      var completedPlayArrived = false;
       if (idx !== null && idx !== undefined) {
         if (!isNaN(lastPlaySeen) && idx > lastPlaySeen) {
+          completedPlayArrived = true;
           if (sb.lastPlayEvent === 'walk') flash('ball', 'Walk', 5000);
           else if (sb.lastPlayEvent === 'strikeout') flash('strike', 'K', 5000);
+          if (window.NumSoxLivePlays) window.NumSoxLivePlays.announce(sb);
         }
         lastPlaySeen = idx;
       }
+      applyPitchNotifications(sb, completedPlayArrived, idx);
     }
 
     function applyHeadline(data) {

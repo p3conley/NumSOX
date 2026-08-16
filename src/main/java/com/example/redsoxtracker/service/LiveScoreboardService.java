@@ -5,6 +5,7 @@ import com.example.redsoxtracker.dto.ScoreboardView;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -46,11 +47,12 @@ public class LiveScoreboardService {
             view.getInnings().add(new ScoreboardView.InningLine(view.getInnings().size() + 1, null, null));
         }
 
-        String status = root.path("gameData").path("status").path("detailedState").asText(game.getStatus());
+        String feedStatus = root.path("gameData").path("status").path("detailedState").asText(game.getStatus());
         String abstractState = root.path("gameData").path("status").path("abstractGameState").asText("");
-        boolean finalGame = "Final".equalsIgnoreCase(status) || "Game Over".equalsIgnoreCase(status);
-        boolean delayed = status != null && status.toLowerCase().contains("delay");
-        boolean live = !delayed && ("Live".equalsIgnoreCase(abstractState)
+        boolean finalGame = "Final".equalsIgnoreCase(abstractState) || isFinalStatus(feedStatus);
+        String status = finalGame ? "Final" : feedStatus;
+        boolean delayed = !finalGame && status != null && status.toLowerCase(Locale.ROOT).contains("delay");
+        boolean live = !finalGame && !delayed && ("Live".equalsIgnoreCase(abstractState)
                 || "In Progress".equalsIgnoreCase(status));
 
         // Drives the bulb panel: Middle/End mean the side was retired, and the last
@@ -61,7 +63,9 @@ public class LiveScoreboardService {
         view.setLive(live);
         view.setInningPhase(linescore.path("inningState").asText(null));
         view.setInningOrdinal(linescore.path("currentInningOrdinal").asText(null));
-        applyLastPlay(view, root.path("liveData").path("plays").path("allPlays"));
+        JsonNode plays = root.path("liveData").path("plays");
+        applyLastPlay(view, plays.path("allPlays"), redSoxAway);
+        applyRecentPitches(view, plays);
         applyChallenges(view, root.path("gameData").path("absChallenges"));
 
         if (finalGame) {
@@ -107,14 +111,71 @@ public class LiveScoreboardService {
      * strikeout lands, so the bulbs alone can never show that it happened; the page
      * flashes the word off the back of this instead.
      */
-    private void applyLastPlay(ScoreboardView view, JsonNode allPlays) {
+    private void applyLastPlay(ScoreboardView view, JsonNode allPlays, boolean redSoxAway) {
         if (!allPlays.isArray()) return;
         for (int i = allPlays.size() - 1; i >= 0; i--) {
             JsonNode play = allPlays.get(i);
             if (!play.path("about").path("isComplete").asBoolean(false)) continue;
-            view.setLastPlayEvent(play.path("result").path("eventType").asText(null));
-            view.setLastPlayIndex(play.path("about").path("atBatIndex").asInt());
+            JsonNode result = play.path("result");
+            JsonNode about = play.path("about");
+            view.setLastPlayEvent(result.path("eventType").asText(null));
+            view.setLastPlayLabel(result.path("event").asText(null));
+            view.setLastPlayDescription(result.path("description").asText(null));
+            view.setLastPlayBatter(play.path("matchup").path("batter").path("fullName").asText(null));
+            view.setLastPlayIndex(about.path("atBatIndex").asInt());
+
+            String half = about.path("halfInning").asText("");
+            boolean topHalf = half.equalsIgnoreCase("top");
+            boolean bottomHalf = half.equalsIgnoreCase("bottom");
+            view.setLastPlayByRedSox((redSoxAway && topHalf) || (!redSoxAway && bottomHalf));
             return;
+        }
+    }
+
+    /**
+     * Ordinary pitches from the current at-bat. The final pitch of a walk, strikeout or
+     * ball put in play is excluded because the completed-play notification owns it.
+     */
+    private void applyRecentPitches(ScoreboardView view, JsonNode plays) {
+        JsonNode play = plays.path("currentPlay");
+        if (play.isMissingNode() || play.isEmpty()) {
+            JsonNode allPlays = plays.path("allPlays");
+            if (!allPlays.isArray() || allPlays.isEmpty()) return;
+            play = allPlays.get(allPlays.size() - 1);
+        }
+
+        int atBatIndex = play.path("about").path("atBatIndex").asInt(-1);
+        JsonNode events = play.path("playEvents");
+        if (!events.isArray()) return;
+
+        for (int i = 0; i < events.size(); i++) {
+            JsonNode event = events.get(i);
+            if (!event.path("isPitch").asBoolean(false)) continue;
+
+            JsonNode details = event.path("details");
+            JsonNode count = event.path("count");
+            int balls = count.path("balls").asInt(0);
+            int strikes = count.path("strikes").asInt(0);
+            if (details.path("isInPlay").asBoolean(false) || balls >= 4 || strikes >= 3) continue;
+
+            String call = details.path("call").path("description").asText("").trim();
+            if (call.isBlank()) continue;
+
+            String id = event.path("playId").asText("").trim();
+            if (id.isBlank()) {
+                int eventIndex = event.path("index").asInt(i);
+                id = atBatIndex + ":" + eventIndex;
+            }
+
+            JsonNode startSpeed = event.path("pitchData").path("startSpeed");
+            String speed = startSpeed.isNumber()
+                    ? String.format(Locale.US, "%.1f mph", startSpeed.asDouble())
+                    : "Speed unavailable";
+            String pitchType = details.path("type").path("description").asText("").trim();
+            if (pitchType.isBlank()) pitchType = "Pitch type unavailable";
+
+            view.getRecentPitches().add(new ScoreboardView.PitchNotification(
+                    id, atBatIndex, balls + " - " + strikes, speed, pitchType, call));
         }
     }
 
@@ -142,16 +203,29 @@ public class LiveScoreboardService {
         for (int i = 1; i <= 10; i++) {
             view.getInnings().add(new ScoreboardView.InningLine(i, null, null));
         }
+        boolean finalGame = isFinalStatus(game.getStatus());
+        boolean delayed = !finalGame && game.getStatus() != null
+                && game.getStatus().toLowerCase(Locale.ROOT).contains("delay");
         view.setBalls(0);
         view.setStrikes(0);
         view.setOuts(0);
-        view.setAtBat("Awaiting live feed");
-        view.setPitching("Awaiting live feed");
-        view.setInningState(game.getStatus());
-        view.setStatus(game.getStatus());
-        view.setLive("In Progress".equalsIgnoreCase(game.getStatus()));
-        view.setDelayed(game.getStatus() != null && game.getStatus().toLowerCase().contains("delay"));
+        view.setAtBat(finalGame ? "Final" : "Awaiting live feed");
+        view.setPitching(finalGame ? "Final" : "Awaiting live feed");
+        view.setInningState(finalGame ? "Final" : game.getStatus());
+        view.setStatus(finalGame ? "Final" : game.getStatus());
+        view.setFinalGame(finalGame);
+        view.setLive(!finalGame && "In Progress".equalsIgnoreCase(game.getStatus()));
+        view.setDelayed(delayed);
         return view;
+    }
+
+    private boolean isFinalStatus(String status) {
+        if (status == null) return false;
+        String normalized = status.trim().toLowerCase(Locale.ROOT);
+        return normalized.equals("final")
+                || normalized.startsWith("final:")
+                || normalized.equals("game over")
+                || normalized.contains("completed early");
     }
 
     private Integer intOrNull(JsonNode node, String field) {

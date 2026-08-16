@@ -30,8 +30,16 @@ public class ScoreboardView {
     private String inningOrdinal;
     /** eventType of the most recently completed at-bat, e.g. "walk" or "strikeout". */
     private String lastPlayEvent;
+    /** Fan-facing result label and description for the live-play notification. */
+    private String lastPlayLabel;
+    private String lastPlayDescription;
+    private String lastPlayBatter;
+    /** True when Boston was batting on the completed play. */
+    private boolean lastPlayByRedSox;
     /** atBatIndex of that play, so the page can tell a new one from a repeat poll. */
     private Integer lastPlayIndex;
+    /** Non-terminal pitches in the current at-bat, oldest first for client-side queuing. */
+    private List<PitchNotification> recentPitches = new ArrayList<>();
     private boolean finalGame;
     /** Occupied bases, for the diamond under the count. */
     private boolean onFirst;
@@ -82,8 +90,18 @@ public class ScoreboardView {
     public void setInningOrdinal(String inningOrdinal) { this.inningOrdinal = inningOrdinal; }
     public String getLastPlayEvent() { return lastPlayEvent; }
     public void setLastPlayEvent(String lastPlayEvent) { this.lastPlayEvent = lastPlayEvent; }
+    public String getLastPlayLabel() { return lastPlayLabel; }
+    public void setLastPlayLabel(String lastPlayLabel) { this.lastPlayLabel = lastPlayLabel; }
+    public String getLastPlayDescription() { return lastPlayDescription; }
+    public void setLastPlayDescription(String lastPlayDescription) { this.lastPlayDescription = lastPlayDescription; }
+    public String getLastPlayBatter() { return lastPlayBatter; }
+    public void setLastPlayBatter(String lastPlayBatter) { this.lastPlayBatter = lastPlayBatter; }
+    public boolean isLastPlayByRedSox() { return lastPlayByRedSox; }
+    public void setLastPlayByRedSox(boolean lastPlayByRedSox) { this.lastPlayByRedSox = lastPlayByRedSox; }
     public Integer getLastPlayIndex() { return lastPlayIndex; }
     public void setLastPlayIndex(Integer lastPlayIndex) { this.lastPlayIndex = lastPlayIndex; }
+    public List<PitchNotification> getRecentPitches() { return recentPitches; }
+    public void setRecentPitches(List<PitchNotification> recentPitches) { this.recentPitches = recentPitches; }
     public boolean isFinalGame() { return finalGame; }
     public void setFinalGame(boolean finalGame) { this.finalGame = finalGame; }
     public boolean isHasChallenges() { return hasChallenges; }
@@ -160,5 +178,30 @@ public class ScoreboardView {
         public void setAwayRuns(Integer awayRuns) { this.awayRuns = awayRuns; }
         public Integer getHomeRuns() { return homeRuns; }
         public void setHomeRuns(Integer homeRuns) { this.homeRuns = homeRuns; }
+    }
+
+    public static class PitchNotification {
+        private final String id;
+        private final int atBatIndex;
+        private final String count;
+        private final String speed;
+        private final String type;
+        private final String call;
+
+        public PitchNotification(String id, int atBatIndex, String count, String speed, String type, String call) {
+            this.id = id;
+            this.atBatIndex = atBatIndex;
+            this.count = count;
+            this.speed = speed;
+            this.type = type;
+            this.call = call;
+        }
+
+        public String getId() { return id; }
+        public int getAtBatIndex() { return atBatIndex; }
+        public String getCount() { return count; }
+        public String getSpeed() { return speed; }
+        public String getType() { return type; }
+        public String getCall() { return call; }
     }
 }
